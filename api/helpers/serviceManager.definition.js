@@ -1,0 +1,284 @@
+const mongoose = require(`mongoose`);
+const Schema = mongoose.Schema;
+let envConfig = require(`../../config/config`);
+var definition = {
+	'_id': {
+		'type': `String`,
+		'default': null
+	},
+	'name': {
+		'type': `String`,
+		'required': true
+	},
+	'description': {
+		'type': `String`
+	},
+	'collectionName': {
+		'type': `String`
+	},
+	'app': {
+		'type': `String`,
+		'required': true
+	},
+	'api': {
+		'type': `String`,
+		'required': true
+	},
+	'port': {
+		'type': `Number`,
+		'required': true
+	},
+	'headers': {
+		'type': `Object`
+	},
+	'wizard': {
+		'type': [{
+			'name': `String`,
+			'fields': {
+				'type': [`String`]
+			},
+			'actions': {
+				'type': [{
+					'name': {
+						'type': `String`
+					},
+					'url': {
+						'type': `String`
+					},
+					'label': {
+						'type': `String`
+					},
+					'type': {
+						'type': `String`
+					},
+					'errorMessage': {
+						'type': `String`
+					},
+					'button': {
+						'name': {
+							'type': `String`
+						},
+						'type': {
+							'type': `String`
+						},
+						'color': {
+							'type': `String`
+						}
+					}
+				}]
+			}
+		}]
+	},
+	'version': {
+		'type': `Number`,
+		'default': 1
+	},
+	'instances': {
+		'type': `Number`,
+		'default': 1
+	},
+	'versionValidity': {
+		'type': {
+			'validityValue': Schema.Types.Mixed,
+			'validityType': {
+				'type': `String`,
+				'enum': [`count`, `time`]
+			}
+		}
+	},
+	'permanentDeleteData': {
+		'type': `Boolean`,
+		'default': true
+	},
+	'disableInsights': {
+		'type': `Boolean`,
+		'default': false
+	},
+	'definition': {
+		'type': `String`
+	},
+	'attributeList': [{
+		'key': `String`,
+		'name': `String`,
+		'properties': {
+			'type': `Object`
+		}
+	}],
+	'status': {
+		'type': `String`,
+		'enum': [`Pending`, `Active`, `Undeployed`, `Maintenance`, `Draft`],
+		'default': `Draft`
+	},
+	'comment': {
+		'type': `String`
+	},
+	'maintenanceInfo': {
+		'type': `String`
+	},
+	'enableSearchIndex': {
+		'type': `Boolean`,
+		'default': envConfig.enableSearchIndex
+	},
+	'relatedSchemas': {
+		'type': {
+			'incoming': [{
+				'type': {
+					'service': {
+						'type': `String`
+					},
+					'uri': {
+						'type': `String`
+					},
+					'port': {
+						'type': `Number`
+					},
+					'app': {
+						'type': `String`
+					},
+					'isRequired': {
+						'type': `Boolean`
+					}
+				}
+			}],
+			'outgoing': [{
+				'type': {
+					'service': {
+						'type': `String`
+					},
+					'path': {
+						'type': `String`
+					}
+				}
+			}],
+			'internal': {
+				'users': [{
+					'type': {
+						'isRequired': {
+							'type': `Boolean`
+						},
+						'path': {
+							'type': `String`
+						},
+						'uri': {
+							'type': `String`
+						}
+					}
+				}]
+			}
+		}
+	},
+	'webHooks': {
+		'type': [{
+			'name': {
+				'type': `String`
+			},
+			'url': {
+				'type': `String`
+			},
+			'failMessage': {
+				'type': `String`
+			}
+		}]
+	},
+	'preHooks': {
+		'type': [{
+			'name': {
+				'type': `String`
+			},
+			'url': {
+				'type': `String`
+			},
+			'failMessage': {
+				'type': `String`
+			}
+		}]
+	},
+	'workflowHooks': {
+		'postHooks': {
+			'submit': {
+				'type': [{
+					'name': {
+						'type': `String`
+					},
+					'url': {
+						'type': `String`
+					}
+				}]
+			},
+			'discard': {
+				'type': [{
+					'name': {
+						'type': `String`
+					},
+					'url': {
+						'type': `String`
+					}
+				}]
+			},
+			'approve': {
+				'type': [{
+					'name': {
+						'type': `String`
+					},
+					'url': {
+						'type': `String`
+					}
+				}]
+			},
+			'rework': {
+				'type': [{
+					'name': {
+						'type': `String`
+					},
+					'url': {
+						'type': `String`
+					}
+				}]
+			},
+			'reject': {
+				'type': [{
+					'name': {
+						'type': `String`
+					},
+					'url': {
+						'type': `String`
+					}
+				}]
+			}
+		}
+	},
+	'flags': {
+		'type': {
+			'apiEndpointChanged': {
+				'type': `String`,
+				'default': true
+			}
+		}
+	},
+	'tags': {
+		'type': `Object`
+	},
+	'attributeCount': {
+		'type': `Number`,
+		'default': 0
+	},
+	'draftVersion': {
+		'type': `Number`
+	},
+	'role':{
+		'type':`Object`
+	},
+	'_metadata': {
+		'type': {
+			'version': {
+				'release': { 'type': `Number` }
+			}
+		}
+	},
+	'type': {
+		'type': `String`,
+		'required': false,
+		'default': null
+	},
+};
+module.exports.definition = definition;

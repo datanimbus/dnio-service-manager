@@ -1,0 +1,54 @@
+{
+    "name": "odp-service-manager",
+    "version": "3.9.0",
+    "description": "",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js",
+        "lint": "./node_modules/.bin/eslint app.js api/ config/ util/ --fix",
+        "test": "nyc --reporter=html --reporter=json-summary mocha"
+    },
+    "keywords": [],
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@bitbucket.org/appveen/odp-service-manager.git"
+    },
+    "homepage": "https://bitbucket.org/appveen/odp-service-manager#readme",
+    "author": "Shobhit Agarwal <shobhit@appveen.com>",
+    "license": "ISC",
+    "dependencies": {
+        "@appveen/odp-utils": "1.5.8",
+        "@appveen/swagger-mongoose-crud": "1.1.2",
+        "@appveen/utils": "1.1.2",
+        "bluebird": "^3.5.1",
+        "body-parser": "^1.18.3",
+        "copy-dir": "^1.2.0",
+        "del": "^5.1.0",
+        "express": "^4.15.2",
+        "express-fileupload": "^0.4.0",
+        "folder-zip-sync": "^1.0.5",
+        "fs-extra": "^5.0.0",
+        "js-yaml": "^3.13.1",
+        "lodash": "^4.17.4",
+        "log4js": "2.4.1",
+        "mkdirp": "^1.0.4",
+        "mongodb": "^3.0.4",
+        "mongoose": "5.4.17",
+        "node-cron": "^1.2.1",
+        "request": "^2.88.0",
+        "request-promise": "^4.2.2",
+        "socket.io": "^2.0.4",
+        "swagger-tools": "^0.10.4",
+        "uuid": "^3.2.1"
+    },
+    "devDependencies": {
+        "eslint": "^5.1.0",
+        "husky": "^1.2.0",
+        "mocha": "^6.1.4",
+        "nyc": "^14.1.1",
+        "rewire": "^4.0.1",
+        "sinon": "^7.3.2",
+        "sinon-express-mock": "^2.2.0",
+        "sinon-mongoose": "^2.3.0"
+    }
+}

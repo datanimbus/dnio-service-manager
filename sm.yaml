@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sm
+  namespace: __namespace__
+spec:
+  type: ClusterIP
+  selector:
+    app: sm
+    release: __release_tag__
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 10003
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sm
+  namespace: __namespace__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sm
+      release: __release_tag__
+  template:
+    metadata:
+      labels:
+        app: sm
+        release: __release_tag__
+    spec:
+      serviceAccountName: odp-admin-appveen
+      containers:
+        - name: sm
+          image: '__docker_registry_server__/odp:sm.__release__'
+          ports:
+            - containerPort: 10003
+          livenessProbe:
+            httpGet:
+              path: /sm/health/live
+              port: 10003
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /sm/health/ready
+              port: 10003
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 60
+          envFrom:
+          - configMapRef:
+              name: config
+      imagePullSecrets:
+        - name: regsecret        
+

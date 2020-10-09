@@ -1,0 +1,677 @@
+const _ = require(`lodash`);
+
+function genrateCode(config) {
+	let schema = config.definition;
+	if (typeof schema === `string`) {
+		schema = JSON.parse(schema);
+	}
+	const code = [];
+	code.push(`const mongoose = require('mongoose');`);
+	code.push(`const _ = require('lodash');`);
+	code.push(``);
+	code.push(`const config = require('../../config');`);
+	code.push(`const httpClient = require('../../http-client');`);
+	code.push(`const commonUtils = require('./common.utils');`);
+	code.push(``);
+	code.push(`const logger = global.logger;`);
+
+	/**------------------------ SPECIAL FIELDS ----------------------- */
+	code.push(`const createOnlyFields = '${config.createOnlyFields}'.split(',');`);
+	code.push(`const precisionFields = ${JSON.stringify(config.precisionFields)};`);
+	code.push(`const secureFields = '${config.secureFields}'.split(',');`);
+	code.push(`const uniqueFields = ${JSON.stringify(config.uniqueFields)};`);
+	code.push(`const relationUniqueFields = '${config.relationUniqueFields}'.split(',');`);
+	code.push(`const relationRequiredFields = '${config.relationRequiredFields}'.split(',');`);
+
+	/**------------------------ CREATE ONLY ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @param {boolean} [forceRemove] Will remove all createOnly field`);
+	code.push(` * @returns {object | null} Returns null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`function validateCreateOnly(req, newData, oldData, forceRemove) {`);
+	code.push(`\tconst errors = {};`);
+	code.push(`\tif (oldData) {`);
+	parseSchemaForCreateOnly(schema);
+	code.push(`\t}`);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ UNIQUE ----------------------- */
+	code.push(`function mongooseUniquePlugin() {`);
+	code.push(`\treturn function (schema) {`);
+	createIndex(schema);
+	code.push(`\t}`);
+	code.push(`}`);
+	code.push(``);
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function validateUnique(req, newData, oldData) {`);
+	code.push(`\tconst model = mongoose.model(config.serviceId);`);
+	code.push(`\tconst errors = {};`);
+	code.push(`\tlet val;`);
+	parseSchemaForUnique(schema);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ RELATION VALIDATION ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function validateRelation(req, newData, oldData) {`);
+	code.push(`\tconst errors = {};`);
+	parseSchemaForRelation(schema);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ RELATION EXPAND ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @param {boolean} expandForSelect Expand only for select`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function expandDocument(req, newData, oldData, expandForSelect) {`);
+	parseSchemaForExpand(schema);
+	code.push(`\treturn newData;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ RELATION FILTER ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} filter The Filter Object`);
+	code.push(` * @param {*} errors The errors while fetching RefIds`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function patchRelationInFilter(req, filter, errors) {`);
+	code.push(`\tif (!errors) {`);
+	code.push(`\t\terrors = {};`);
+	code.push(`\t}`);
+	code.push(`\ttry {`);
+	code.push(`\t\tif (typeof filter !== 'object') {`);
+	code.push(`\t\t\treturn;`);
+	code.push(`\t\t}`);
+	code.push(`\t\tlet flag = 0;`);
+	code.push(`\t\tconst tempFilter = {};`);
+	code.push(`\t\tlet promises = Object.keys(filter).map(async (key) => {`);
+	parseSchemaForFilter(schema);
+	code.push(`\t\t\tif (!flag) {`);
+	code.push(`\t\t\t\tif (typeof filter[key] == 'object') {`);
+	code.push(`\t\t\t\t\tif (Array.isArray(filter[key])) {`);
+	code.push(`\t\t\t\t\t\tconst promiseArr = filter[key].map(async (item, i) => {`);
+	code.push(`\t\t\t\t\t\t\treturn await patchRelationInFilter(req, item, errors);`);
+	code.push(`\t\t\t\t\t\t});`);
+	code.push(`\t\t\t\t\t\ttempFilter[key] = (await Promise.all(promiseArr)).filter(e => Object.keys(e).length);`);
+	code.push(`\t\t\t\t\t} else {`);
+	code.push(`\t\t\t\t\t\ttempFilter[key] = await patchRelationInFilter(req, filter[key], errors);`);
+	code.push(`\t\t\t\t\t}`);
+	code.push(`\t\t\t\t} else {`);
+	code.push(`\t\t\t\t\ttempFilter[key] = filter[key]`);
+	code.push(`\t\t\t\t}`);
+	code.push(`\t\t\t}`);
+	code.push(`\t\t});`);
+	code.push(`\t\tpromises = await Promise.all(promises);`);
+	code.push(`\t\tpromises = null;`);
+	code.push(`\t\treturn tempFilter;`);
+	code.push(`\t} catch (e) {`);
+	code.push(`\t\tthrow e;`);
+	code.push(`\t}`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ SECURE FIELD ENCRYPT ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function encryptSecureFields(req, newData, oldData) {`);
+	code.push(`\tconst errors = {};`);
+	parseSchemaForEncryption(schema);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ SECURE FIELD DECRYPT ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function decryptSecureFields(req, newData, oldData) {`);
+	code.push(`\tconst errors = {};`);
+	parseSchemaForDecryption(schema);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ FIX BOOLEAN ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incoming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`function fixBoolean(req, newData, oldData) {`);
+	code.push(`\tconst errors = {};`);
+	code.push(`\tconst trueBooleanValues = global.trueBooleanValues;`);
+	parseSchemaForBoolean(schema);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+	/**------------------------ ENRICH GEOJSON ----------------------- */
+	code.push(`/**`);
+	code.push(` * @param {*} req The Incomming Request Object`);
+	code.push(` * @param {*} newData The New Document Object`);
+	code.push(` * @param {*} oldData The Old Document Object`);
+	code.push(` * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths`);
+	code.push(` */`);
+	code.push(`async function enrichGeojson(req, newData, oldData) {`);
+	code.push(`\tconst errors = {};`);
+	parseSchemaForGeojson(schema);
+	code.push(`\treturn Object.keys(errors).length > 0 ? errors : null;`);
+	code.push(`}`);
+	code.push(``);
+
+
+
+	/**------------------------ EXPORTS ----------------------- */
+	/**------------------------ CONSTANTS ----------------------- */
+	code.push(`module.exports.createOnlyFields = createOnlyFields;`);
+	code.push(`module.exports.precisionFields = precisionFields;`);
+	code.push(`module.exports.secureFields = secureFields;`);
+	code.push(`module.exports.uniqueFields = uniqueFields;`);
+	code.push(`module.exports.relationUniqueFields = relationUniqueFields;`);
+	code.push(`module.exports.relationRequiredFields = relationRequiredFields;`);
+	/**------------------------ METHODS ----------------------- */
+	code.push(`module.exports.mongooseUniquePlugin = mongooseUniquePlugin;`);
+	code.push(`module.exports.validateCreateOnly = validateCreateOnly;`);
+	code.push(`module.exports.validateRelation = validateRelation;`);
+	code.push(`module.exports.validateUnique = validateUnique;`);
+	code.push(`module.exports.expandDocument = expandDocument;`);
+	code.push(`module.exports.encryptSecureFields = encryptSecureFields;`);
+	code.push(`module.exports.decryptSecureFields = decryptSecureFields;`);
+	code.push(`module.exports.patchRelationInFilter = patchRelationInFilter;`);
+	code.push(`module.exports.fixBoolean = fixBoolean;`);
+	code.push(`module.exports.enrichGeojson = enrichGeojson;`);
+
+	return code.join(`\n`);
+	// fs.writeFileSync(path.join(process.cwd(), `generated`, `special-fields.utils.js`), code.join(`\n`), `utf-8`);
+
+	function parseSchemaForRelation(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.properties.relatedTo && def.type != `Array`) {
+					code.push(`\tlet ${_.camelCase(path + `._id`)} = _.get(newData, '${path}._id')`);
+					code.push(`\tif (${_.camelCase(path + `._id`)}) {`);
+					code.push(`\t\ttry {`);
+					code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + `._id`)});`);
+					code.push(`\t\t\t\tif (!doc) {`);
+					code.push(`\t\t\t\t\terrors['${path}'] = ${_.camelCase(path + `._id`)} + ' not found';`);
+					code.push(`\t\t\t\t} else {`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}._href', doc._href);`);
+					code.push(`\t\t\t\t}`);
+					code.push(`\t\t} catch (e) {`);
+					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t}`);
+					code.push(`\t}`);
+				} else if (def.type == `Object`) {
+					parseSchemaForRelation(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.properties.relatedTo) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
+						code.push(`\t\t\ttry {`);
+						code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition._self.properties.relatedTo}', item._id);`);
+						code.push(`\t\t\t\t\tif (!doc) {`);
+						code.push(`\t\t\t\t\t\terrors['${path}.' + i] = item._id + ' not found';`);
+						code.push(`\t\t\t\t\t} else {`);
+						code.push(`\t\t\t\t\t\titem._href = doc._href;`);
+						code.push(`\t\t\t\t\t}`);
+						code.push(`\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					} else if (def.definition._self.type == `Object`) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
+						parseSchemaForRelation(def.definition._self.definition, ``);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForExpand(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.properties.relatedTo && def.type != `Array`) {
+					code.push(`\tlet ${_.camelCase(path + `._id`)} = _.get(newData, '${path}._id')`);
+					code.push(`\tif (${_.camelCase(path + `._id`)}) {`);
+					code.push(`\t\ttry {`);
+					code.push(`\t\t\tif (!expandForSelect || (expandForSelect && commonUtils.isExpandAllowed(req, '${path}'))) {`);
+					code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + `._id`)});`);
+					code.push(`\t\t\t\tif (doc) {`);
+					code.push(`\t\t\t\t\tdoc._id = ${_.camelCase(path + `._id`)};`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
+					code.push(`\t\t\t\t}`);
+					code.push(`\t\t\t}`);
+					code.push(`\t\t} catch (e) {`);
+					code.push(`\t\t\t// errors['${path}'] = e.message;`);
+					code.push(`\t\t}`);
+					code.push(`\t}`);
+				} else if (def.type == `Object`) {
+					parseSchemaForExpand(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.properties.relatedTo) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
+						code.push(`\t\t\ttry {`);
+						code.push(`\t\t\t\tif (!expandForSelect || (expandForSelect && commonUtils.isExpandAllowed(req, '${path}'))) {`);
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition._self.properties.relatedTo}', item._id);`);
+						code.push(`\t\t\t\t\tif (doc) {`);
+						code.push(`\t\t\t\t\t\t_.assign(item, doc);`);
+						code.push(`\t\t\t\t\t}`);
+						code.push(`\t\t\t\t}`);
+						code.push(`\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\t// errors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					} else if (def.definition._self.type == `Object`) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
+						parseSchemaForExpand(def.definition._self.definition, ``);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					}
+				}
+			}
+		});
+	}
+
+	function createIndex(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.type == `Object`) {
+					createIndex(def.definition, path);
+				} else if (def.type == `Array`) {
+					// code.push(`\t if((_.get(newData,'${path}')||[]).length !== (_.get(newData,'${path}')||[]).length) {`);
+					// code.push(`\t\t errors.${path} = true;`);
+					// code.push(`\t }`);
+					// code.push(`\t for(let i=0;i<newData.${path};i++){`);
+					// code.push(`\t\t const item = newData.${path}[i];`);
+					// createIndex(def.definition, path);
+					// code.push(`\t }`);
+				} else {
+					if (def.properties.unique) {
+						code.push(`\t\tschema.index({ '${path}': 1 }, { unique: '${path} field should be unique', sparse: true, collation: { locale: 'en', strength: 2 } });`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForUnique(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.type == `Object`) {
+					parseSchemaForUnique(def.definition, path);
+				} else if (def.type == `Array`) {
+					// code.push(`\t if((_.get(newData,'${path}')||[]).length !== (_.get(newData,'${path}')||[]).length) {`);
+					// code.push(`\t\t errors.${path} = true;`);
+					// code.push(`\t }`);
+					// code.push(`\t for(let i=0;i<newData.${path};i++){`);
+					// code.push(`\t\t const item = newData.${path}[i];`);
+					// parseSchemaForUnique(def.definition, path);
+					// code.push(`\t }`);
+				} else {
+					if (def.properties.unique) {
+						code.push(`\tval = _.get(newData, '${path}');`);
+						code.push(`\tif (val) {`);
+						code.push(`\t\tconst doc = await model.find({ '${path}': val }).collation({ locale: 'en', strength: 2 }).lean();`);
+						code.push(`\t\tif (doc && doc.length > 0) {`);
+						code.push(`\t\t\terrors['${path}'] = '${path} field should be unique';`);
+						code.push(`\t\t}`);
+						code.push(`\t}`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForCreateOnly(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.type == `Object`) {
+					parseSchemaForCreateOnly(def.definition, path);
+				} else if (def.type == `Array` && def.properties && def.properties.createOnly) {
+					code.push(`\t\tif (!forceRemove) {`);
+					code.push(`\t\t\tif (_.differenceWith((_.get(newData, '${path}')||[]), (_.get(oldData, '${path}')||[]), _.isEqual)) {`);
+					code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
+					code.push(`\t\t\t}`);
+					code.push(`\t\t} else {`);
+					code.push(`\t\t\tdelete newData['${path}'];`);
+					code.push(`\t\t}`);
+				} else {
+					if (def.properties.createOnly) {
+						code.push(`\t\tif (!forceRemove) {`);
+						code.push(`\t\t\tif (_.get(newData, '${path}') !== _.get(oldData, '${path}')) {`);
+						code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t} else {`);
+						code.push(`\t\t\tdelete newData['${path}'];`);
+						code.push(`\t\t}`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForFilter(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.properties.relatedTo && def.type != `Array`) {
+					code.push(`\t\t\tif (key.startsWith('${path}')) {`);
+					code.push(`\t\t\t\ttry {`);
+					code.push(`\t\t\t\t\tconst tempKey = key.split('${path}.')[1];`);
+					code.push(`\t\t\t\t\tconst ids = await commonUtils.getDocumentIds(req, '${def.properties.relatedTo}', { [tempKey]: filter[key] })`);
+					code.push(`\t\t\t\t\tif (ids && ids.length > 0) {`);
+					code.push(`\t\t\t\t\t\tif (!tempFilter['${path}._id'] || !tempFilter['${path}._id']['$in']) {`);
+					code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id'] = { $in: ids };`);
+					code.push(`\t\t\t\t\t\t} else {`);
+					code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id']['$in'] = tempFilter['${path}._id']['$in'].concat(ids);`);
+					code.push(`\t\t\t\t\t\t}`);
+					code.push(`\t\t\t\t\t}`);
+					code.push(`\t\t\t\t\tflag = true;`);
+					code.push(`\t\t\t\t} catch (e) {`);
+					code.push(`\t\t\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t\t\t}`);
+					code.push(`\t\t\t}`);
+				} else if (def.type == `Object`) {
+					parseSchemaForFilter(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.properties.relatedTo) {
+						code.push(`\t\t\tif (key.startsWith('${path}')) {`);
+						code.push(`\t\t\t\ttry {`);
+						code.push(`\t\t\t\t\tconst tempKey = key.split('${path}.')[1];`);
+						code.push(`\t\t\t\t\tconst ids = await commonUtils.getDocumentIds(req, '${def.definition._self.properties.relatedTo}', { [tempKey]: filter[key] })`);
+						code.push(`\t\t\t\t\tif (ids && ids.length > 0) {`);
+						code.push(`\t\t\t\t\t\tif (!tempFilter['${path}._id'] || !tempFilter['${path}._id']['$in']) {`);
+						code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id'] = { $in: ids };`);
+						code.push(`\t\t\t\t\t\t} else {`);
+						code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id']['$in'] = tempFilter['${path}._id']['$in'].concat(ids);`);
+						code.push(`\t\t\t\t\t\t}`);
+						code.push(`\t\t\t\t\t}`);
+						code.push(`\t\t\t\t\tflag = true;`);
+						code.push(`\t\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\t\terrors['${path}'] = e.message;`);
+						code.push(`\t\t\t\t}`);
+						code.push(`\t\t\t}`);
+					} else if (def.definition._self.type == `Object`) {
+						parseSchemaForFilter(def.definition._self.definition, path);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForEncryption(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.properties.password && def.type != `Array`) {
+					code.push(`\tlet ${_.camelCase(path + `.value`)}New = _.get(newData, '${path}.value')`);
+					code.push(`\tlet ${_.camelCase(path + `.value`)}Old = _.get(oldData, '${path}.value')`);
+					code.push(`\tif (${_.camelCase(path + `.value`)}New && ${_.camelCase(path + `.value`)}New != ${_.camelCase(path + `.value`)}Old) {`);
+					code.push(`\t\ttry {`);
+					code.push(`\t\t\tconst doc = await commonUtils.encryptText(req, ${_.camelCase(path + `.value`)}New);`);
+					code.push(`\t\t\tif (doc) {`);
+					code.push(`\t\t\t\t_.set(newData, '${path}', doc);`);
+					code.push(`\t\t\t}`);
+					code.push(`\t\t} catch (e) {`);
+					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t}`);
+					code.push(`\t}`);
+				} else if (def.type == `Object`) {
+					parseSchemaForEncryption(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.properties.password) {
+						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
+						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (item, i) => {`);
+						code.push(`\t\t\ttry {`);
+						code.push(`\t\t\t\tif (item && item.value && !${_.camelCase(path)}Old.find(e => e.value == item.value)) {`);
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.encryptText(req, item.value);`);
+						code.push(`\t\t\t\t\tif (doc) {`);
+						code.push(`\t\t\t\t\t\t_.assign(item, doc);`);
+						code.push(`\t\t\t\t\t}`);
+						code.push(`\t\t\t\t}`);
+						code.push(`\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					} else if (def.definition._self.type == `Object`) {
+						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
+						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (newData, i) => {`);
+						code.push(`\t\t\tlet oldData = _.find(${_.camelCase(path)}Old, newData);`);
+						parseSchemaForEncryption(def.definition._self.definition, ``);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForDecryption(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def.properties) {
+				if (def.properties.password && def.type != `Array`) {
+					code.push(`\tlet ${_.camelCase(path + `.value`)} = _.get(newData, '${path}.value')`);
+					code.push(`\tif (${_.camelCase(path + `.value`)}) {`);
+					code.push(`\t\ttry {`);
+					code.push(`\t\t\tconst doc = await commonUtils.decryptText(req, ${_.camelCase(path + `.value`)});`);
+					code.push(`\t\t\tif (doc) {`);
+					code.push(`\t\t\t\t_.set(newData, '${path}.value', doc);`);
+					code.push(`\t\t\t}`);
+					code.push(`\t\t} catch (e) {`);
+					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t}`);
+					code.push(`\t}`);
+				} else if (def.type == `Object`) {
+					parseSchemaForDecryption(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.properties.password) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
+						code.push(`\t\t\ttry {`);
+						code.push(`\t\t\t\tif (item && item.value) {`);
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.decryptText(req, item.value);`);
+						code.push(`\t\t\t\t\tif (doc) {`);
+						code.push(`\t\t\t\t\t\titem.value = doc;`);
+						code.push(`\t\t\t\t\t}`);
+						code.push(`\t\t\t\t}`);
+						code.push(`\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					} else if (def.definition._self.type == `Object`) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
+						parseSchemaForDecryption(def.definition._self.definition, ``);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForBoolean(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def) {
+				if (def.type == `Boolean`) {
+					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}')`);
+					code.push(`\ttry {`);
+					code.push(`\t\tif (typeof ${_.camelCase(path)} == 'string') {`);
+					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toLowerCase();`);
+					code.push(`\t\t\tif (_.indexOf(trueBooleanValues, ${_.camelCase(path)}) > -1) {`);
+					code.push(`\t\t\t\t_.set(newData, '${path}', true);`);
+					code.push(`\t\t\t} else {`);
+					code.push(`\t\t\t\t_.set(newData, '${path}', false);`);
+					code.push(`\t\t\t}`);
+					code.push(`\t\t}`);
+					code.push(`\t} catch (e) {`);
+					code.push(`\t\terrors['${path}'] = e.message;`);
+					code.push(`\t}`);
+					code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+				} else if (def.type == `Object`) {
+					parseSchemaForBoolean(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.type == `Boolean`) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.map((item, i) => {`);
+						code.push(`\t\t\ttry {`);
+						code.push(`\t\t\t\tif (typeof item == 'string' && _.indexOf(trueBooleanValues, item.toLowerCase()) > -1) {`);
+						code.push(`\t\t\t\t\treturn true;`);
+						code.push(`\t\t\t\t} else {`);
+						code.push(`\t\t\t\t\treturn false;`);
+						code.push(`\t\t\t\t}`);
+						code.push(`\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\treturn false;`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t});`);
+						code.push(`\t}`);
+						code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+					} else if (def.definition._self.type == `Object`) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.forEach((newData, i) => {`);
+						parseSchemaForBoolean(def.definition._self.definition, ``);
+						code.push(`\t\t});`);
+						code.push(`\t}`);
+						code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForGeojson(schema, parentKey) {
+		Object.keys(schema).forEach(key => {
+			const path = parentKey ? parentKey + `.` + key : key;
+			const def = schema[key];
+			if (key != `_id` && def) {
+				if (def.type == `Geojson`) {
+					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
+					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
+					code.push(`\tif (${_.camelCase(path)}New && !_.isEqual(${_.camelCase(path)}New,${_.camelCase(path)}Old)) {`);
+					code.push(`\t\ttry {`);
+					code.push(`\t\t\tconst doc = await commonUtils.getGeoDetails(req, ${_.camelCase(path)}New.userInput);`);
+					code.push(`\t\t\tif (doc) {`);
+					code.push(`\t\t\t\t_.set(newData, '${path}', doc.geoObj);`);
+					code.push(`\t\t\t}`);
+					code.push(`\t\t} catch (e) {`);
+					code.push(`\t\t\t// errors['${path}'] = e.message;`);
+					code.push(`\t\t}`);
+					code.push(`\t}`);
+				} else if (def.type == `Object`) {
+					parseSchemaForGeojson(def.definition, path);
+				} else if (def.type == `Array`) {
+					if (def.definition._self.type == `Geojson`) {
+						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
+						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (item, i) => {`);
+						code.push(`\t\t\tif (!_.find(${_.camelCase(path)}Old, item)) {`);
+						code.push(`\t\t\t\ttry {`);
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.getGeoDetails(req, item.userInput);`);
+						code.push(`\t\t\t\t\tif (doc) {`);
+						code.push(`\t\t\t\t\t\t_.assign(item, doc.geoObj);`);
+						code.push(`\t\t\t\t\t}`);
+						code.push(`\t\t\t\t} catch (e) {`);
+						code.push(`\t\t\t\t\t// errors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\t}`);
+						code.push(`\t\t\t}`);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					} else if (def.definition._self.type == `Object`) {
+						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
+						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (newData, i) => {`);
+						code.push(`\t\t\tlet oldData = _.find(${_.camelCase(path)}Old, newData);`);
+						parseSchemaForGeojson(def.definition._self.definition, ``);
+						code.push(`\t\t});`);
+						code.push(`\t\tpromises = await Promise.all(promises);`);
+						code.push(`\t\tpromises = null;`);
+						code.push(`\t}`);
+					}
+				}
+			}
+		});
+	}
+}
+
+module.exports.genrateCode = genrateCode;
