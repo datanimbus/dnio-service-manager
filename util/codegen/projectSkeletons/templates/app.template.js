@@ -104,7 +104,7 @@ let secureFields = '${config.secureFields}'.split(',').map(_d=>_d+'.value');
 let baseURL = '${`/` + config.app + config.api}';
 let masking = [
 	{ url: \`\${baseURL}\`, path: secureFields },
-    { url: \`\${baseURL}/simulate\`, path: secureFields },
+    { url: \`\${baseURL}/utils/simulate\`, path: secureFields },
     { url: \`\${baseURL}/{id}\`, path: secureFields },
 	{ url: \`\${baseURL}/experienceHook\`, path: secureFields }
 ];

@@ -480,7 +480,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + `/simulate`] = {
+	swagger.paths[basePath + `/utils/simulate`] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'post': {
 			description: `validate '${config.name}'`,
@@ -581,7 +581,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + `/bulkShow`] = {
+	swagger.paths[basePath + `/utils/bulkShow`] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
 			description: `Retrieve a list of '${config.name}'`,
@@ -600,7 +600,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + `/securedFields`] = {
+	swagger.paths[basePath + `/utils/securedFields`] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
 			description: `Retrieve a list of secured fields in '${config.name}'`,
@@ -736,7 +736,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + `/bulkDelete`] = {
+	swagger.paths[basePath + `/utils/bulkDelete`] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'delete': {
 			description: `Deletes a list of '${name}'`,
@@ -755,7 +755,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + `/count`] = {
+	swagger.paths[basePath + `/utils/count`] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
 			description: `returns count of '${config.name}'`,
@@ -1284,7 +1284,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + `/export`] = {
+	swagger.paths[basePath + `/utils/export`] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
 			description: `Retrieve a list of '${config.name}'`,
