@@ -54,7 +54,7 @@ schema.pre(`validate`, function (next) {
 	var self = this;
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
-	if (self.definition) self.definition = self.definition.trim();
+	// if (self.definition) self.definition = self.definition.trim();
 	if (self.name && _.isEmpty(self.name)) next(new Error(`name is empty`));
 	if (self.definition && _.isEmpty(self.definition)) next(new Error(`definition is empty`));
 	if (!_.isEmpty(self.preHooks)) {
@@ -70,7 +70,7 @@ draftSchema.pre(`validate`, function (next) {
 	var self = this;
 	self.name = self.name.trim();
 	self.api = self.api.trim();
-	self.definition = self.definition.trim();
+	// self.definition = self.definition.trim();
 	if (_.isEmpty(self.name)) next(new Error(`name is empty`));
 	if (_.isEmpty(self.definition)) next(new Error(`definition is empty`));
 	if (!_.isEmpty(self.preHooks)) {
@@ -175,7 +175,7 @@ draftSchema.pre(`save`, function (next) {
 schema.pre(`save`, function (next) {
 	let self = this;
 	try {
-		if (self.definition) schemaValidate(JSON.parse(self.definition));
+		if (self.definition) schemaValidate(self.definition);
 		next();
 	} catch (error) {
 		next(error);
@@ -185,7 +185,7 @@ schema.pre(`save`, function (next) {
 draftSchema.pre(`save`, function (next) {
 	let self = this;
 	try {
-		schemaValidate(JSON.parse(self.definition));
+		schemaValidate(self.definition);
 		next();
 	} catch (error) {
 		next(error);
@@ -194,23 +194,30 @@ draftSchema.pre(`save`, function (next) {
 
 function reserved(def) {
 	var keywords = [`schema`, `collection`, `db`, `save`, `get`, `model`, `default`];
-	var promise = Object.keys(def).map(function (key) {
-		for (var i = 0; i < keywords.length; i++) {
-			if (key.toLowerCase() == keywords[i]) {
-				throw new Error(keywords[i] + ` cannot be used as an attribute name`);
-			}
-		}
-		if (def[key].type == `Object` || def[key].type == `Array`) {
-			return reserved(def[key].definition);
-		}
-
+	var promise = def.map(ele => {
+		if(ele.key && keywords.includes(ele.key.toLowerCase()))
+			throw new Error(ele.key + ` cannot be used as an attribute name`);
+		if (ele.type == `Object` || ele.type == `Array`)
+			return reserved(ele.definition);
 	});
 	return Promise.all(promise);
+	// var promise = Object.keys(def).map(function (key) {
+	// 	for (var i = 0; i < keywords.length; i++) {
+	// 		if (key.toLowerCase() == keywords[i]) {
+	// 			throw new Error(keywords[i] + ` cannot be used as an attribute name`);
+	// 		}
+	// 	}
+	// 	if (def[key].type == `Object` || def[key].type == `Array`) {
+	// 		return reserved(def[key].definition);
+	// 	}
+
+	// });
+	// return Promise.all(promise);
 }
 schema.pre(`save`, function (next) {
 	let self = this;
 	try {
-		if (self.definition) reserved(JSON.parse(self.definition));
+		if (self.definition) reserved(self.definition);
 		next();
 	} catch (error) {
 		next(error);
@@ -220,7 +227,7 @@ schema.pre(`save`, function (next) {
 draftSchema.pre(`save`, function (next) {
 	let self = this;
 	try {
-		reserved(JSON.parse(self.definition));
+		reserved(self.definition);
 		next();
 	} catch (error) {
 		next(error);
@@ -230,7 +237,7 @@ draftSchema.pre(`save`, function (next) {
 schema.pre(`save`, function (next) {
 	let self = this;
 	if (self.definition) {
-		schemaValidateDefault(JSON.parse(self.definition), self.app)
+		schemaValidateDefault(self.definition, self.app)
 			.then(() => {
 				next();
 			})
@@ -245,7 +252,7 @@ schema.pre(`save`, function (next) {
 
 draftSchema.pre(`save`, function (next) {
 	let self = this;
-	schemaValidateDefault(JSON.parse(self.definition), self.app)
+	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
 			next();
 		})
@@ -378,10 +385,20 @@ draftSchema.pre(`save`, function (next) {
 
 function countAttr(def) {
 	let count = 0;
+	// if (def && typeof def === `object`) {
+	// 	Object.keys(def).forEach(_d => {
+	// 		if (def[_d] && def[_d].type === `Object`) {
+	// 			count += countAttr(def[_d].definition);
+	// 		} else {
+	// 			count++;
+	// 		}
+	// 	});
+	// 	return count;
+	// } 
 	if (def && typeof def === `object`) {
-		Object.keys(def).forEach(_d => {
-			if (def[_d] && def[_d].type === `Object`) {
-				count += countAttr(def[_d].definition);
+		def.forEach(_d => {
+			if (_d && _d.type === `Object`) {
+				count += countAttr(_d.definition);
 			} else {
 				count++;
 			}
@@ -395,19 +412,26 @@ function countAttr(def) {
 schema.pre(`save`, function (next) {
 	let self = this;
 	if (!self.definition) next();
-	let def = JSON.parse(self.definition);
-	delete def._id;
-	let count = countAttr(def);
-	this.attributeCount = count + 1;
+	// To check if _id ele need to be removed as +1 is there
+	// let def = self.definition.filter(ele => ele.key != '_id');
+	// let count = countAttr(def);
+	// this.attributeCount = count + 1;
+	this.attributeCount = countAttr(self.definition);
 	next();
 });
 
 draftSchema.pre(`save`, function (next) {
 	let self = this;
-	let def = JSON.parse(self.definition);
-	delete def._id;
-	let count = countAttr(def);
-	this.attributeCount = count + 1;
+	// let def = JSON.parse(self.definition);
+	// delete def._id;
+	// let count = countAttr(def);
+	// this.attributeCount = count + 1;
+
+	// To check if _id ele need to be removed as =1 is there
+	// let def = self.definition.filter(ele => ele.key != '_id');
+	// let count = countAttr(def);
+	// this.attributeCount = count + 1;
+	this.attributeCount = countAttr(self.definition);
 	next();
 });
 
@@ -721,9 +745,9 @@ e.createDoc = (_req, _res) => {
 	try {
 		let socket = _req.app.get(`socket`);
 		if (_req.body.definition) {
-			let idObject = _req.body.definition._id;
-			idObject.counter = idObject.counter ? parseInt(idObject.counter, 10) : 0;
-			idObject.padding = idObject.padding ? parseInt(idObject.padding, 10) : null;
+			let idObject = _req.body.definition.find(def => def.key == '_id');
+			idObject.counter = idObject && idObject.counter ? parseInt(idObject.counter, 10) : 0;
+			idObject.padding = idObject && idObject.padding ? parseInt(idObject.padding, 10) : null;
 			if (idObject.padding > 15) {
 				return _res.status(400).json({
 					'message': `_id length cannot be greater than 15`
@@ -756,7 +780,7 @@ e.createDoc = (_req, _res) => {
 			})
 			.then(expandedDef => {
 				if (expandedDef) {
-					_req.body.definition = JSON.stringify(expandedDef);
+					_req.body.definition = expandedDef;
 					return relationManager.checkRelationsAndCreate(_req.body, _req);
 				} else {
 					let model = mongoose.model(`services`);
@@ -766,6 +790,7 @@ e.createDoc = (_req, _res) => {
 			})
 			.then(_d => {
 				serviceObj = _d;
+				// To check
 				let permObj = {
 					_id: serviceObj._id,
 					app: serviceObj.app,
@@ -944,8 +969,8 @@ e.updateDoc = (_req, _res) => {
 			let definitionComparison = true;
 			if (!oldData.definition && _req.body.definition) definitionComparison = false;
 			else if (oldData.definition && _req.body.definition) {
-				definitionComparison = deepEqual(JSON.parse(oldData.definition), _req.body.definition);
-				if (!definitionComparison && oldData.type == `internal` && !allowedChangeForCalendarDS(JSON.parse(oldData.definition), JSON.parse(JSON.stringify(_req.body.definition)))) {
+				definitionComparison = deepEqual(oldData.definition, _req.body.definition);
+				if (!definitionComparison && oldData.type == `internal` && !allowedChangeForCalendarDS(JSON.parse(JSON.stringify(oldData.definition)), JSON.parse(JSON.stringify(_req.body.definition)))) {
 					logger.error(`Changing definition is not allowed for calendar DS`);
 					return _res.status(400).json({
 						message: `Changing definition is not allowed for this DS.`
@@ -953,7 +978,9 @@ e.updateDoc = (_req, _res) => {
 				}
 			}
 			let isCounterChangeRequired = false;
-			let padding = _req.body.definition ? _req.body.definition._id.padding : null;
+			let oldIdElement = oldData.definition ? oldData.definition.find(d=> d.key == '_id') : {};
+			let newIdElement = _req.body.definition ? _req.body.definition.find(d=> d.key == '_id') : {};
+			let padding = newIdElement ? newIdElement.padding : null;
 			if (!definitionComparison) {
 				logger.debug(`Definition has changed!`);
 				if ((padding != null) && padding > 15) {
@@ -961,13 +988,13 @@ e.updateDoc = (_req, _res) => {
 						'message': `_id length cannot be greater than 15`
 					});
 				}
-				if (oldData.definition && _req.body.definition && JSON.parse(oldData.definition)._id[`padding`] > _req.body.definition._id[`padding`]) {
+				if (oldIdElement && newIdElement && oldIdElement[`padding`] > newIdElement[`padding`]) {
 					_res.status(400).json({
 						message: `Decreasing _id's length in not allowed`
 					});
 					return;
 				}
-				if (oldData.definition && _req.body.definition && _req.body.definition._id[`counter`] && JSON.parse(oldData.definition)._id[`counter`] != _req.body.definition._id[`counter`]) {
+				if (oldIdElement && newIdElement && newIdElement[`counter`] && oldIdElement[`counter`] != newIdElement[`counter`]) {
 					isCounterChangeRequired = true;
 				}
 			}
@@ -992,14 +1019,14 @@ e.updateDoc = (_req, _res) => {
 					}
 				})
 				.then(() => {
-					if (_req.body.definition) return validateCounterChange(isCounterChangeRequired, ID, _req.body.definition._id[`counter`], _req.body.app);
+					if (_req.body.definition) return validateCounterChange(isCounterChangeRequired, ID, newIdElement[`counter`], _req.body.app);
 				})
 				.then(() => {
 					if (_d.status === `Draft`) {
 						Object.assign(_d, _req.body);
 						if (!definitionComparison) {
 							logger.debug(`Definition changed.`);
-							_d.definition = JSON.stringify(_req.body.definition);
+							_d.definition = _req.body.definition;
 						}
 						return smHooks.updateServicesInGlobalSchema(_req.body, _req)
 							.then(() => {
@@ -1012,16 +1039,16 @@ e.updateDoc = (_req, _res) => {
 					} else if (_d.draftVersion) {
 						return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 							.then((newData) => {
-								_req.body.definition = JSON.stringify(_req.body.definition);
+								// _req.body.definition = JSON.stringify(_req.body.definition);
 								newData = Object.assign(newData, _req.body);
-								_req.body.definition = JSON.parse(_req.body.definition);
+								// _req.body.definition = JSON.parse(_req.body.definition);
 								return relationManager.getOutgoingRelationAndUpdate(newData, _req);
 							});
 					} else {
 						let model = draftCrudder.model;
-						_req.body.definition = JSON.stringify(_req.body.definition);
+						// _req.body.definition = JSON.stringify(_req.body.definition);
 						let newData = new model(Object.assign({}, JSON.parse(JSON.stringify(oldData)), _req.body));
-						if (_req.body.definition) _req.body.definition = JSON.parse(_req.body.definition);
+						//if (_req.body.definition) _req.body.definition = JSON.parse(_req.body.definition);
 						newData.version = oldData.version + 1;
 						_d.draftVersion = newData.version;
 						logger.debug(JSON.stringify({ newData, _d }));
@@ -1061,16 +1088,44 @@ e.updateDoc = (_req, _res) => {
 };
 
 /**
- * Compares definitions for calendar DS and allows change only for
- * keys in keyToIgnore variable
+ * Compares definitions for calendar DS and allows only limited change
  * 
  * @param {*} oldDefinition 
  * @param {*} newDefinition 
  */
 
 function allowedChangeForCalendarDS(oldDefinition, newDefinition) {
-	let keysToIgnore = [`name.properties.enum`, `name.properties.label`, `holidayName.properties.label`, `date.properties.label`];
-	return _.isEqual(_.omit(oldDefinition, keysToIgnore), _.omit(newDefinition, keysToIgnore));
+	if(oldDefinition.length != newDefinition.length) return false;
+	for(var i = 0; i < oldDefinition.length; i++) {
+		if(newDefinition[i].key == 'name' && oldDefinition[i].key == 'name') {
+			delete newDefinition[i].propperties.enum;
+			delete oldDefinition[i].propperties.enum;
+		}
+		delete newDefinition[i].propperties.label;
+		delete oldDefinition[i].propperties.label;
+	}
+	return _.isEqual(oldDefinition, newDefinition);
+	// let isAllowed = true;
+	// _.forEach(oldDefinition, function (oldAttr) {
+	// 	newAttr = newDefinition.find(nAttr => nAttr.key === oldAttr.key);
+	// 	if(!newAttr) {
+	// 		isAllowed = false;
+	// 		return false;
+	// 	}
+	// 	if(newAttr.key == 'name' && oldAttr.key == 'name') {
+	// 		delete newAttr.propperties.enum;
+	// 		delete oldAttr.propperties.enum;
+	// 	}
+	// 	delete newAttr.propperties.label;
+	// 	delete oldAttr.propperties.label;
+	// 	if(!_.isEqual(oldAttr, newAttr)) {
+	// 		isAllowed = false;
+	// 		return false;
+	// 	}
+	// });
+	// return isAllowed;
+	// let keysToIgnore = [`name.properties.enum`, `name.properties.label`, `holidayName.properties.label`, `date.properties.label`];
+	// return _.isEqual(_.omit(oldDefinition, keysToIgnore), _.omit(newDefinition, keysToIgnore));
 }
 
 /**
@@ -1096,7 +1151,7 @@ function getAllEventsForDSUpdate(oldData, newData) {
 	newWizard.forEach(wz => delete wz._id);
 	if (!deepEqual(oldData.wizard, newWizard)) eventsList.push(`EVENT_DS_UPDATE_EXPERIENCE`);
 	if ((!oldData.definition && newData.definition) ||
-		(oldData.definition && newData.definition && !deepEqual(JSON.parse(oldData.definition), JSON.parse(newData.definition))))
+		(oldData.definition && newData.definition && !deepEqual(oldData.definition, newData.definition)))
 		eventsList.push(`EVENT_DS_UPDATE_DEFINITION`);
 	return eventsList;
 }
@@ -1145,7 +1200,7 @@ e.deployAPIHandler = (_req, _res) => {
 					let svcObject = _d.toObject();
 					if (!svcObject.definition) throw new Error(`Data service definition not found.`);
 					if (!svcObject.versionValidity) throw new Error(`Data settings are not configured for the data service.`);
-					svcObject.definition = JSON.parse(svcObject.definition);
+					// svcObject.definition = JSON.parse(svcObject.definition);
 					let promise = Promise.resolve();
 					let role = svcObject.role;
 					if (role) {
@@ -1155,6 +1210,7 @@ e.deployAPIHandler = (_req, _res) => {
 							entityName: svcObject.name,
 							roles: role ? role.roles : null,
 							fields: role && role.fields ? JSON.stringify(role.fields) : null,
+							// to check
 							definition: JSON.stringify(svcObject.definition)
 						};
 						promise = deployUtil.updateRolesUserMgmt(svcObject._id, permObj, _req);
@@ -1208,10 +1264,12 @@ e.deployAPIHandler = (_req, _res) => {
 								isReDeploymentRequired = true;
 								isAuditIndexDeleteRequired = true;
 							}
-							let newDefinition = JSON.parse(_newData.definition);
-							let definitionComparison = deepEqual(JSON.parse(oldData.definition), newDefinition);
+							let newDefinition = _newData.definition;
+							let definitionComparison = deepEqual(oldData.definition, _newData.definition);
+							let oldIdElement = oldData.definition ? oldData.definition.find(d=> d.key == '_id') : {};
+							let newIdElement = _newData.definition ? _req.body.definition.find(d=> d.key == '_id') : {};
 							let isCounterChangeRequired = false;
-							let padding = newDefinition._id.padding;
+							let padding = newIdElement ? newIdElement.padding : null;
 							if (!definitionComparison) {
 								logger.debug(`Definition has changed!`);
 								if (padding > 15) {
@@ -1219,13 +1277,13 @@ e.deployAPIHandler = (_req, _res) => {
 										'message': `_id length cannot be greater than 15`
 									});
 								}
-								if (JSON.parse(oldData.definition)._id[`padding`] > newDefinition._id[`padding`]) {
+								if (oldIdElement[`padding`] > newIdElement[`padding`]) {
 									_res.status(400).json({
 										message: `Decreasing _id's length in not allowed`
 									});
 									return;
 								}
-								if (newDefinition._id[`counter`] && JSON.parse(oldData.definition)._id[`counter`] != newDefinition._id[`counter`]) {
+								if (newIdElement[`counter`] && oldIdElement[`counter`] != newIdElement[`counter`]) {
 									isCounterChangeRequired = true;
 								}
 								isReDeploymentRequired = true;
@@ -1241,7 +1299,7 @@ e.deployAPIHandler = (_req, _res) => {
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
-							if (!definitionComparison) _d.definition = JSON.stringify(newDefinition);
+							if (!definitionComparison) _d.definition = newDefinition;
 							let promise = Promise.resolve();
 
 							if (oldData.name != _newData.name) {
@@ -1256,7 +1314,7 @@ e.deployAPIHandler = (_req, _res) => {
 									}
 								})
 								.then(() => {
-									if (newDefinition) return validateCounterChange(isCounterChangeRequired, ID, newDefinition._id[`counter`], _newData.app);
+									if (newDefinition) return validateCounterChange(isCounterChangeRequired, ID, newIdElement[`counter`], _newData.app);
 									else {
 										return Promise.resolve();
 									}
@@ -1272,6 +1330,7 @@ e.deployAPIHandler = (_req, _res) => {
 										entityName: srvcObj.name,
 										roles: role ? role.roles : null,
 										fields: role && role.fields ? JSON.stringify(role.fields) : null,
+										// to check 
 										definition: JSON.stringify(newDefinition)
 									};
 									return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
@@ -1300,7 +1359,7 @@ e.deployAPIHandler = (_req, _res) => {
 								.then(() => {
 									if (isCounterChangeRequired) {
 										return global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${srvcObj.app}`).collection(`counters`)
-											.update({ _id: oldData.collectionName }, { next: parseInt(newDefinition._id[`counter`], 10) - 1 });
+											.update({ _id: oldData.collectionName }, { next: parseInt(newIdElement[`counter`], 10) - 1 });
 									}
 								})
 								.then(_e => {
@@ -1335,7 +1394,7 @@ e.deployAPIHandler = (_req, _res) => {
 										logger.debug(JSON.stringify(_d));
 										logger.info(`Redeploying service ` + _d._id + ` under app ` + _d.app);
 										var data = JSON.parse(JSON.stringify(_d));
-										data.definition = JSON.parse(_d.definition);
+										// data.definition = JSON.parse(_d.definition);
 										let mongoDBVishnu = global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${srvcObj.app}`);
 										if (envConfig.isCosmosDB()) {
 											return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
@@ -1410,7 +1469,7 @@ e.startAPIHandler = (_req, _res) => {
 						});
 						// doc.save(_req);
 						doc = doc.toObject();
-						doc.definition = JSON.parse(doc.definition);
+						// doc.definition = JSON.parse(doc.definition);
 						const ns = envConfig.odpNS + `-` + doc.app.toLowerCase().replace(/ /g, ``);
 						if (process.env.SM_ENV == `K8s`) {
 							let instances = doc.instances ? doc.instances : 1;
@@ -2129,7 +2188,7 @@ e.startAllServices = (_req, _res) => {
 			if (docs) {
 				let promises = docs.map(doc => {
 					doc = doc.toObject();
-					doc.definition = JSON.parse(doc.definition);
+					// doc.definition = JSON.parse(doc.definition);
 					const ns = envConfig.odpNS + `-` + doc.app.toLowerCase().replace(/ /g, ``);
 					if (process.env.SM_ENV == `K8s`) {
 						let instances = doc.instances ? doc.instances : 1;
@@ -2263,7 +2322,7 @@ function updateDeployment(req, res, ds) {
 		.then(_d => {
 			logger.info(`Service deleted`);
 			logger.debug(_d);
-			srvcDoc.definition = JSON.parse(srvcDoc.definition);
+			// srvcDoc.definition = JSON.parse(srvcDoc.definition);
 			return k8s.serviceStart(srvcDoc);
 		})
 		.then(_d => {
@@ -2720,7 +2779,7 @@ function createDSWithDefinition(req, dsDefinition) {
 			entityName: serviceObj.name,
 			roles: rolesUtil.getDefaultRoles(),
 			type: `appcenter`,
-			fields: JSON.stringify(rolesUtil.getDefaultFields(roles.map(e => e.id), JSON.parse(dsDefinition.definition), {})),
+			fields: JSON.stringify(rolesUtil.getDefaultFields(roles.map(e => e.id), dsDefinition.definition, {})),
 			definition: serviceObj.definition
 
 		};

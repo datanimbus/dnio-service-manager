@@ -64,20 +64,21 @@ e.getDefaultRoles = function() {
 		}
 	];
 };
+
 e.getDefaultFields = function (roleIds, definition, fields) {
 	if (typeof fields === `string`) {
 		fields = JSON.parse(fields);
 	}
-	let arrDefinition = [];
-	if(Array.isArray(definition)) {
-		arrDefinition = definition;
-	} else {
-		Object.keys(definition).forEach(key => {
-			let obj = definition[key];
-			obj.key = key;
-			arrDefinition.push(obj);
-		});
-	}
+	let arrDefinition = definition;
+	// if(Array.isArray(definition)) {
+	// 	arrDefinition = definition;
+	// } else {
+	// 	Object.keys(definition).forEach(key => {
+	// 		let obj = definition[key];
+	// 		obj.key = key;
+	// 		arrDefinition.push(obj);
+	// 	});
+	// }
 	arrDefinition.forEach(def => {
 		if (!def.properties) {
 			def.properties = {};

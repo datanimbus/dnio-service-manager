@@ -33,25 +33,26 @@ function embedObject(schema, key) {
 
 function getSchemaRelations(schema) {
 	let relations = [];
-	Object.keys(schema).forEach(key => {
-		if (schema[key][`properties`] && schema[key][`properties`][`relatedTo`]) {
+	// Object.keys(schema).forEach(key => {
+	schema.forEach(attr => {
+		if (attr[`properties`] && attr[`properties`][`relatedTo`]) {
 			let pathObj = {};
-			pathObj[key] = schema[key][`type`];
-			let service = schema[key][`properties`][`relatedTo`];
-			let isRequired = schema[key][`properties`][`required`] ? true : false;
-			if (!isRequired) isRequired = schema[key][`properties`][`deleteAction`] == `restrict`;
+			pathObj[attr.key] = attr[`type`];
+			let service = attr[`properties`][`relatedTo`];
+			let isRequired = attr[`properties`][`required`] ? true : false;
+			if (!isRequired) isRequired = attr[`properties`][`deleteAction`] == `restrict`;
 			relations.push({
 				path: JSON.parse(JSON.stringify(pathObj)),
 				service,
 				isRequired
 			});
-		} else if (schema[key][`definition`]) {
-			let nestedRel = getSchemaRelations(schema[key][`definition`]);
+		} else if (attr[`definition`]) {
+			let nestedRel = getSchemaRelations(attr[`definition`]);
 			nestedRel.forEach(obj => {
 				let rel = {};
 				rel[`service`] = obj.service;
 				rel[`path`] = {};
-				rel[`path`][key] = JSON.parse(JSON.stringify(obj.path));
+				rel[`path`][attr.key] = JSON.parse(JSON.stringify(obj.path));
 				rel[`isRequired`] = obj.isRequired;
 				relations.push(rel);
 			});
@@ -62,23 +63,24 @@ function getSchemaRelations(schema) {
 
 function getUsers(schema) {
 	let relations = [];
-	Object.keys(schema).forEach(key => {
-		if (schema[key] && schema[key][`type`] == `User`) {
+	// Object.keys(schema).forEach(key => {
+	schema.forEach(attr => {
+		if (attr && attr[`type`] == `User`) {
 			let pathObj = {};
-			pathObj[key] = schema[key][`type`];
-			let isRequired = schema[key][`properties`][`required`] ? true : false;
-			if (!isRequired) isRequired = schema[key][`properties`][`deleteAction`] == `restrict`;
+			pathObj[attr.key] = attr[`type`];
+			let isRequired = attr[`properties`][`required`] ? true : false;
+			if (!isRequired) isRequired = attr[`properties`][`deleteAction`] == `restrict`;
 			relations.push({
 				path: JSON.parse(JSON.stringify(pathObj)),
 				isRequired
 			});
 		}
-		else if (schema[key][`definition`]) {
-			let nestedRel = getUsers(schema[key][`definition`]);
+		else if (attr[`definition`]) {
+			let nestedRel = getUsers(attr[`definition`]);
 			nestedRel.forEach(obj => {
 				let rel = {};
 				rel[`path`] = {};
-				rel[`path`][key] = JSON.parse(JSON.stringify(obj.path));
+				rel[`path`][attr.key] = JSON.parse(JSON.stringify(obj.path));
 				rel[`isRequired`] = obj.isRequired;
 				relations.push(rel);
 			});
@@ -96,7 +98,7 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 	var servicePromiseArr = [];
 	let genServiceObj = null;
 	let serviceInfo = JSON.parse(JSON.stringify(_serviceInfo));
-	let schema = JSON.parse(serviceInfo.definition);
+	let schema = serviceInfo.definition;
 	let relations = getSchemaRelations(schema);
 	let userRelation = getUsers(schema);
 	let outgoingServicesList = relations.map(obj => obj.service);
@@ -171,7 +173,7 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 
 e.getOutgoingRelationAndUpdate = function (newData, req) {
 	if (!newData.definition) return newData.save(req);
-	let newSchema = JSON.parse(newData.definition);
+	let newSchema = newData.definition;
 	let newRelations = getSchemaRelations(newSchema);
 	let newUsers = getUsers(newSchema);
 	let newOutgoingServicesList = _.uniq(newRelations.map(obj => obj.service));
@@ -208,8 +210,8 @@ e.getOutgoingRelationAndUpdate = function (newData, req) {
 
 e.checkRelationsAndUpdate = function (oldData, newData, req) {
 	let genServiceObj = null;
-	let newSchema = JSON.parse(newData.definition);
-	let oldSchema = JSON.parse(oldData.definition);
+	let newSchema = newData.definition;
+	let oldSchema = oldData.definition;
 	let newRelations = getSchemaRelations(newSchema);
 	let oldRelations = getSchemaRelations(oldSchema);
 	let newUsersRelation = getUsers(newSchema);

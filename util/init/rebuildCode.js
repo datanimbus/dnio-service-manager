@@ -21,7 +21,7 @@ function redeploy(services, successIds, i) {
 				logger.info(`Service deleted`);
 				logger.debug(_d);
 				srvcDoc = srvcDoc.toObject();
-				srvcDoc.definition = JSON.parse(srvcDoc.definition);
+				// srvcDoc.definition = JSON.parse(srvcDoc.definition);
 				return k8s.serviceStart(srvcDoc);
 			})
 			.then(_d => {

@@ -94,9 +94,32 @@ var definition = {
 		'type': `Boolean`,
 		'default': false
 	},
-	'definition': {
-		'type': `String`
-	},
+	'definition': [{
+		'key': `String`,
+		'type': `String`,
+		'prefix': {
+			'type': `String`,
+			'required': false
+		},
+		"suffix": {
+			'type': `String`,
+			'required': false
+		},
+		'padding': {
+			'type': `Number`,
+			'required': false
+		},
+		'counter': {
+			'type': `Number`,
+			'required': false
+		},
+		'definition': {
+			'type': `Object`
+		},
+		'properties': {
+			'type': `Object`
+		}
+	}],
 	'attributeList': [{
 		'key': `String`,
 		'name': `String`,

@@ -1,3 +1,5 @@
+// Not updating for now as its not used anywhere
+
 var a = {
 	name: `product`,
 	collectionName: `product`,

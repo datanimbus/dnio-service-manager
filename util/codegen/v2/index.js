@@ -22,7 +22,7 @@ const logger = global.logger;
 function generateFiles(config) {
 	logger.debug(`config >> `);
 	logger.debug(config);
-	config.idDetails = config[`definition`][`_id`];
+	config.idDetails = config[`definition`].find(attr => attr.key == '_id');
 	if (config.idDetails.counter && isNaN(config.idDetails.counter)) throw new Error(`Counter is not valid`);
 	if (config.idDetails.counter != null) config.idDetails.counter = parseInt(config.idDetails.counter);
 	if (config.idDetails.padding && isNaN(config.idDetails.padding)) throw new Error(`Padding is not valid`);
@@ -30,7 +30,7 @@ function generateFiles(config) {
 	config[`definitionWithId`] = JSON.parse(JSON.stringify(config[`definition`]));
 	config.projectName = config._id;
 	config.path = `./generatedServices/` + config.projectName;
-	delete config[`definition`][`_id`];
+	config[`definition`] = config['definition'].filter(attr => attr.key != '_id');
 	return generateFolderStructure(config)
 		.then(() => generateDefinition(config))
 		.then((definition) => fs.writeFileSync(path.join(config.path, `api/helpers/service.definition.js`), definition, `utf-8`))

@@ -3,139 +3,164 @@ module.exports = [
 		'name': `Geojson`,
 		'definition': {
 			'type': `Object`,
-			'definition': {
-				'geometry': {
+			'definition': [
+				{
 					'type': `Object`,
-					'definition': {
-						'type': {
+					'key': 'geometry',
+					'definition': [
+						{
 							'type': `String`,
+							'key': 'type',
 							'enum': [`Point`]
 						},
-						'coordinates': {
+						{
 							'type': `Array`,
-							'definition': {
-								'_self': {
-									'type': `Number`
+							'key': 'coordinates',
+							'definition': [
+								{
+									'type': `Number`,
+									'key': '_self'
 								}
-							}
+							]
 						}
-					}
+					]
 				},
-				'formattedAddress': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'formattedAddress'
 				},
-				'town': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'town'
 				},
-				'district': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'district'
 				},
-				'state': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'state'
 				},
-				'country': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'country'
 				},
-				'pincode': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'pincode'
 				},
-				'userInput': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'userInput'
 				}
-			}
+			]
 		}
 	},
 	{
 		'name': `File`,
 		'definition': {
 			'type': `Object`,
-			'definition': {
-				'_id': {
-					'type': `String`
+			'definition': [
+				{
+					'type': `String`,
+					'key': '_id'
 				},
-				'filename': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'filename'
 				},
-				'contentType': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'contentType'
 				},
-				'length': {
-					'type': `Number`
+				{
+					'type': `Number`,
+					'key': 'length'
 				},
-				'chunkSize': {
-					'type': `Number`
+				{
+					'type': `Number`,
+					'key': 'chunkSize'
 				},
-				'uploadDate': {
-					'type': `Date`
+				{
+					'type': `Date`,
+					'key': 'uploadDate'
 				},
-				'md5': {
-					'type': `String`
+				{
+					'type': `String`,
+					'key': 'md5'
 				},
-				'metadata': {
+				{
 					'type': `Object`,
-					'definition': {
-						'filename': {
-							'type': `String`
+					'key': 'metadata',
+					'definition': [
+						{
+							'type': `String`,
+							'key': 'filename'
 						}
-					}
+					]
 				}
-			}
+			]
 		}
 	}, {
 		'name': `Relation`,
 		'definition': {
 			'type': `Object`,
-			'definition': {
-				'_id': {
+			'definition': [
+				{
 					'type': `String`,
+					'key': '_id',
 					'properties': {
 						'name': `_id`,
 						'_typeChanged': `String`
 					}
 				},
-				'_href': {
+				{
 					'type': `String`,
+					'key': '_href',
 					'properties': {
 						'name': `_href`,
 						'_typeChanged': `String`
 					}
 				}
-			}
+			]
 		}
 	},
 	{
 		'name': `User`,
 		'definition': {
 			'type': `User`,
-			'definition': {
-				'_id': {
+			'definition': [
+				{
 					'type': `String`,
+					'key': '_id',
 					'properties': {
 						'name': `_id`,
 					}
 				}
-			}
+			]
 		}
 	}, {
 		'name': `SecureText`,
 		'definition': {
 			'type': `Object`,
-			'definition': {
-				'value': {
+			'definition': [
+				{
 					'type': `String`,
+					'key': 'value',
 					'properties': {
 						'name': `value`,
 						'_typeChanged': `String`
 					}
 				},
-				'checksum': {
+				{
 					'type': `String`,
+					'key': 'checksum',
 					'properties': {
 						'name': `checksum`,
 						'_typeChanged': `String`
 					}
 				}
-			}
+			]
 		}
 	}
 

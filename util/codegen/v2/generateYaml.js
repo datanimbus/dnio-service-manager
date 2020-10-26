@@ -165,25 +165,26 @@ function getType(type) {
 	return type;
 }
 
-function getCreateDefinition(json) {
-	let definition = {};
-	if (json[`_self`]) {
-		if (json[`_self`][`type`] === `Object`) {
-			definition = getCreateDefinition(json[`_self`][`definition`]);
+function getCreateDefinition(defArr) {
+	let definition = [];
+	if (defArr[0] && def[0].key == '_self') {
+		let attribute = defArr[0];
+		if (attribute[`type`] === `Object`) {
+			definition = getCreateDefinition(attribute[`definition`]);
 		}
-		else if (json[`_self`][`type`] === `User`) {
-			definition = getCreateDefinition(json[`_self`][`definition`]);
-		} else if (json[`_self`][`type`] === `Array`) {
-			if (json[`_self`][`definition`][`_self`][`type`] === `Array`) {
+		else if (attribute[`type`] === `User`) {
+			definition = getCreateDefinition(attribute[`definition`]);
+		} else if (attribute[`type`] === `Array`) {
+			if (attribute[`definition`][0][`type`] === `Array`) {
 				definition = {
 					type: [`array`, `null`],
-					items: getCreateDefinition(json[`_self`][`definition`])
+					items: getCreateDefinition(attribute[`definition`])
 				};
 			} else {
-				definition = getCreateDefinition(json[`_self`][`definition`]);
+				definition = getCreateDefinition(attribute[`definition`]);
 			}
 		} else {
-			definition.type = getType(json[`_self`][`type`]);
+			definition.type = getType(attribute[`type`]);
 		}
 		return definition;
 	}
@@ -191,58 +192,59 @@ function getCreateDefinition(json) {
 		properties: {},
 		required: []
 	};
-	Object.keys(json).forEach(el => {
-		if (json[el][`properties`] && json[el][`properties`][`required`]) {
+	defArr.forEach(attribute => {
+		let el = attribute.key
+		if (attribute[`properties`] && attribute[`properties`][`required`]) {
 			definition.required.push(el);
 		}
 		if (el == `_id`) {
-			json[el][`type`] = `string`;
+			attribute[`type`] = `string`;
 		}
-		if (json[el][`type`] === `Object`) {
-			definition[`properties`][el] = getCreateDefinition(json[el].definition);
+		if (attribute[`type`] === `Object`) {
+			definition[`properties`][el] = getCreateDefinition(attribute.definition);
 		}
-		else if (json[el][`type`] === `User`) {
-			definition[`properties`][el] = getCreateDefinition(json[el].definition);
-		} else if (json[el][`type`] == `Array`) {
-			if (json[el][`definition`][`_self`][`type`] === `Array`) {
+		else if (attribute[`type`] === `User`) {
+			definition[`properties`][el] = getCreateDefinition(attribute.definition);
+		} else if (attribute[`type`] == `Array`) {
+			if (attribute[`definition`][0][`type`] === `Array`) {
 				definition[`properties`][el] = {
 					type: [`array`, `null`],
 					items: {
 						type: [`array`, `null`],
-						items: getCreateDefinition(json[el][`definition`])
+						items: getCreateDefinition(attribute[`definition`])
 					}
 				};
-			} else if (json[el][`definition`][`_self`][`type`] === `Object`) {
+			} else if (attribute[`definition`][0][`type`] === `Object`) {
 				definition[`properties`][el] = {
 					type: [`array`, `null`],
-					items: getCreateDefinition(json[el][`definition`])
+					items: getCreateDefinition(attribute[`definition`])
 				};
 			}
-			else if (json[el][`definition`][`_self`][`type`] === `User`) {
+			else if (attribute[`definition`][0][`type`] === `User`) {
 				definition[`properties`][el] = {
 					type: [`array`, `null`],
-					items: getCreateDefinition(json[el][`definition`])
+					items: getCreateDefinition(attribute[`definition`])
 				};
 			} else {
 				definition[`properties`][el] = {
 					type: [`array`, `null`],
 					items: {
-						type: getType(json[el][`definition`][`_self`][`type`])
+						type: getType(attribute[`definition`][`_self`][`type`])
 					}
 				};
 			}
 		} else {
-			if (json[el][`properties`] && (json[el][`properties`][`required`])) {
+			if (attribute[`properties`] && (attribute[`properties`][`required`])) {
 				definition[`properties`][el] = {
-					type: getType(json[el][`type`])
+					type: getType(attribute[`type`])
 				};
 			} else {
 				definition[`properties`][el] = {
-					type: [getType(json[el][`type`]), `null`]
+					type: [getType(attribute[`type`]), `null`]
 				};
 			}
-			if (json[el][`properties`] && json[el][`properties`][`enum`]) {
-				definition[`properties`][el][`enum`] = json[el][`properties`][`enum`];
+			if (attribute[`properties`] && attribute[`properties`][`enum`]) {
+				definition[`properties`][el][`enum`] = attribute[`properties`][`enum`];
 			}
 		}
 	});
@@ -251,26 +253,27 @@ function getCreateDefinition(json) {
 	return definition;
 }
 
-function getMathKeyList(json, key) {
+function getMathKeyList(defArr, key) {
 	let list = [];
-	Object.keys(json).forEach(_k => {
+	defArr.forEach(attribute => {
+		let _k = attribute.key;
 		let newKey = key == `` ? _k : key + `.` + _k;
-		if (json[_k][`type`] === `Object`) {
-			list = list.concat(getMathKeyList(json[_k][`definition`], newKey));
-		} else if (json[_k][`type`] === `Number`) {
+		if (attribute[`type`] === `Object`) {
+			list = list.concat(getMathKeyList(attribute[`definition`], newKey));
+		} else if (attribute[`type`] === `Number`) {
 			list.push(newKey);
 		}
 	});
 	return list;
 }
 
-function getUpdateDefinition(json) {
-	if (json[`required`]) {
-		delete json.required;
+function getUpdateDefinition(def) {
+	if (def.constructor == {}.constructor && def[`required`]) {
+		delete def.required;
 	}
-	Object.keys(json).forEach(key => {
-		if (json[key] != null && typeof json[key] === `object`)
-			getUpdateDefinition(json[key]);
+	def.forEach(attr => {
+		if (attr != null && typeof attr === `object`)
+			getUpdateDefinition(attr);
 	});
 }
 

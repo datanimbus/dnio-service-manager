@@ -1158,7 +1158,7 @@ definitions:
               items:
                 type: string   
       definition:
-        type: object
+        type: array
       webHooks:
         type: [array, 'null']
         items:
@@ -1263,7 +1263,7 @@ definitions:
           validityType: 
             type: string
       definition:
-        type: object
+        type: array
       attributeList:
         type: [array]
       webHooks:
@@ -1340,7 +1340,7 @@ definitions:
       name:
         type: string
       definition:
-        type: object
+        type: array
       app:
         type: string  
   globalSchema_update:
@@ -1348,7 +1348,7 @@ definitions:
       name:
         type: [string, 'null']
       definition:
-        type: object
+        type: array
       app:
         type: string   
   

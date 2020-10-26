@@ -8,28 +8,30 @@ const request = require(`request`);
 const _ = require(`lodash`);
 const logger = global.logger;
 
-e.getAttributeList = function (_definitions, parentKey, parentLabel) {
-	let _temp = [];
-	for (let i in _definitions) {
-		let _def = _definitions[i];
-		let key = (parentKey ? parentKey + `.` : ``) + i;
-		let name = (parentLabel ? parentLabel + `.` : ``) + _def.properties.name;
-		let properties = JSON.parse(JSON.stringify(_def.properties));
-		if (_def.type == `Object`) {
-			_temp = _temp.concat(e.getAttributeList(_def.definition, key, name));
-		} else if (_def.type == `Array`) {
-			//do nothing
-		}
-		else {
-			_temp.push({
-				key: key,
-				name: name,
-				properties
-			});
-		}
-	}
-	return _temp;
-};
+// to check
+// commented as attributeList is not required anymore
+// e.getAttributeList = function (_definitions, parentKey, parentLabel) {
+// 	let _temp = [];
+// 	for (let i in _definitions) {
+// 		let _def = _definitions[i];
+// 		let key = (parentKey ? parentKey + `.` : ``) + i;
+// 		let name = (parentLabel ? parentLabel + `.` : ``) + _def.properties.name;
+// 		let properties = JSON.parse(JSON.stringify(_def.properties));
+// 		if (_def.type == `Object`) {
+// 			_temp = _temp.concat(e.getAttributeList(_def.definition, key, name));
+// 		} else if (_def.type == `Array`) {
+// 			//do nothing
+// 		}
+// 		else {
+// 			_temp.push({
+// 				key: key,
+// 				name: name,
+// 				properties
+// 			});
+// 		}
+// 	}
+// 	return _temp;
+// };
 
 e.postRolesUserMgmt = function (data, _req) {
 	var options = {
@@ -61,6 +63,7 @@ e.postRolesUserMgmt = function (data, _req) {
 	});
 };
 
+// to check what to be done in user
 e.updateRolesUserMgmt = function (serviceId, data, _req) {
 	var options = {
 		url: envConfig.baseUrlUSR + `/role/` + serviceId,
@@ -163,19 +166,20 @@ e.sendToSocket = function (_socket, _channel, _body) {
 };
 
 e.getSystemFields = (list, key, definition, systemFields) => {
-	if (definition[`_self`]) {
-		if (definition[`_self`][`type`] === `Object`) {
-			e.getSystemFields(list, key, definition[`_self`][`definition`], systemFields);
-		} else if (systemFields.indexOf(definition[`_self`][`type`]) > -1) {
-			list[definition[`_self`][`type`]].push(key);
+	if (definition[0] && definition[0].key == `_self`) {
+		if (definition[0][`type`] === `Object`) {
+			e.getSystemFields(list, key, definition[0][`definition`], systemFields);
+		} else if (systemFields.indexOf(definition[0][`type`]) > -1) {
+			list[definition[0][`type`]].push(key);
 		}
 	} else {
-		Object.keys(definition).forEach(_k => {
+		definition.forEach(def => {
+			let _k = def.key;
 			let _key = key === `` ? _k : key + `.` + _k;
-			if (definition[_k][`type`] === `Array` || definition[_k][`type`] === `Object`) {
-				e.getSystemFields(list, _key, definition[_k][`definition`], systemFields);
-			} else if (systemFields.indexOf(definition[_k][`type`]) > -1) {
-				list[definition[_k][`type`]].push(_key);
+			if (def[`type`] === `Array` || def[`type`] === `Object`) {
+				e.getSystemFields(list, _key, def[`definition`], systemFields);
+			} else if (systemFields.indexOf(def[`type`]) > -1) {
+				list[def[`type`]].push(_key);
 			}
 		});
 	}

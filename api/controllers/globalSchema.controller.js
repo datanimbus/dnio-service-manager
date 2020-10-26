@@ -71,17 +71,30 @@ let deleteGSInUserMgmt = function (_id, _req) {
 };
 
 function validateDefinition(schema) {
-	Object.keys(schema).forEach(_k => {
-		if (!schema[_k][`type`] || !schema[_k][`properties`]) {
+
+	schema.forEach(sch => {
+		if (!sch[`type`] || !sch[`properties`]) {
 			throw new Error(`Library definition is invalid`);
 		}
-		if (schema[_k][`type`] === `object` || schema[_k][`type`] === `Array`) {
-			if (!schema[_k][`definition`] || typeof schema[_k][`definition`] != `object`) {
+		if (sch[`type`] === `object` || sch[`type`] === `Array`) {
+			if (!sch[`definition`] || typeof sch[`definition`] != `object`) {
 				throw new Error(`Library definition is invalid`);
 			}
-			validateDefinition(schema[_k][`definition`]);
+			validateDefinition(sch[`definition`]);
 		}
 	});
+
+	// Object.keys(schema).forEach(_k => {
+	// 	if (!schema[_k][`type`] || !schema[_k][`properties`]) {
+	// 		throw new Error(`Library definition is invalid`);
+	// 	}
+	// 	if (schema[_k][`type`] === `object` || schema[_k][`type`] === `Array`) {
+	// 		if (!schema[_k][`definition`] || typeof schema[_k][`definition`] != `object`) {
+	// 			throw new Error(`Library definition is invalid`);
+	// 		}
+	// 		validateDefinition(schema[_k][`definition`]);
+	// 	}
+	// });
 }
 
 function updateInusrMgmt(srvcObj, definition, _req) {
@@ -89,6 +102,7 @@ function updateInusrMgmt(srvcObj, definition, _req) {
 		app: srvcObj.app,
 		entity: srvcObj._id,
 		entityName: srvcObj.name,
+		// to check if usermanagement it would be string or json
 		definition: JSON.stringify(definition)
 	};
 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
@@ -97,7 +111,7 @@ function updateInusrMgmt(srvcObj, definition, _req) {
 schema.pre(`save`, function (next) {
 	let self = this;
 	if(!self.definition) next();
-	let definition = JSON.parse(self.definition);
+	let definition = self.definition;
 	if (!definition.definition || typeof definition.definition !== `object`) {
 		next(new Error(`Library definition is invalid`));
 	} else {
@@ -177,8 +191,8 @@ function deployService(serv, socket, _req) {
 	return globalDefHelper.expandSchemaWithGlobalDef(newServ.app, JSON.parse(newServ.definition))
 		.then(def => {
 			newServ.definition = def;
-			serv.attributeList = deployUtil.getAttributeList(JSON.parse(JSON.stringify(def)));
-			serv.definition = JSON.stringify(def);
+			// serv.attributeList = deployUtil.getAttributeList(JSON.parse(JSON.stringify(def)));
+			serv.definition = def;
 			serv.version++;
 			newServ.version++;
 			return serv.save(_req);
@@ -232,7 +246,7 @@ var crudder = new SMCrud(schema, `globalSchema`, options);
 e.createDoc = (_req, _res) => {
 	smHooks.validateApp(_req)
 		.then(() => {
-			if (_req.body.definition) _req.body.definition = JSON.stringify(_req.body.definition);
+			// if (_req.body.definition) _req.body.definition = JSON.stringify(_req.body.definition);
 			return new crudder.model(_req.body).save(_req);
 		})
 		.then((_d) => {
@@ -249,9 +263,9 @@ e.createDoc = (_req, _res) => {
 };
 
 e.updateDoc = (_req, _res) => {
-	if (_req.body.definition) {
-		_req.body.definition = JSON.stringify(_req.body.definition);
-	}
+	// if (_req.body.definition) {
+	// 	_req.body.definition = JSON.stringify(_req.body.definition);
+	// }
 	crudder.update(_req, _res);
 };
 

@@ -11,12 +11,12 @@ function getGlobalDefinitions(app) {
 
 function getGDDependencyObj(schema) {
 	var gds = [];
-	Object.keys(schema).forEach(key => {
-		if (key != `properties` && key != `_id`) {
-			if (schema[key][`properties`] && schema[key][`properties`][`schema`])
-				gds.push(schema[key][`properties`][`schema`]);
-			if (schema[key][`definition`]) {
-				let nestedGds = getGDDependencyObj(schema[key][`definition`]);
+	schema.forEach(sch => {
+		if (sch.key != `properties` && sch.key != `_id`) {
+			if (sch[`properties`] && sch[`properties`][`schema`])
+				gds.push(sch[`properties`][`schema`]);
+			if (sch[`definition`]) {
+				let nestedGds = getGDDependencyObj(sch[`definition`]);
 				gds = _.union(gds, nestedGds);
 			}
 		}
@@ -31,7 +31,7 @@ e.updateServicesInGlobalSchema = (serviceObj, req) => {
 	return getGlobalDefinitions(serviceObj.app)
 		.then(gds => {
 			gds = JSON.parse(JSON.stringify(gds));
-			serviceObj.definition = typeof serviceObj.definition == `string` ? JSON.parse(serviceObj.definition) : serviceObj.definition;
+			// serviceObj.definition = typeof serviceObj.definition == `string` ? JSON.parse(serviceObj.definition) : serviceObj.definition;
 			let schemaGDs = getGDDependencyObj(serviceObj.definition);
 			schemaGDs.forEach((schemaGD) => {
 				let depGD = gds.find(gd => gd._id === schemaGD);

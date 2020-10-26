@@ -208,9 +208,9 @@ function genrateCode(config) {
 	// fs.writeFileSync(path.join(process.cwd(), `generated`, `special-fields.utils.js`), code.join(`\n`), `utf-8`);
 
 	function parseSchemaForRelation(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.properties.relatedTo && def.type != `Array`) {
 					code.push(`\tlet ${_.camelCase(path + `._id`)} = _.get(newData, '${path}._id')`);
@@ -229,12 +229,12 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForRelation(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.properties.relatedTo) {
+					if (def.definition[0].properties.relatedTo) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push(`\t\t\ttry {`);
-						code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition._self.properties.relatedTo}', item._id);`);
+						code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
 						code.push(`\t\t\t\t\tif (!doc) {`);
 						code.push(`\t\t\t\t\t\terrors['${path}.' + i] = item._id + ' not found';`);
 						code.push(`\t\t\t\t\t} else {`);
@@ -247,11 +247,11 @@ function genrateCode(config) {
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
 						code.push(`\t}`);
-					} else if (def.definition._self.type == `Object`) {
+					} else if (def.definition[0].type == `Object`) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
-						parseSchemaForRelation(def.definition._self.definition, ``);
+						parseSchemaForRelation(def.definition[0].definition, ``);
 						code.push(`\t\t});`);
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
@@ -263,9 +263,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForExpand(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.properties.relatedTo && def.type != `Array`) {
 					code.push(`\tlet ${_.camelCase(path + `._id`)} = _.get(newData, '${path}._id')`);
@@ -285,13 +285,13 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForExpand(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.properties.relatedTo) {
+					if (def.definition[0].properties.relatedTo) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push(`\t\t\ttry {`);
 						code.push(`\t\t\t\tif (!expandForSelect || (expandForSelect && commonUtils.isExpandAllowed(req, '${path}'))) {`);
-						code.push(`\t\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition._self.properties.relatedTo}', item._id);`);
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
 						code.push(`\t\t\t\t\tif (doc) {`);
 						code.push(`\t\t\t\t\t\t_.assign(item, doc);`);
 						code.push(`\t\t\t\t\t}`);
@@ -303,11 +303,11 @@ function genrateCode(config) {
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
 						code.push(`\t}`);
-					} else if (def.definition._self.type == `Object`) {
+					} else if (def.definition[0].type == `Object`) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
-						parseSchemaForExpand(def.definition._self.definition, ``);
+						parseSchemaForExpand(def.definition[0].definition, ``);
 						code.push(`\t\t});`);
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
@@ -319,9 +319,9 @@ function genrateCode(config) {
 	}
 
 	function createIndex(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.type == `Object`) {
 					createIndex(def.definition, path);
@@ -343,9 +343,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForUnique(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.type == `Object`) {
 					parseSchemaForUnique(def.definition, path);
@@ -373,9 +373,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForCreateOnly(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.type == `Object`) {
 					parseSchemaForCreateOnly(def.definition, path);
@@ -403,9 +403,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForFilter(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(key => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.properties.relatedTo && def.type != `Array`) {
 					code.push(`\t\t\tif (key.startsWith('${path}')) {`);
@@ -427,11 +427,11 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForFilter(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.properties.relatedTo) {
+					if (def.definition[0].properties.relatedTo) {
 						code.push(`\t\t\tif (key.startsWith('${path}')) {`);
 						code.push(`\t\t\t\ttry {`);
 						code.push(`\t\t\t\t\tconst tempKey = key.split('${path}.')[1];`);
-						code.push(`\t\t\t\t\tconst ids = await commonUtils.getDocumentIds(req, '${def.definition._self.properties.relatedTo}', { [tempKey]: filter[key] })`);
+						code.push(`\t\t\t\t\tconst ids = await commonUtils.getDocumentIds(req, '${def.definition[0].properties.relatedTo}', { [tempKey]: filter[key] })`);
 						code.push(`\t\t\t\t\tif (ids && ids.length > 0) {`);
 						code.push(`\t\t\t\t\t\tif (!tempFilter['${path}._id'] || !tempFilter['${path}._id']['$in']) {`);
 						code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id'] = { $in: ids };`);
@@ -444,8 +444,8 @@ function genrateCode(config) {
 						code.push(`\t\t\t\t\terrors['${path}'] = e.message;`);
 						code.push(`\t\t\t\t}`);
 						code.push(`\t\t\t}`);
-					} else if (def.definition._self.type == `Object`) {
-						parseSchemaForFilter(def.definition._self.definition, path);
+					} else if (def.definition[0].type == `Object`) {
+						parseSchemaForFilter(def.definition[0].definition, path);
 					}
 				}
 			}
@@ -453,9 +453,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForEncryption(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.properties.password && def.type != `Array`) {
 					code.push(`\tlet ${_.camelCase(path + `.value`)}New = _.get(newData, '${path}.value')`);
@@ -473,7 +473,7 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForEncryption(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.properties.password) {
+					if (def.definition[0].properties.password) {
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
@@ -492,13 +492,13 @@ function genrateCode(config) {
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
 						code.push(`\t}`);
-					} else if (def.definition._self.type == `Object`) {
+					} else if (def.definition[0].type == `Object`) {
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (newData, i) => {`);
 						code.push(`\t\t\tlet oldData = _.find(${_.camelCase(path)}Old, newData);`);
-						parseSchemaForEncryption(def.definition._self.definition, ``);
+						parseSchemaForEncryption(def.definition[0].definition, ``);
 						code.push(`\t\t});`);
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
@@ -510,9 +510,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForDecryption(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def.properties) {
 				if (def.properties.password && def.type != `Array`) {
 					code.push(`\tlet ${_.camelCase(path + `.value`)} = _.get(newData, '${path}.value')`);
@@ -529,7 +529,7 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForDecryption(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.properties.password) {
+					if (def.definition[0].properties.password) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
@@ -547,11 +547,11 @@ function genrateCode(config) {
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
 						code.push(`\t}`);
-					} else if (def.definition._self.type == `Object`) {
+					} else if (def.definition[0].type == `Object`) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
-						parseSchemaForDecryption(def.definition._self.definition, ``);
+						parseSchemaForDecryption(def.definition[0].definition, ``);
 						code.push(`\t\t});`);
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
@@ -563,9 +563,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForBoolean(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def) {
 				if (def.type == `Boolean`) {
 					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}')`);
@@ -585,7 +585,7 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForBoolean(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.type == `Boolean`) {
+					if (def.definition[0].type == `Boolean`) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.map((item, i) => {`);
@@ -602,11 +602,11 @@ function genrateCode(config) {
 						code.push(`\t\t});`);
 						code.push(`\t}`);
 						code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
-					} else if (def.definition._self.type == `Object`) {
+					} else if (def.definition[0].type == `Object`) {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.forEach((newData, i) => {`);
-						parseSchemaForBoolean(def.definition._self.definition, ``);
+						parseSchemaForBoolean(def.definition[0].definition, ``);
 						code.push(`\t\t});`);
 						code.push(`\t}`);
 						code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
@@ -617,9 +617,9 @@ function genrateCode(config) {
 	}
 
 	function parseSchemaForGeojson(schema, parentKey) {
-		Object.keys(schema).forEach(key => {
+		schema.forEach(def => {
+			let key = def.key;
 			const path = parentKey ? parentKey + `.` + key : key;
-			const def = schema[key];
 			if (key != `_id` && def) {
 				if (def.type == `Geojson`) {
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
@@ -637,7 +637,7 @@ function genrateCode(config) {
 				} else if (def.type == `Object`) {
 					parseSchemaForGeojson(def.definition, path);
 				} else if (def.type == `Array`) {
-					if (def.definition._self.type == `Geojson`) {
+					if (def.definition[0].type == `Geojson`) {
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
@@ -656,13 +656,13 @@ function genrateCode(config) {
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);
 						code.push(`\t}`);
-					} else if (def.definition._self.type == `Object`) {
+					} else if (def.definition[0].type == `Object`) {
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (newData, i) => {`);
 						code.push(`\t\t\tlet oldData = _.find(${_.camelCase(path)}Old, newData);`);
-						parseSchemaForGeojson(def.definition._self.definition, ``);
+						parseSchemaForGeojson(def.definition[0].definition, ``);
 						code.push(`\t\t});`);
 						code.push(`\t\tpromises = await Promise.all(promises);`);
 						code.push(`\t\tpromises = null;`);

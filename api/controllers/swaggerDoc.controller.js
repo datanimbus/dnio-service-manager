@@ -24,7 +24,7 @@ function show(req, res) {
 				return;
 			}
 			_d = _d.toObject();
-			_d.definition = JSON.parse(_d.definition);
+			_d.definition = _d.definition;
 			let swagger = generateYaml(_d);
 			swagger.host = req.query.host;
 			swagger.basePath = req.query.basePath ? req.query.basePath : swagger.basePath;

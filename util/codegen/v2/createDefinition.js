@@ -12,25 +12,26 @@ function filterMongooseFields(schemaObj) {
 	return newObj;
 }
 
-function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
-	if (schemaObj[`_self`]) {
-		if (schemaObj[`_self`][`properties`] && (schemaObj[`_self`][`properties`][`password`])) {
+function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
+	if (schemaArr[0] && schemaArr[0].key == `_self`) {
+		let attribute = schemaArr[0];
+		if (attribute[`properties`] && (attribute[`properties`][`password`])) {
 			specialFields[`secureFields`].push(nestedKey);
 		}
-		if (schemaObj[`_self`][`type`] === `Object`) {
-			processSchema(schemaObj[`_self`][`definition`], mongoSchema, nestedKey, specialFields);
+		if (attribute[`type`] === `Object`) {
+			processSchema(attribute[`definition`], mongoSchema, nestedKey, specialFields);
 		}
-		else if (schemaObj[`_self`][`type`] === `User`) {
-			processSchema(schemaObj[`_self`][`definition`], mongoSchema, nestedKey, specialFields);
-		} else if (schemaObj[`_self`][`type`] === `Array`) {
-			mongoSchema[0] = schemaObj[`_self`][`definition`][`_self`][`type`] === `Array` ? [] : {};
-			processSchema(schemaObj[`_self`][`definition`], mongoSchema[0], nestedKey, specialFields);
+		else if (attribute[`type`] === `User`) {
+			processSchema(attribute[`definition`], mongoSchema, nestedKey, specialFields);
+		} else if (attribute[`type`] === `Array`) {
+			mongoSchema[0] = attribute[`definition`][`_self`][`type`] === `Array` ? [] : {};
+			processSchema(attribute[`definition`], mongoSchema[0], nestedKey, specialFields);
 		} else {
-			mongoSchema[`type`] = schemaObj[`_self`][`type`];
-			if (schemaObj[`_self`][`properties`]) {
-				Object.keys(schemaObj[`_self`][`properties`]).forEach(scKey => {
+			mongoSchema[`type`] = attribute[`type`];
+			if (attribute[`properties`]) {
+				Object.keys(attribute[`properties`]).forEach(scKey => {
 					if (mongooseFields.indexOf(scKey) > -1)
-						mongoSchema[scKey] = schemaObj[`_self`][`properties`][scKey];
+						mongoSchema[scKey] = attribute[`properties`][scKey];
 				});
 				if (mongoSchema[`enum`] && !mongoSchema[`required`]) {
 					mongoSchema[`enum`].push(null);
@@ -53,20 +54,21 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 					}
 				}
 			}
-			if (schemaObj[`_self`][`type`] == `Number` && schemaObj[`_self`][`properties`] && (schemaObj[`_self`][`properties`][`precision`] || schemaObj[`_self`][`properties`][`precision`] === 0)) {
-				specialFields[`precisionFields`].push({ field: nestedKey, precision: schemaObj[`_self`][`properties`][`precision`] });
+			if (attribute[`type`] == `Number` && attribute[`properties`] && (attribute[`properties`][`precision`] || attribute[`properties`][`precision`] === 0)) {
+				specialFields[`precisionFields`].push({ field: nestedKey, precision: attribute[`properties`][`precision`] });
 			}
-			if (schemaObj[`_self`][`properties`] && (schemaObj[`_self`][`properties`][`password`])) {
+			if (attribute[`properties`] && (attribute[`properties`][`password`])) {
 				specialFields[`secureFields`].push(nestedKey);
 			}
 		}
 	} else {
-		Object.keys(schemaObj).forEach(key => {
+		schemaArr.forEach(attribute => {
+			let key = attribute.key;
 			let newNestedKey = nestedKey ? nestedKey + `.` + key : key;
-			if (schemaObj[key][`type`] === `Array`) {
+			if (attribute[`type`] === `Array`) {
 				mongoSchema[key] = {};
 				mongoSchema[key][`type`] = [];
-				if (schemaObj[key][`definition`][`_self`][`properties`] && schemaObj[key][`definition`][`_self`][`properties`][`email`]) {
+				if (attribute[`definition`][`_self`][`properties`] && attribute[`definition`][`_self`][`properties`][`email`]) {
 					const functionBody = `
 					if(value == null) return true;
 					if(value.length == 0) return false;
@@ -91,9 +93,9 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 						mongoSchema[key][`validate`] = [validationObj];
 					}
 				}
-				if (schemaObj[key][`definition`][`_self`][`type`] === `Array`) {
-					mongoSchema[key][`type`][0] = [];
-					if (schemaObj[key][`definition`][`_self`][`properties`] && schemaObj[key][`definition`][`_self`][`properties`][`email`]) {
+				if (attribute[`definition`][`_self`][`type`] === `Array`) {
+					attribute[`type`][0] = [];
+					if (attribute[`definition`][`_self`][`properties`] && attribute[`definition`][`_self`][`properties`][`email`]) {
 						const functionBody = `
 						if(value == null) return true;
 						if(value.length == 0) return false;
@@ -112,7 +114,7 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 						return re.test(value);
 					}`;
 						const validationObj = { validator: new Function(`value`, functionBody), msg: key + ` is not a valid email` };
-						if (mongoSchema[key][`validate`])
+						if (attribute[`validate`])
 							mongoSchema[key][`validate`].push(validationObj);
 						else {
 							mongoSchema[key][`validate`] = [validationObj];
@@ -121,34 +123,34 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 				} else {
 					mongoSchema[key][`type`][0] = {};
 				}
-				processSchema(schemaObj[key][`definition`], mongoSchema[key][`type`][0], newNestedKey, specialFields);
-			} else if (schemaObj[key][`type`] === `Object`) {
+				processSchema(attribute[`definition`], mongoSchema[key][`type`][0], newNestedKey, specialFields);
+			} else if (attribute[`type`] === `Object`) {
 				mongoSchema[key] = {};
-				if (schemaObj[key][`properties`] && (schemaObj[key][`properties`][`geoType`] || schemaObj[key][`properties`][`relatedTo`] || schemaObj[key][`properties`][`fileType`] || schemaObj[key][`properties`][`password`])) {
+				if (attribute[`properties`] && (attribute[`properties`][`geoType`] || attribute[`properties`][`relatedTo`] || attribute[`properties`][`fileType`] || attribute[`properties`][`password`])) {
 					mongoSchema[key][`type`] = {};
-					processSchema(schemaObj[key][`definition`], mongoSchema[key][`type`], newNestedKey, specialFields);
+					processSchema(attribute[`definition`], mongoSchema[key][`type`], newNestedKey, specialFields);
 				}
 				else {
-					processSchema(schemaObj[key][`definition`], mongoSchema[key], newNestedKey, specialFields);
+					processSchema(attribute[`definition`], mongoSchema[key], newNestedKey, specialFields);
 				}
 			}
-			else if (schemaObj[key][`type`] === `User`) {
+			else if (attribute[`type`] === `User`) {
 				mongoSchema[key] = {};
 				mongoSchema[key][`type`] = {};
-				processSchema(schemaObj[key][`definition`], mongoSchema[key][`type`], newNestedKey, specialFields);
+				processSchema(attribute[`definition`], mongoSchema[key][`type`], newNestedKey, specialFields);
 
 			}
 			else {
 				mongoSchema[key] = {};
-				if (schemaObj[key][`properties`])
-					mongoSchema[key] = filterMongooseFields(schemaObj[key][`properties`]);
+				if (attribute[`properties`])
+					mongoSchema[key] = filterMongooseFields(attribute[`properties`]);
 
-				mongoSchema[key][`type`] = schemaObj[key][`type`];
+				mongoSchema[key][`type`] = attribute[`type`];
 			}
-			if (schemaObj[key][`properties`]) {
-				Object.keys(schemaObj[key][`properties`]).forEach(keyOfObj => {
+			if (attribute[`properties`]) {
+				Object.keys(attribute[`properties`]).forEach(keyOfObj => {
 					if (mongooseFields.indexOf(keyOfObj) > -1) {
-						mongoSchema[key][keyOfObj] = schemaObj[key][`properties`][keyOfObj];
+						mongoSchema[key][keyOfObj] = attribute[`properties`][keyOfObj];
 						if (!mongoSchema[key][`required`]) delete mongoSchema[key].required;
 						if (!mongoSchema[key][`unique`]) delete mongoSchema[key].unique;
 					}
@@ -165,7 +167,7 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 					const functionBody = `value = _.trim(value);\n return !_.isEmpty(value);`;
 					mongoSchema[key][`validate`] = [{ validator: new Function(`value`, functionBody), msg: key + ` is empty.` }];
 				}
-				if (schemaObj[key][`properties`][`email`]) {
+				if (attribute[`properties`][`email`]) {
 					const functionBody = `
                     if(value == null) return true;
 					if(value.length == 0) return false;
@@ -191,12 +193,12 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 						mongoSchema[key][`validate`] = [validationObj];
 					}
 				}
-				if (schemaObj[key][`properties`][`unique`] && schemaObj[key][`type`] === `Number`) {
+				if (attribute[`properties`][`unique`] && attribute[`type`] === `Number`) {
 					mongoSchema[key][`sparse`] = true;
 				}
-				if (schemaObj[key][`properties`][`pattern`]) {
+				if (attribute[`properties`][`pattern`]) {
 					const functionBody = `
-                    var re = /${schemaObj[key][`properties`][`pattern`]}/;
+                    var re = /${attribute[`properties`][`pattern`]}/;
                     if(value && value.trim()){
 						var arr = re.exec(value);
 						if(!arr) return false;
@@ -212,7 +214,7 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 						mongoSchema[key][`validate`] = [validationObj];
 					}
 				}
-				if (schemaObj[key][`type`] == `Number`) {
+				if (attribute[`type`] == `Number`) {
 					const functionBody = `
 					if(!value) return true;
                     return Number.isFinite(value);
@@ -224,29 +226,29 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 						mongoSchema[key][`validate`] = [validationObj];
 					}
 				}
-				if (schemaObj[key][`type`] == `Number` && schemaObj[key][`properties`] && (schemaObj[key][`properties`][`precision`] || schemaObj[key][`properties`][`precision`] === 0)) {
-					specialFields[`precisionFields`].push({ field: newNestedKey, precision: schemaObj[key][`properties`][`precision`] });
+				if (attribute[`type`] == `Number` && attribute[`properties`] && (attribute[`properties`][`precision`] || attribute[`properties`][`precision`] === 0)) {
+					specialFields[`precisionFields`].push({ field: newNestedKey, precision: attribute[`properties`][`precision`] });
 				}
-				if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`createOnly`]) {
+				if (attribute[`properties`] && attribute[`properties`][`createOnly`]) {
 					specialFields[`createOnlyFields`].push(newNestedKey);
 				}
-				if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`password`]) {
+				if (attribute[`properties`] && attribute[`properties`][`password`]) {
 					specialFields[`secureFields`].push(newNestedKey);
 				}
-				if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`unique`]) {
-					let locale = schemaObj[key][`properties`].locale || `en`;
+				if (attribute[`properties`] && attribute[`properties`][`unique`]) {
+					let locale = attribute[`properties`].locale || `en`;
 					specialFields[`uniqueFields`].push({ key: newNestedKey, locale });
 				}
-				if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`relatedTo`] && schemaObj[key][`properties`][`unique`]) {
+				if (attribute[`properties`] && attribute[`properties`][`relatedTo`] && attribute[`properties`][`unique`]) {
 					delete mongoSchema[key][`unique`];
 					delete mongoSchema[key][`uniqueCaseInsensitive`];
 					specialFields[`relationUniqueFields`].push(newNestedKey);
 				}
-				if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`relatedTo`] && schemaObj[key][`properties`][`required`]) {
+				if (attribute[`properties`] && attribute[`properties`][`relatedTo`] && attribute[`properties`][`required`]) {
 					specialFields[`relationRequiredFields`].push(newNestedKey);
 				}
-				if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`relatedTo`] && schemaObj[key][`properties`][`default`]) {
-					mongoSchema[key][`default`] = { '_id': schemaObj[key][`properties`][`default`] };
+				if (attribute[`properties`] && attribute[`properties`][`relatedTo`] && attribute[`properties`][`default`]) {
+					mongoSchema[key][`default`] = { '_id': attribute[`properties`][`default`] };
 				}
 			}
 		});

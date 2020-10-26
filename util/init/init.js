@@ -45,17 +45,23 @@ function fixServiceinNewRelease(successIds) {
 			logger.info(`data is`,JSON.stringify(data));
 			var count = 0;
 			var promises = data.map(doc => {
-				let definitionObject = JSON.parse(doc.definition);
-				if (!(definitionObject._id && (definitionObject._id.isPermanentDelete !== true || definitionObject._id.isPermanentDelete !== false))) 
+				// let definitionObject = JSON.parse(doc.definition);
+				let idAttribute = doc.definition.find(attr => attr.key == '_id');
+				if (!(idAttribute && (idAttribute.isPermanentDelete !== true || idAttribute.isPermanentDelete !== false))) 
 				{
-					logger.info(`something wrong here`);
+					logger.info(`something wrong here with id attribute`);
 					return Promise.resolve();
 				}
 				if(doc.permanentDeleteData == true || doc.permanentDeleteData == false) return Promise.resolve();
-				let newDefinitionObject = JSON.parse(JSON.stringify(definitionObject));
-				delete newDefinitionObject._id.isPermanentDelete;
+				// let newDefinition = JSON.parse(JSON.stringify(doc.definition));
+				let newDefinition = doc.definition.map(def => {
+					if(def.key == '_id')
+						delete def.isPermanentDelete;
+					return def;
+				})
+				// delete newDefinition._id.isPermanentDelete;
 				logger.debug({ 'service is':doc._id });
-				return mongoose.model(`services`).update({ '_id': doc._id }, { $set: { 'permanentDeleteData': definitionObject._id.isPermanentDelete, 'definition': JSON.stringify(newDefinitionObject), '_metadata.version.release': release } })
+				return mongoose.model(`services`).update({ '_id': doc._id }, { $set: { 'permanentDeleteData': idAttribute.isPermanentDelete, 'definition': JSON.stringify(newDefinition), '_metadata.version.release': release } })
 					.then(_d => {
 						logger.debug({ _d });
 						count++;

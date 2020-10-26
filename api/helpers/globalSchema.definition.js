@@ -10,9 +10,32 @@ var definition = {
 		'type': `String`,
 		'required': true
 	},
-	'definition': {
+	'definition': [{
+		'key': `String`,
 		'type': `String`,
-	},
+		'prefix': {
+			'type': `String`,
+			'required': false
+		},
+		"suffix": {
+			'type': `String`,
+			'required': false
+		},
+		'padding': {
+			'type': `Number`,
+			'required': false
+		},
+		'counter': {
+			'type': `Number`,
+			'required': false
+		},
+		'definition': {
+			'type': `Object`
+		},
+		'properties': {
+			'type': `Object`
+		}
+	}],
 	'services': {
 		'type': [`String`]
 	},
