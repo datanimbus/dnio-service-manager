@@ -790,7 +790,7 @@ e.createDoc = (_req, _res) => {
 			})
 			.then(_d => {
 				serviceObj = _d;
-				// To check
+				// To check => if definition is string of array
 				let permObj = {
 					_id: serviceObj._id,
 					app: serviceObj.app,
@@ -1210,8 +1210,8 @@ e.deployAPIHandler = (_req, _res) => {
 							entityName: svcObject.name,
 							roles: role ? role.roles : null,
 							fields: role && role.fields ? JSON.stringify(role.fields) : null,
-							// to check
-							definition: JSON.stringify(svcObject.definition)
+							// to check => converted to array
+							definition: svcObject.definition
 						};
 						promise = deployUtil.updateRolesUserMgmt(svcObject._id, permObj, _req);
 					}
@@ -1330,8 +1330,8 @@ e.deployAPIHandler = (_req, _res) => {
 										entityName: srvcObj.name,
 										roles: role ? role.roles : null,
 										fields: role && role.fields ? JSON.stringify(role.fields) : null,
-										// to check 
-										definition: JSON.stringify(newDefinition)
+										// to check => converted to array
+										definition: newDefinition
 									};
 									return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
 								})

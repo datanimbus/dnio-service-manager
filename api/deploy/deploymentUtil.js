@@ -63,7 +63,6 @@ e.postRolesUserMgmt = function (data, _req) {
 	});
 };
 
-// to check what to be done in user
 e.updateRolesUserMgmt = function (serviceId, data, _req) {
 	var options = {
 		url: envConfig.baseUrlUSR + `/role/` + serviceId,

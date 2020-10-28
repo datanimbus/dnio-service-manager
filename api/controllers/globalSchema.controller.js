@@ -102,8 +102,8 @@ function updateInusrMgmt(srvcObj, definition, _req) {
 		app: srvcObj.app,
 		entity: srvcObj._id,
 		entityName: srvcObj.name,
-		// to check if usermanagement it would be string or json
-		definition: JSON.stringify(definition)
+		// to check => converted to array
+		definition: definition
 	};
 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
 }
