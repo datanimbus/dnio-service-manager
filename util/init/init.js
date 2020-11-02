@@ -1,17 +1,17 @@
 
-let startActiveEntity = require(`./startActiveEntity`);
-let request = require(`request`);
-let envConfig = require(`../../config/config`);
-const mongoose = require(`mongoose`);
+let startActiveEntity = require('./startActiveEntity');
+let request = require('request');
+let envConfig = require('../../config/config');
+const mongoose = require('mongoose');
 let logger = global.logger;
 let release = process.env.RELEASE;
 
 function checkDependency() {
 	var options = {
-		url: envConfig.baseUrlDM + `/health`,
-		method: `GET`,
+		url: envConfig.baseUrlDM + '/health',
+		method: 'GET',
 		headers: {
-			'Content-Type': `application/json`
+			'Content-Type': 'application/json'
 		},
 		json: true
 	};
@@ -21,17 +21,17 @@ function checkDependency() {
 				logger.error(err.message);
 				reject(err);
 			} else if (!res) {
-				logger.error(`Server is DOWN`);
-				reject(new Error(`Server is down`));
+				logger.error('Server is DOWN');
+				reject(new Error('Server is down'));
 			}
 			else {
 				if (res.statusCode >= 200 && res.statusCode < 400) {
-					logger.info(`Connected to DM`);
+					logger.info('Connected to DM');
 					resolve();
 				} else {
 					logger.debug(res.statusCode);
 					logger.debug(body);
-					reject(new Error(`Request returned ` + res.statusCode));
+					reject(new Error('Request returned ' + res.statusCode));
 				}
 			}
 		});
@@ -40,16 +40,16 @@ function checkDependency() {
 
 function fixServiceinNewRelease(successIds) {
 	if (!release) return Promise.resolve();
-	return mongoose.model(`services`).find({$and: [{'_metadata.version.release': { $ne: release }},{'definition': { $exists: true }}] })
+	return mongoose.model('services').find({$and: [{'_metadata.version.release': { $ne: release }},{'definition': { $exists: true }}] })
 		.then(data => {
-			logger.info(`data is`,JSON.stringify(data));
+			logger.info('data is',JSON.stringify(data));
 			var count = 0;
 			var promises = data.map(doc => {
 				// let definitionObject = JSON.parse(doc.definition);
 				let idAttribute = doc.definition.find(attr => attr.key == '_id');
 				if (!(idAttribute && (idAttribute.isPermanentDelete !== true || idAttribute.isPermanentDelete !== false))) 
 				{
-					logger.info(`something wrong here with id attribute`);
+					logger.info('something wrong here with id attribute');
 					return Promise.resolve();
 				}
 				if(doc.permanentDeleteData == true || doc.permanentDeleteData == false) return Promise.resolve();
@@ -58,10 +58,10 @@ function fixServiceinNewRelease(successIds) {
 					if(def.key == '_id')
 						delete def.isPermanentDelete;
 					return def;
-				})
+				});
 				// delete newDefinition._id.isPermanentDelete;
 				logger.debug({ 'service is':doc._id });
-				return mongoose.model(`services`).update({ '_id': doc._id }, { $set: { 'permanentDeleteData': idAttribute.isPermanentDelete, 'definition': JSON.stringify(newDefinition), '_metadata.version.release': release } })
+				return mongoose.model('services').update({ '_id': doc._id }, { $set: { 'permanentDeleteData': idAttribute.isPermanentDelete, 'definition': JSON.stringify(newDefinition), '_metadata.version.release': release } })
 					.then(_d => {
 						logger.debug({ _d });
 						count++;
@@ -72,8 +72,8 @@ function fixServiceinNewRelease(successIds) {
 			});
 			return Promise.all(promises)
 				.then(() => {
-					logger.info(`Total number of services updated ` + count);
-					return mongoose.model(`services`).updateMany({ _id: { '$in': successIds } }, { '_metadata.version.release': process.env.RELEASE });
+					logger.info('Total number of services updated ' + count);
+					return mongoose.model('services').updateMany({ _id: { '$in': successIds } }, { '_metadata.version.release': process.env.RELEASE });
 				});
 		});
 }
@@ -82,7 +82,7 @@ function init() {
 	return checkDependency()
 		.then(() => {
 			startActiveEntity();
-			return require(`./rebuildCode`).init();
+			return require('./rebuildCode').init();
 		})
 		.then(successId=>{
 			return fixServiceinNewRelease(successId);

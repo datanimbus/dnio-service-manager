@@ -1,4 +1,4 @@
-const mongoose = require(`mongoose`);
+const mongoose = require('mongoose');
 const logger = global.logger;
 let e = {};
 // const sampleServices = require('./sampleServices');
@@ -6,7 +6,7 @@ let e = {};
 function getServices() {
 	let services = [];
 	// return Promise.resolve(sampleServices);
-	return mongoose.model(`services`).find({}, `_id relatedSchemas`)
+	return mongoose.model('services').find({}, '_id relatedSchemas')
 		.then(_docs => {
 			_docs.forEach(doc => {
 				services.push({
@@ -24,7 +24,7 @@ function getServices() {
 
 function markAndCheckVisited(serviceId, services) {
 	let obj = services.find(obj => obj._id === serviceId);
-	if (!obj) throw new Error(`Related service ` + serviceId + `not found`);
+	if (!obj) throw new Error('Related service ' + serviceId + 'not found');
 	if (obj.visited === true) {
 		return true;
 	}
@@ -74,8 +74,8 @@ e.checkCyclic = (serviceId, relatedSchemas) => {
 				}
 				return obj;
 			});
-			let isCyclicIncoming = traversePath(`incoming`, JSON.parse(JSON.stringify(services)), serviceId);
-			let isCyclicOutgoing = traversePath(`outgoing`, JSON.parse(JSON.stringify(services)), serviceId);
+			let isCyclicIncoming = traversePath('incoming', JSON.parse(JSON.stringify(services)), serviceId);
+			let isCyclicOutgoing = traversePath('outgoing', JSON.parse(JSON.stringify(services)), serviceId);
 			return isCyclicIncoming || isCyclicOutgoing;
 		})
 		.catch(err => {

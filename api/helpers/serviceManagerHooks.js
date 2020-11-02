@@ -1,22 +1,22 @@
-const mongoose = require(`mongoose`);
-const _ = require(`lodash`);
-const request = require(`request`);
+const mongoose = require('mongoose');
+const _ = require('lodash');
+const request = require('request');
 const logger = global.logger;
-const envConfig = require(`../../config/config.js`);
+const envConfig = require('../../config/config.js');
 var e = {};
 
 function getGlobalDefinitions(app) {
-	return mongoose.model(`globalSchema`).find({ 'app': app }, { _id: 1, name: 1 });
+	return mongoose.model('globalSchema').find({ 'app': app }, { _id: 1, name: 1 });
 }
 
 function getGDDependencyObj(schema) {
 	var gds = [];
 	schema.forEach(sch => {
-		if (sch.key != `properties` && sch.key != `_id`) {
-			if (sch[`properties`] && sch[`properties`][`schema`])
-				gds.push(sch[`properties`][`schema`]);
-			if (sch[`definition`]) {
-				let nestedGds = getGDDependencyObj(sch[`definition`]);
+		if (sch.key != 'properties' && sch.key != '_id') {
+			if (sch['properties'] && sch['properties']['schema'])
+				gds.push(sch['properties']['schema']);
+			if (sch['definition']) {
+				let nestedGds = getGDDependencyObj(sch['definition']);
 				gds = _.union(gds, nestedGds);
 			}
 		}
@@ -37,11 +37,11 @@ e.updateServicesInGlobalSchema = (serviceObj, req) => {
 				let depGD = gds.find(gd => gd._id === schemaGD);
 				if (depGD) dependentGD.push(depGD._id);
 				else {
-					throw new Error(`Could not find global schema with ` + JSON.stringify(schemaGD));
+					throw new Error('Could not find global schema with ' + JSON.stringify(schemaGD));
 				}
 			});
 			_.uniq(dependentGD);
-			return mongoose.model(`globalSchema`).find({
+			return mongoose.model('globalSchema').find({
 				services: serviceObj._id
 			});
 		})
@@ -63,7 +63,7 @@ e.updateServicesInGlobalSchema = (serviceObj, req) => {
 		})
 		.then(() => {
 			if (_.isEmpty(dependentGD)) return [];
-			return mongoose.model(`globalSchema`).find({
+			return mongoose.model('globalSchema').find({
 				_id: {
 					$in: dependentGD
 				}
@@ -83,7 +83,7 @@ e.updateServicesInGlobalSchema = (serviceObj, req) => {
 };
 
 e.removeServicesInGlobalSchema = function (serviceId, req) {
-	return mongoose.model(`globalSchema`).find({
+	return mongoose.model('globalSchema').find({
 		services: serviceId
 	})
 		.then(docs => {
@@ -100,11 +100,11 @@ e.removeServicesInGlobalSchema = function (serviceId, req) {
 
 e.validateApp = function (_req) {
 	var options = {
-		url: envConfig.baseUrlUSR + `/app/` + _req.body.app + `?select=_id,type`,
-		method: `GET`,
+		url: envConfig.baseUrlUSR + '/app/' + _req.body.app + '?select=_id,type',
+		method: 'GET',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`TxnId`),
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('TxnId'),
 			'Authorization': _req.headers.authorization
 		}
 	};
@@ -113,17 +113,17 @@ e.validateApp = function (_req) {
 			logger.error(err.message);
 			_reject();
 		} else if (!res) {
-			logger.error(`App management service is down!`);
+			logger.error('App management service is down!');
 			_reject({
-				'message': `App management service is down!`
+				'message': 'App management service is down!'
 			});
 		} else if (res.statusCode == 404) {
-			logger.info(`App ` + _req.body.app + ` not found!`);
+			logger.info('App ' + _req.body.app + ' not found!');
 			_reject({
-				'message': `Invalid app`
+				'message': 'Invalid app'
 			});
 		} else {
-			logger.info(`App ` + _req.body.app + ` exists!`);
+			logger.info('App ' + _req.body.app + ' exists!');
 			_resolve();
 		}
 	}));
@@ -131,18 +131,18 @@ e.validateApp = function (_req) {
 
 e.createDSinMON = (serviceObj, _req) => {
 	let body = {
-		'srvc': serviceObj.app + `.` + serviceObj.collectionName
+		'srvc': serviceObj.app + '.' + serviceObj.collectionName
 	};
-	if (serviceObj.versionValidity && serviceObj.versionValidity.validityType == `time`) {
+	if (serviceObj.versionValidity && serviceObj.versionValidity.validityType == 'time') {
 		body.expiry = serviceObj.versionValidity.validityValue;
 	}
 	var options = {
-		url: envConfig.baseUrlMON + `/create`,
+		url: envConfig.baseUrlMON + '/create',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		json: true,
 		body: body
@@ -153,9 +153,9 @@ e.createDSinMON = (serviceObj, _req) => {
 			_reject();
 		}
 		else if (!res) {
-			logger.error(`Monitoring service is down!`);
+			logger.error('Monitoring service is down!');
 			_reject({
-				'message': `Monitoring service is down!`
+				'message': 'Monitoring service is down!'
 			});
 		}
 		else if (res) _resolve();
@@ -165,28 +165,28 @@ e.createDSinMON = (serviceObj, _req) => {
 
 e.updateExpiry = (serviceObj, _req, oldCollectionName, newCollectionName) => {
 	let body = {};
-	if (serviceObj.versionValidity.validityType == `time`) {
+	if (serviceObj.versionValidity.validityType == 'time') {
 		body = {
-			'srvc': serviceObj.app + `.` + serviceObj.collectionName,
+			'srvc': serviceObj.app + '.' + serviceObj.collectionName,
 			'expiry': serviceObj.versionValidity.validityValue
 		};
 	}
-	if (serviceObj.versionValidity.validityType == `count`) {
-		body = { 'srvc': serviceObj.app + `.` + serviceObj.collectionName };
+	if (serviceObj.versionValidity.validityType == 'count') {
+		body = { 'srvc': serviceObj.app + '.' + serviceObj.collectionName };
 	}
 	if (oldCollectionName != newCollectionName) {
-		body.oldCollectionName = serviceObj.app + `.` + oldCollectionName,
-		body.newCollectionName = serviceObj.app + `.` + newCollectionName;
+		body.oldCollectionName = serviceObj.app + '.' + oldCollectionName,
+		body.newCollectionName = serviceObj.app + '.' + newCollectionName;
 	}
 
 	var options = {
-		url: envConfig.baseUrlMON + `/update`,
-		method: `PUT`,
+		url: envConfig.baseUrlMON + '/update',
+		method: 'PUT',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		json: true,
 		body: body
@@ -197,9 +197,9 @@ e.updateExpiry = (serviceObj, _req, oldCollectionName, newCollectionName) => {
 			_reject();
 		}
 		else if (!res) {
-			logger.error(`Monitoring service is down!`);
+			logger.error('Monitoring service is down!');
 			_reject({
-				'message': `Monitoring service is down!`
+				'message': 'Monitoring service is down!'
 			});
 		}
 		else if (res) _resolve();
@@ -210,13 +210,13 @@ e.updateExpiry = (serviceObj, _req, oldCollectionName, newCollectionName) => {
 e.deleteAudit = (serviceObj, _req) => {
 
 	var options = {
-		url: envConfig.baseUrlMON + `/delete/` + serviceObj,
-		method: `DELETE`,
+		url: envConfig.baseUrlMON + '/delete/' + serviceObj,
+		method: 'DELETE',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		json: true
 	};
@@ -228,9 +228,9 @@ e.deleteAudit = (serviceObj, _req) => {
 			_reject();
 		}
 		else if (!res) {
-			logger.error(`Monitoring service is down!`);
+			logger.error('Monitoring service is down!');
 			_reject({
-				'message': `Monitoring service is down!`
+				'message': 'Monitoring service is down!'
 			});
 		}
 		else if (res) _resolve();

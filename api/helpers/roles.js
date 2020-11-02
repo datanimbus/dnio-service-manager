@@ -7,66 +7,66 @@ function rand(index) {
 }
 
 e.getDefaultRoles = function() {
-	const mp = `P` + rand(10);
-	const vp = `P` + rand(10);
-	const srp = `P` + rand(10);
+	const mp = 'P' + rand(10);
+	const vp = 'P' + rand(10);
+	const srp = 'P' + rand(10);
 	return [
 		{
 			skipReviewRole: true,
 			id: srp,
-			name: `Skip Review`,
+			name: 'Skip Review',
 			operations: [
 				{
-					method: `SKIP_REVIEW`
+					method: 'SKIP_REVIEW'
 				},
 				{
-					method: `POST`
+					method: 'POST'
 				},
 				{
-					method: `PUT`
+					method: 'PUT'
 				},
 				{
-					method: `DELETE`
+					method: 'DELETE'
 				},
 			],
-			description: `This role entitles an authorized user to create, update or delete a record and without any approval`
+			description: 'This role entitles an authorized user to create, update or delete a record and without any approval'
 		},
 		{
 			manageRole: true,
 			id: mp,
-			name: `Manage`,
+			name: 'Manage',
 			operations: [
 				{
-					method: `POST`
+					method: 'POST'
 				},
 				{
-					method: `PUT`
+					method: 'PUT'
 				},
 				{
-					method: `DELETE`
+					method: 'DELETE'
 				},
 				{
-					method: `GET`
+					method: 'GET'
 				}
 			],
-			description: `This role entitles an authorized user to create, update or delete a record`
+			description: 'This role entitles an authorized user to create, update or delete a record'
 		},
 		{
 			viewRole: true,
 			id: vp,
-			name: `View`,
+			name: 'View',
 			operations: [
 				{
-					method: `GET`
+					method: 'GET'
 				}
 			],
-			description: `This role entitles an authorized user to view the record`
+			description: 'This role entitles an authorized user to view the record'
 		}
 	];
 };
 
 e.getDefaultFields = function (roleIds, definition, fields) {
-	if (typeof fields === `string`) {
+	if (typeof fields === 'string') {
 		fields = JSON.parse(fields);
 	}
 	let arrDefinition = definition;
@@ -84,7 +84,7 @@ e.getDefaultFields = function (roleIds, definition, fields) {
 			def.properties = {};
 		}
 		if (!def._id) {
-			if (def.type === `Object`) {
+			if (def.type === 'Object') {
 				if (!fields[def.key]) {
 					fields[def.key] = {};
 				}
@@ -93,17 +93,17 @@ e.getDefaultFields = function (roleIds, definition, fields) {
 				if (!fields[def.key]) {
 					fields[def.key] = {};
 				}
-				if ([`String`, `Number`, `Boolean`, `Date`, `Array`].indexOf(def.type) > -1) {
-					fields[def.key][`_t`] = def.type;
+				if (['String', 'Number', 'Boolean', 'Date', 'Array'].indexOf(def.type) > -1) {
+					fields[def.key]['_t'] = def.type;
 				} else if (def.type) {
-					fields[def.key][`_t`] = `String`;
+					fields[def.key]['_t'] = 'String';
 				}
-				if (!fields[def.key][`_p`]) {
-					fields[def.key][`_p`] = {};
+				if (!fields[def.key]['_p']) {
+					fields[def.key]['_p'] = {};
 				}
 				roleIds.forEach(id => {
-					if (!fields[def.key][`_p`][id]) {
-						fields[def.key][`_p`][id] = `R`;
+					if (!fields[def.key]['_p'][id]) {
+						fields[def.key]['_p'][id] = 'R';
 					}
 				});
 			}
@@ -111,13 +111,13 @@ e.getDefaultFields = function (roleIds, definition, fields) {
 			if (!fields[def.key]) {
 				fields[def.key] = {};
 			}
-			fields[def.key][`_t`] = `String`;
-			if (!fields[def.key][`_p`]) {
-				fields[def.key][`_p`] = {};
+			fields[def.key]['_t'] = 'String';
+			if (!fields[def.key]['_p']) {
+				fields[def.key]['_p'] = {};
 			}
 			roleIds.forEach(id => {
-				if (!fields[def.key][`_p`][id]) {
-					fields[def.key][`_p`][id] = `R`;
+				if (!fields[def.key]['_p'][id]) {
+					fields[def.key]['_p'][id] = 'R';
 				}
 			});
 		}

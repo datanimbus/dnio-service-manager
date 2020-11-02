@@ -1,39 +1,39 @@
 'use strict';
 
-const mongoose = require(`mongoose`);
-const definition = require(`../helpers/globalSchema.definition.js`).definition;
-const SMCrud = require(`@appveen/swagger-mongoose-crud`);
-const utils = require(`@appveen/utils`);
-const _ = require(`lodash`);
-const odpUtils = require(`@appveen/odp-utils`);
-const globalDefHelper = require(`../helpers/util/globalDefinitionHelper`);
-const deployUtil = require(`../deploy/deploymentUtil`);
-let queueMgmt = require(`../../util/queueMgmt`);
+const mongoose = require('mongoose');
+const definition = require('../helpers/globalSchema.definition.js').definition;
+const SMCrud = require('@appveen/swagger-mongoose-crud');
+const utils = require('@appveen/utils');
+const _ = require('lodash');
+const odpUtils = require('@appveen/odp-utils');
+const globalDefHelper = require('../helpers/util/globalDefinitionHelper');
+const deployUtil = require('../deploy/deploymentUtil');
+let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const schema = new mongoose.Schema(definition, {
 	usePushEach: true
 });
-const envConfig = require(`../../config/config`);
-const request = require(`request`);
-const smHooks = require(`../helpers/serviceManagerHooks.js`);
+const envConfig = require('../../config/config');
+const request = require('request');
+const smHooks = require('../helpers/serviceManagerHooks.js');
 const logger = global.logger;
 var e = {};
 var options = {
 	logger: logger,
-	collectionName: `globalSchema`
+	collectionName: 'globalSchema'
 };
 
 schema.index({ name: 1, app: 1 }, { unique: true });
 
 let createGSInUserMgmt = function (_id, _req, body) {
 	var options = {
-		url: envConfig.baseUrlUSR + `/library/` + _id,
-		method: `POST`,
+		url: envConfig.baseUrlUSR + '/library/' + _id,
+		method: 'POST',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		json: true,
 		body: body
@@ -41,31 +41,31 @@ let createGSInUserMgmt = function (_id, _req, body) {
 	request.post(options, function (err, res) {
 		if (err) {
 			logger.error(err.message);
-		} else if (!res) logger.error(`User Management Service DOWN`);
+		} else if (!res) logger.error('User Management Service DOWN');
 		else {
-			logger.info(`Library creation process of ` + _id + `  queued in user management`);
+			logger.info('Library creation process of ' + _id + '  queued in user management');
 		}
 	});
 };
 
 let deleteGSInUserMgmt = function (_id, _req) {
 	var options = {
-		url: envConfig.baseUrlUSR + `/library/` + _id,
-		method: `DELETE`,
+		url: envConfig.baseUrlUSR + '/library/' + _id,
+		method: 'DELETE',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		json: true
 	};
 	request.delete(options, function (err, res) {
 		if (err) {
 			logger.error(err.message);
-		} else if (!res) logger.error(`User Management Service DOWN`);
+		} else if (!res) logger.error('User Management Service DOWN');
 		else {
-			logger.info(`Library deletion process of ` + _id + `  queued in user management`);
+			logger.info('Library deletion process of ' + _id + '  queued in user management');
 		}
 	});
 };
@@ -73,14 +73,14 @@ let deleteGSInUserMgmt = function (_id, _req) {
 function validateDefinition(schema) {
 
 	schema.forEach(sch => {
-		if (!sch[`type`] || !sch[`properties`]) {
-			throw new Error(`Library definition is invalid`);
+		if (!sch['type'] || !sch['properties']) {
+			throw new Error('Library definition is invalid');
 		}
-		if (sch[`type`] === `object` || sch[`type`] === `Array`) {
-			if (!sch[`definition`] || typeof sch[`definition`] != `object`) {
-				throw new Error(`Library definition is invalid`);
+		if (sch['type'] === 'object' || sch['type'] === 'Array') {
+			if (!sch['definition'] || typeof sch['definition'] != 'object') {
+				throw new Error('Library definition is invalid');
 			}
-			validateDefinition(sch[`definition`]);
+			validateDefinition(sch['definition']);
 		}
 	});
 
@@ -108,31 +108,31 @@ function updateInusrMgmt(srvcObj, definition, _req) {
 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
 }
 
-schema.pre(`save`, function (next) {
+schema.pre('save', function (next) {
 	let self = this;
 	if(!self.definition) next();
 	let definition = self.definition;
-	if (!definition.definition || typeof definition.definition !== `object`) {
-		next(new Error(`Library definition is invalid`));
+	if (!definition.definition || typeof definition.definition !== 'object') {
+		next(new Error('Library definition is invalid'));
 	} else {
 		try {
 			validateDefinition(definition.definition);
 		} catch (err) {
-			next(new Error(`Library definition is invalid`));
+			next(new Error('Library definition is invalid'));
 		}
 	}
 	next();
 });
 
-schema.pre(`save`, function (next) {
+schema.pre('save', function (next) {
 	if (!this.name) {
-		next(new Error(`Name is mandatory field`));
+		next(new Error('Name is mandatory field'));
 	} else {
 		next();
 	}
 });
 
-schema.pre(`save`, function (next) {
+schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
@@ -140,15 +140,15 @@ schema.pre(`save`, function (next) {
 	next();
 });
 
-schema.post(`save`, function (error, doc, next) {
+schema.post('save', function (error, doc, next) {
 	if (error.code == 11000 || (error && error.errors && error.errors.name)) {
-		next(new Error(`Library name already exists.`));
+		next(new Error('Library name already exists.'));
 	} else {
 		next();
 	}
 });
 
-schema.pre(`save`, function (next, req) {
+schema.pre('save', function (next, req) {
 	let self = this;
 	this._req = req;
 	this.wasNew = this.isNew;
@@ -158,11 +158,11 @@ schema.pre(`save`, function (next, req) {
 				if (_d) {
 					self._oldData = _d.toObject();
 					if (self._oldData.app != self.app) {
-						return next(new Error(`App change not permitted`));
+						return next(new Error('App change not permitted'));
 					}
 					next();
 				} else {
-					next(new Error(`could not find global schema ` + self._id));
+					next(new Error('could not find global schema ' + self._id));
 				}
 			});
 	} else {
@@ -170,20 +170,20 @@ schema.pre(`save`, function (next, req) {
 	}
 });
 
-schema.pre(`save`, utils.counter.getIdGenerator(`SCHM`, `globalSchema`, null, null, 1000));
+schema.pre('save', utils.counter.getIdGenerator('SCHM', 'globalSchema', null, null, 1000));
 
-schema.pre(`save`, odpUtils.auditTrail.getAuditPreSaveHook(`globalSchema`));
+schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('globalSchema'));
 
-schema.post(`save`, odpUtils.auditTrail.getAuditPostSaveHook(`globalSchema.audit`, client, `auditQueue`));
+schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('globalSchema.audit', client, 'auditQueue'));
 
-schema.pre(`remove`, odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post(`remove`, odpUtils.auditTrail.getAuditPostRemoveHook(`globalSchema.audit`, client, `auditQueue`));
+schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('globalSchema.audit', client, 'auditQueue'));
 
-schema.pre(`remove`, function (next, req) {
+schema.pre('remove', function (next, req) {
 	let self = this;
 	this._req = req;
-	_.isEmpty(self.services) ? next() : next(new Error(self.services + ` still use this definition`));
+	_.isEmpty(self.services) ? next() : next(new Error(self.services + ' still use this definition'));
 });
 
 function deployService(serv, socket, _req) {
@@ -215,34 +215,34 @@ function deployService(serv, socket, _req) {
 	// });
 }
 
-schema.post(`save`, function (doc) {
-	let socket = doc._req.app.get(`socket`);
+schema.post('save', function (doc) {
+	let socket = doc._req.app.get('socket');
 	if (doc._oldData && doc.definition && doc._oldData.definition != doc.definition) {
-		mongoose.model(`services`).find({ '_id': { '$in': doc.services } })
+		mongoose.model('services').find({ '_id': { '$in': doc.services } })
 			.then(services => {
 				let promiseArr = services.map(serv => deployService(serv, socket, doc._req));
 				return Promise.all(promiseArr);
 			})
 			.then(() => {
-				logger.info(`Redeployed services ` + doc.services);
+				logger.info('Redeployed services ' + doc.services);
 			})
 			.catch(err => logger.error(err));
 	}
 });
 
-schema.post(`save`, function(doc) {
-	let eventId = `EVENT_LIBRARY_UPDATE`;
+schema.post('save', function(doc) {
+	let eventId = 'EVENT_LIBRARY_UPDATE';
 	if(doc.wasNew)
-		eventId = `EVENT_LIBRARY_CREATE`;
-	odpUtils.eventsUtil.publishEvent(eventId, `library`, doc._req, doc);
+		eventId = 'EVENT_LIBRARY_CREATE';
+	odpUtils.eventsUtil.publishEvent(eventId, 'library', doc._req, doc);
 });
 
-schema.post(`remove`, function (doc) {
+schema.post('remove', function (doc) {
 	deleteGSInUserMgmt(doc._id, doc._req);
-	odpUtils.eventsUtil.publishEvent(`EVENT_LIBRARY_DELETE`, `library`, doc._req, doc);
+	odpUtils.eventsUtil.publishEvent('EVENT_LIBRARY_DELETE', 'library', doc._req, doc);
 });
 
-var crudder = new SMCrud(schema, `globalSchema`, options);
+var crudder = new SMCrud(schema, 'globalSchema', options);
 e.createDoc = (_req, _res) => {
 	smHooks.validateApp(_req)
 		.then(() => {

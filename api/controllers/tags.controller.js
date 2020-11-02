@@ -1,36 +1,36 @@
 'use strict';
 
-const mongoose = require(`mongoose`);
+const mongoose = require('mongoose');
 const logger = global.logger;
 let e = {};
 e.tags = (_req, _res) => {
 	let tag = _req.swagger.params.tag.value;
-	let regex = tag ? `^` + tag : ``;
-	mongoose.model(`services`)
+	let regex = tag ? '^' + tag : '';
+	mongoose.model('services')
 		.aggregate([{
 			'$match': {
 				'tags': {
 					'$regex': regex,
-					'$options': `i`
+					'$options': 'i'
 				}
 			}
 		},
 		{
-			'$unwind': `$tags`
+			'$unwind': '$tags'
 		},
 		{
 			'$match': {
 				'tags': {
 					'$regex': regex,
-					'$options': `i`
+					'$options': 'i'
 				}
 			}
 		},
 		{
 			'$group': {
-				'_id': `TAG1`,
+				'_id': 'TAG1',
 				'tags': {
-					'$addToSet': `$tags`
+					'$addToSet': '$tags'
 				}
 			}
 		}

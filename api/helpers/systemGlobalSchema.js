@@ -1,24 +1,24 @@
 module.exports = [
 	{
-		'name': `Geojson`,
+		'name': 'Geojson',
 		'definition': {
-			'type': `Object`,
+			'type': 'Object',
 			'definition': [
 				{
-					'type': `Object`,
+					'type': 'Object',
 					'key': 'geometry',
 					'definition': [
 						{
-							'type': `String`,
+							'type': 'String',
 							'key': 'type',
-							'enum': [`Point`]
+							'enum': ['Point']
 						},
 						{
-							'type': `Array`,
+							'type': 'Array',
 							'key': 'coordinates',
 							'definition': [
 								{
-									'type': `Number`,
+									'type': 'Number',
 									'key': '_self'
 								}
 							]
@@ -26,75 +26,75 @@ module.exports = [
 					]
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'formattedAddress'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'town'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'district'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'state'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'country'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'pincode'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'userInput'
 				}
 			]
 		}
 	},
 	{
-		'name': `File`,
+		'name': 'File',
 		'definition': {
-			'type': `Object`,
+			'type': 'Object',
 			'definition': [
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': '_id'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'filename'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'contentType'
 				},
 				{
-					'type': `Number`,
+					'type': 'Number',
 					'key': 'length'
 				},
 				{
-					'type': `Number`,
+					'type': 'Number',
 					'key': 'chunkSize'
 				},
 				{
-					'type': `Date`,
+					'type': 'Date',
 					'key': 'uploadDate'
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'md5'
 				},
 				{
-					'type': `Object`,
+					'type': 'Object',
 					'key': 'metadata',
 					'definition': [
 						{
-							'type': `String`,
+							'type': 'String',
 							'key': 'filename'
 						}
 					]
@@ -102,62 +102,62 @@ module.exports = [
 			]
 		}
 	}, {
-		'name': `Relation`,
+		'name': 'Relation',
 		'definition': {
-			'type': `Object`,
+			'type': 'Object',
 			'definition': [
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': '_id',
 					'properties': {
-						'name': `_id`,
-						'_typeChanged': `String`
+						'name': '_id',
+						'_typeChanged': 'String'
 					}
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': '_href',
 					'properties': {
-						'name': `_href`,
-						'_typeChanged': `String`
+						'name': '_href',
+						'_typeChanged': 'String'
 					}
 				}
 			]
 		}
 	},
 	{
-		'name': `User`,
+		'name': 'User',
 		'definition': {
-			'type': `User`,
+			'type': 'User',
 			'definition': [
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': '_id',
 					'properties': {
-						'name': `_id`,
+						'name': '_id',
 					}
 				}
 			]
 		}
 	}, {
-		'name': `SecureText`,
+		'name': 'SecureText',
 		'definition': {
-			'type': `Object`,
+			'type': 'Object',
 			'definition': [
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'value',
 					'properties': {
-						'name': `value`,
-						'_typeChanged': `String`
+						'name': 'value',
+						'_typeChanged': 'String'
 					}
 				},
 				{
-					'type': `String`,
+					'type': 'String',
 					'key': 'checksum',
 					'properties': {
-						'name': `checksum`,
-						'_typeChanged': `String`
+						'name': 'checksum',
+						'_typeChanged': 'String'
 					}
 				}
 			]

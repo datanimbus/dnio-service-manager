@@ -1,58 +1,58 @@
 var definition = {
 	'_id': {
-		'type': `String`,
+		'type': 'String',
 		'default': null
 	},
 	'description': {
-		'type': `String`
+		'type': 'String'
 	},
 	'name': {
-		'type': `String`,
+		'type': 'String',
 		'required': true
 	},
 	'definition': [{
-		'key': `String`,
-		'type': `String`,
+		'key': 'String',
+		'type': 'String',
 		'prefix': {
-			'type': `String`,
+			'type': 'String',
 			'required': false
 		},
-		"suffix": {
-			'type': `String`,
+		'suffix': {
+			'type': 'String',
 			'required': false
 		},
 		'padding': {
-			'type': `Number`,
+			'type': 'Number',
 			'required': false
 		},
 		'counter': {
-			'type': `Number`,
+			'type': 'Number',
 			'required': false
 		},
 		'definition': {
-			'type': `Object`
+			'type': 'Object'
 		},
 		'properties': {
-			'type': `Object`
+			'type': 'Object'
 		}
 	}],
 	'services': {
-		'type': [`String`]
+		'type': ['String']
 	},
 	'app': {
-		'type': `String`
+		'type': 'String'
 	},
 	'attributeList': [{
-		'key': `String`,
-		'name': `String`,
+		'key': 'String',
+		'name': 'String',
 		'properties': {
-			'type': `Object`
+			'type': 'Object'
 		}
 	}],
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': { 'type': `Number` }
+				'release': { 'type': 'Number' }
 			}
 		}
 	}

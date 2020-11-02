@@ -1,20 +1,20 @@
-const mongoose = require(`mongoose`);
-const _ = require(`lodash`);
+const mongoose = require('mongoose');
+const _ = require('lodash');
 const logger = global.logger;
 var e = {};
 
 function generateFilter(schema, key) {
-	if (typeof schema === `object` && Object.keys(schema)[0] === `_self`) {
-		if (typeof schema[Object.keys(schema)[0]] === `object`) {
-			return embedObject(schema[`_self`], `$elemMatch`);
+	if (typeof schema === 'object' && Object.keys(schema)[0] === '_self') {
+		if (typeof schema[Object.keys(schema)[0]] === 'object') {
+			return embedObject(schema['_self'], '$elemMatch');
 		} else {
 			return `"${key}":{"$elemMatch":{"_id":"{{id}}"}}`;
 		}
-	} else if (typeof schema === `object`) {
-		let newKey = key == `` ? `${Object.keys(schema)[0]}` : `${key}.${Object.keys(schema)[0]}`;
-		if (typeof schema[Object.keys(schema)[0]] === `object`) {
+	} else if (typeof schema === 'object') {
+		let newKey = key == '' ? `${Object.keys(schema)[0]}` : `${key}.${Object.keys(schema)[0]}`;
+		if (typeof schema[Object.keys(schema)[0]] === 'object') {
 			let nextKey = Object.keys(schema[Object.keys(schema)[0]])[0];
-			if (nextKey === `_self` && typeof schema[Object.keys(schema)[0]][nextKey] === `object`) {
+			if (nextKey === '_self' && typeof schema[Object.keys(schema)[0]][nextKey] === 'object') {
 				return embedObject(schema[Object.keys(schema)[0]], newKey);
 			} else {
 				return generateFilter(schema[Object.keys(schema)[0]], newKey);
@@ -23,37 +23,37 @@ function generateFilter(schema, key) {
 			return `"${newKey}._id":"{{id}}"`;
 		}
 	} else {
-		return `"{{id}}"`;
+		return '"{{id}}"';
 	}
 }
 
 function embedObject(schema, key) {
-	return typeof schema === `object` ? `"${key}":{${generateFilter(schema, ``)}}` : `"${key}._id":{${generateFilter(schema, ``)}}`;
+	return typeof schema === 'object' ? `"${key}":{${generateFilter(schema, '')}}` : `"${key}._id":{${generateFilter(schema, '')}}`;
 }
 
 function getSchemaRelations(schema) {
 	let relations = [];
 	// Object.keys(schema).forEach(key => {
 	schema.forEach(attr => {
-		if (attr[`properties`] && attr[`properties`][`relatedTo`]) {
+		if (attr['properties'] && attr['properties']['relatedTo']) {
 			let pathObj = {};
-			pathObj[attr.key] = attr[`type`];
-			let service = attr[`properties`][`relatedTo`];
-			let isRequired = attr[`properties`][`required`] ? true : false;
-			if (!isRequired) isRequired = attr[`properties`][`deleteAction`] == `restrict`;
+			pathObj[attr.key] = attr['type'];
+			let service = attr['properties']['relatedTo'];
+			let isRequired = attr['properties']['required'] ? true : false;
+			if (!isRequired) isRequired = attr['properties']['deleteAction'] == 'restrict';
 			relations.push({
 				path: JSON.parse(JSON.stringify(pathObj)),
 				service,
 				isRequired
 			});
-		} else if (attr[`definition`]) {
-			let nestedRel = getSchemaRelations(attr[`definition`]);
+		} else if (attr['definition']) {
+			let nestedRel = getSchemaRelations(attr['definition']);
 			nestedRel.forEach(obj => {
 				let rel = {};
-				rel[`service`] = obj.service;
-				rel[`path`] = {};
-				rel[`path`][attr.key] = JSON.parse(JSON.stringify(obj.path));
-				rel[`isRequired`] = obj.isRequired;
+				rel['service'] = obj.service;
+				rel['path'] = {};
+				rel['path'][attr.key] = JSON.parse(JSON.stringify(obj.path));
+				rel['isRequired'] = obj.isRequired;
 				relations.push(rel);
 			});
 		}
@@ -65,23 +65,23 @@ function getUsers(schema) {
 	let relations = [];
 	// Object.keys(schema).forEach(key => {
 	schema.forEach(attr => {
-		if (attr && attr[`type`] == `User`) {
+		if (attr && attr['type'] == 'User') {
 			let pathObj = {};
-			pathObj[attr.key] = attr[`type`];
-			let isRequired = attr[`properties`][`required`] ? true : false;
-			if (!isRequired) isRequired = attr[`properties`][`deleteAction`] == `restrict`;
+			pathObj[attr.key] = attr['type'];
+			let isRequired = attr['properties']['required'] ? true : false;
+			if (!isRequired) isRequired = attr['properties']['deleteAction'] == 'restrict';
 			relations.push({
 				path: JSON.parse(JSON.stringify(pathObj)),
 				isRequired
 			});
 		}
-		else if (attr[`definition`]) {
-			let nestedRel = getUsers(attr[`definition`]);
+		else if (attr['definition']) {
+			let nestedRel = getUsers(attr['definition']);
 			nestedRel.forEach(obj => {
 				let rel = {};
-				rel[`path`] = {};
-				rel[`path`][attr.key] = JSON.parse(JSON.stringify(obj.path));
-				rel[`isRequired`] = obj.isRequired;
+				rel['path'] = {};
+				rel['path'][attr.key] = JSON.parse(JSON.stringify(obj.path));
+				rel['isRequired'] = obj.isRequired;
 				relations.push(rel);
 			});
 		}
@@ -111,7 +111,7 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 
 	let userObj = userRelation.map(obj => {
 		let newObj = JSON.parse(JSON.stringify(obj));
-		let filter = `{ ${generateFilter(newObj.path, ``)}}`;
+		let filter = `{ ${generateFilter(newObj.path, '')}}`;
 		newObj.filter = filter;
 		newObj.path = JSON.stringify(newObj.path);
 		return newObj;
@@ -128,7 +128,7 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 	//         if (isCyclic) throw new Error("Generated service will lead to cyclic relationship");
 	//     })
 	//     .then(() => {
-	return mongoose.model(`services`).find({
+	return mongoose.model('services').find({
 		_id: {
 			$in: outgoingServicesList
 		}
@@ -136,13 +136,13 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 		.then((docs) => {
 			if (docs.length === outgoingServicesList.length) {
 				outgoingServiceArr = docs;
-				let model = mongoose.model(`services`);
+				let model = mongoose.model('services');
 				let doc = new model(serviceInfo);
 				return doc.save(req);
 			} else {
 				let docsIdList = docs.map(obj => obj._id);
 				let unMatchedId = _.difference(outgoingServicesList, docsIdList);
-				throw new Error(`The following ServiceID not found ` + unMatchedId);
+				throw new Error('The following ServiceID not found ' + unMatchedId);
 			}
 		})
 		.then((_genServiceObj) => {
@@ -150,8 +150,8 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 			outgoingServiceArr.forEach(doc => {
 				let pathArr = getPathfromServiceId(doc._id, relations);
 				pathArr.forEach(obj => {
-					let basePath = genServiceObj.api.charAt(0) === `/` ? genServiceObj.api : `/` + genServiceObj.api;
-					let uri = `/` + genServiceObj.app + basePath + `?filter={` + generateFilter(obj.path, ``) + `}`;
+					let basePath = genServiceObj.api.charAt(0) === '/' ? genServiceObj.api : '/' + genServiceObj.api;
+					let uri = '/' + genServiceObj.app + basePath + '?filter={' + generateFilter(obj.path, '') + '}';
 					if (!doc.relatedSchemas.incoming) doc.relatedSchemas.incoming = [];
 					doc.relatedSchemas.incoming.push({
 						service: genServiceObj._id,
@@ -161,7 +161,7 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 						isRequired: obj.isRequired
 					});
 				});
-				doc.markModified(`relatedSchemas.incoming`);
+				doc.markModified('relatedSchemas.incoming');
 				servicePromiseArr.push(doc.save(req));
 			});
 			return Promise.all(servicePromiseArr);
@@ -186,24 +186,24 @@ e.getOutgoingRelationAndUpdate = function (newData, req) {
 	});
 	let userObj = newUsers.map(obj => {
 		let newObj = JSON.parse(JSON.stringify(obj));
-		let filter = `{ ${generateFilter(newObj.path, ``)}}`;
+		let filter = `{ ${generateFilter(newObj.path, '')}}`;
 		newObj.filter = filter;
 		newObj.path = JSON.stringify(newObj.path);
 		return newObj;
 	});
 	newData.relatedSchemas.outgoing = outgoingServicesObj;
 	newData.relatedSchemas.internal.users = userObj;
-	return mongoose.model(`services`).find({ _id: { $in: newOutgoingServicesList } })
+	return mongoose.model('services').find({ _id: { $in: newOutgoingServicesList } })
 		.then((docs) => {
-			logger.debug(`docs.length`, docs.length);
-			logger.debug(`newOutgoingServicesList.length`, newOutgoingServicesList.length);
+			logger.debug('docs.length', docs.length);
+			logger.debug('newOutgoingServicesList.length', newOutgoingServicesList.length);
 			if (docs.length === newOutgoingServicesList.length) {
-				newData.markModified(`relatedSchemas.outgoing`); //to save the latest changes of relatedSchemas.outgoing
+				newData.markModified('relatedSchemas.outgoing'); //to save the latest changes of relatedSchemas.outgoing
 				return newData.save(req);
 			} else {
 				let docsIdList = docs.map(obj => obj._id);
 				let unMatchedId = _.difference(newOutgoingServicesList, docsIdList);
-				throw new Error(`The following Service ID not found ` + unMatchedId);
+				throw new Error('The following Service ID not found ' + unMatchedId);
 			}
 		});
 };
@@ -225,7 +225,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 	
 	let userObj = newUsersRelation.map(obj => {
 		let newObj = JSON.parse(JSON.stringify(obj));
-		let filter = `{ ${generateFilter(newObj.path, ``)}}`;
+		let filter = `{ ${generateFilter(newObj.path, '')}}`;
 		newObj.filter = filter;
 		newObj.path = JSON.stringify(newObj.path);
 		return newObj;
@@ -236,24 +236,24 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 
 	if (!newData.relatedSchemas.internal) newData.relatedSchemas.internal = {};
 	newData.relatedSchemas.internal.users = userObj;
-	return mongoose.model(`services`).find({ _id: { $in: newOutgoingServicesList } })
+	return mongoose.model('services').find({ _id: { $in: newOutgoingServicesList } })
 		.then((docs) => {
-			logger.debug(`docs.length`, docs.length);
-			logger.debug(`newOutgoingServicesList.length`, newOutgoingServicesList.length);
+			logger.debug('docs.length', docs.length);
+			logger.debug('newOutgoingServicesList.length', newOutgoingServicesList.length);
 			if (docs.length === newOutgoingServicesList.length) {
 				delete newData.__v;
-				newData.markModified(`relatedSchemas.outgoing`); //to save the latest changes of relatedSchemas.outgoing
+				newData.markModified('relatedSchemas.outgoing'); //to save the latest changes of relatedSchemas.outgoing
 				return newData.save(req);
 			} else {
 				let docsIdList = docs.map(obj => obj._id);
 				let unMatchedId = _.difference(newOutgoingServicesList, docsIdList);
-				throw new Error(`The following Service ID not found ` + unMatchedId);
+				throw new Error('The following Service ID not found ' + unMatchedId);
 			}
 		})
 		.then((_genServiceObj) => {
 			genServiceObj = JSON.parse(JSON.stringify(_genServiceObj));
 			if (oldOutgoingServicesList.length == 0) return Promise.resolve([]);
-			return mongoose.model(`services`).find({
+			return mongoose.model('services').find({
 				_id: {
 					$in: oldOutgoingServicesList
 				}
@@ -263,7 +263,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 			let promiseArr = docs.map(doc => {
 				if (doc.relatedSchemas.incoming) {
 					doc.relatedSchemas.incoming = doc.relatedSchemas.incoming.filter(obj => obj.service != newData._id);
-					doc.markModified(`relatedSchemas.incoming`);
+					doc.markModified('relatedSchemas.incoming');
 					return doc.save(req);
 				}
 			});
@@ -271,7 +271,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 		})
 		.then(() => {
 			if (newOutgoingServicesList.length == 0) return Promise.resolve([]);
-			return mongoose.model(`services`).find({
+			return mongoose.model('services').find({
 				_id: {
 					$in: newOutgoingServicesList
 				}
@@ -282,7 +282,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 				if (!doc.relatedSchemas.incoming) doc.relatedSchemas.incoming = [];
 				let pathArr = getPathfromServiceId(doc._id, newRelations);
 				pathArr.forEach(obj => {
-					let uri = `/` + genServiceObj.app + genServiceObj.api + `?filter={` + generateFilter(obj.path, ``) + `}`;
+					let uri = '/' + genServiceObj.app + genServiceObj.api + '?filter={' + generateFilter(obj.path, '') + '}';
 					doc.relatedSchemas.incoming.push({
 						service: genServiceObj._id,
 						uri: uri,
@@ -290,7 +290,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 						isRequired: obj.isRequired
 					});
 				});
-				doc.markModified(`relatedSchemas.incoming`);
+				doc.markModified('relatedSchemas.incoming');
 				return doc.save(req);
 			});
 			return Promise.all(promiseArr);
