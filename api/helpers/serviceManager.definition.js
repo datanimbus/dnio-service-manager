@@ -127,13 +127,13 @@ var definition = {
 			'type': 'Object'
 		}
 	}],
-	'attributeList': [{
-		'key': 'String',
-		'name': 'String',
-		'properties': {
-			'type': 'Object'
-		}
-	}],
+	// 'attributeList': [{
+	// 	'key': 'String',
+	// 	'name': 'String',
+	// 	'properties': {
+	// 		'type': 'Object'
+	// 	}
+	// }],
 	'status': {
 		'type': 'String',
 		'enum': ['Pending', 'Active', 'Undeployed', 'Maintenance', 'Draft'],
