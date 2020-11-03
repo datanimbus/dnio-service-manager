@@ -1,4 +1,4 @@
-const envConfig = require(`../../../../config/config.js`);
+const envConfig = require('../../../../config/config.js');
 module.exports = function (config) {
 	var appJs = `
 "use strict";
@@ -101,7 +101,7 @@ app.use(liveness);
 let queueMgmt = require('./queueManagement.js');
 
 let secureFields = '${config.secureFields}'.split(',').map(_d=>_d+'.value');
-let baseURL = '${`/` + config.app + config.api}';
+let baseURL = '${'/' + config.app + config.api}';
 let masking = [
 	{ url: \`\${baseURL}\`, path: secureFields },
     { url: \`\${baseURL}/utils/simulate\`, path: secureFields },

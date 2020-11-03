@@ -1,6 +1,6 @@
-const mongoose = require(`mongoose`);
-const systemGlobalSchema = require(`../systemGlobalSchema.js`);
-const mongooseDataType = [`String`, `Number`, `Date`, `Boolean`, `Object`, `Array`];
+const mongoose = require('mongoose');
+const systemGlobalSchema = require('../systemGlobalSchema.js');
+const mongooseDataType = ['String', 'Number', 'Date', 'Boolean', 'Object', 'Array'];
 
 var e = {};
 
@@ -19,12 +19,12 @@ function getSystemGlobalDefinition(type, globalDefArr) {
 function getAllGlobalDefinitions(app) {
 	let globalDocs = null;
 	return new Promise(resolve => {
-		mongoose.model(`globalSchema`).find({ 'app': app, definition: { $exists: true } }, `name definition`)
+		mongoose.model('globalSchema').find({ 'app': app, definition: { $exists: true } }, 'name definition')
 			.then(docs => {
 				if (docs) {
 					docs = JSON.parse(JSON.stringify(docs));
 					docs = docs.map(doc => {
-						if (doc.definition) doc.definition = JSON.parse(doc.definition);
+						// if (doc.definition) doc.definition = JSON.parse(doc.definition);
 						return doc;
 					});
 					globalDocs = docs;
@@ -35,63 +35,68 @@ function getAllGlobalDefinitions(app) {
 }
 
 function substituteGlobalDefinition(schema, globalSchema) {
-	Object.keys(schema).forEach(key => {
-		if (key !== `properties` && key !== `_id`) {
-			if (schema[key][`type`] == `Global` || (schema[key][`properties`] && schema[key][`properties`][`schema`])) {
-				if (!schema[key][`properties`][`schema`]) throw new Error(`Property schema missing for type Global`);
-				let globalDefinition = getGlobalDefinition(schema[key][`properties`][`schema`], globalSchema);
-				let properties = schema[key][`properties`];
-				if (!globalDefinition) throw new Error(`Library schema not found.`);
-				schema[key] = JSON.parse(JSON.stringify(globalDefinition));
-				if (properties) schema[key][`properties`] = JSON.parse(JSON.stringify(properties));
+	schema.forEach(attribute => {
+		if (attribute.key !== 'properties' && attribute.key !== '_id') {
+			if (attribute['type'] == 'Global' || (attribute['properties'] && attribute['properties']['schema'])) {
+				if (!attribute['properties']['schema']) throw new Error('Property schema missing for type Global');
+				let globalDefinition = getGlobalDefinition(attribute['properties']['schema'], globalSchema);
+				globalDefinition.key = attribute.key;
+				let properties = attribute['properties'];
+				if (!globalDefinition) throw new Error('Library schema not found.');
+				attribute = JSON.parse(JSON.stringify(globalDefinition));
+				if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 			}
-			else if (schema[key][`properties`] && schema[key][`properties`][`relatedTo`]) {
-				let sysDef = getSystemGlobalDefinition(`Relation`, systemGlobalSchema);
+			else if (attribute['properties'] && attribute['properties']['relatedTo']) {
+				let sysDef = getSystemGlobalDefinition('Relation', systemGlobalSchema);
 				if (sysDef) {
-					let properties = schema[key][`properties`];
-					schema[key] = JSON.parse(JSON.stringify(sysDef));
-					if (properties) schema[key][`properties`] = JSON.parse(JSON.stringify(properties));
+					sysDef.key = attribute.key;
+					let properties = attribute['properties'];
+					attribute = JSON.parse(JSON.stringify(sysDef));
+					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
 			}
-			else if (schema[key][`type`] == `User`) {
-				let sysDef = getSystemGlobalDefinition(`User`, systemGlobalSchema);
+			else if (attribute['type'] == 'User') {
+				let sysDef = getSystemGlobalDefinition('User', systemGlobalSchema);
 				if (sysDef) {
-					let properties = schema[key][`properties`];
-					schema[key] = JSON.parse(JSON.stringify(sysDef));
-					if (properties) schema[key][`properties`] = JSON.parse(JSON.stringify(properties));
+					sysDef.key = attribute.key;
+					let properties = attribute['properties'];
+					attribute = JSON.parse(JSON.stringify(sysDef));
+					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
 			}
-			else if (schema[key][`properties`] && schema[key][`properties`][`password`]) {
-				let sysDef = getSystemGlobalDefinition(`SecureText`, systemGlobalSchema);
+			else if (attribute['properties'] && attribute['properties']['password']) {
+				let sysDef = getSystemGlobalDefinition('SecureText', systemGlobalSchema);
 				if (sysDef) {
-					let properties = schema[key][`properties`];
+					sysDef.key = attribute.key;
+					let properties = attribute['properties'];
 					let newDef = JSON.parse(JSON.stringify(sysDef));
-					if (schema[key][`properties`][`unique`]) {
+					if (attribute['properties']['unique']) {
 						newDef.definition.checksum.properties.unique = true;
 					}
-					schema[key] = newDef;
-					if (properties) schema[key][`properties`] = JSON.parse(JSON.stringify(properties));
+					attribute = newDef;
+					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
 			}
-			if (schema[key][`definition`])
-				substituteGlobalDefinition(schema[key][`definition`], globalSchema);
+			if (attribute['definition'])
+				substituteGlobalDefinition(attribute['definition'], globalSchema);
 		}
 	});
 }
 
 function substituteSystemGlobalDefinition(schema) {
-	Object.keys(schema).forEach(key => {
-		if (key !== `properties` && key !== `_id`) {
-			if (mongooseDataType.indexOf(schema[key][`type`]) == -1) {
-				let sysDef = getSystemGlobalDefinition(schema[key][`type`], systemGlobalSchema);
+	schema.forEach(attribute => {
+		if (attribute.key !== 'properties' && attribute.key !== '_id') {
+			if (mongooseDataType.indexOf(attribute['type']) == -1) {
+				let sysDef = getSystemGlobalDefinition(attribute['type'], systemGlobalSchema);
 				if (sysDef) {
-					let properties = schema[key][`properties`];
-					schema[key] = JSON.parse(JSON.stringify(sysDef));
-					if (properties) schema[key][`properties`] = JSON.parse(JSON.stringify(properties));
+					sysDef.key = attribute.key;
+					let properties = attribute['properties'];
+					attribute = JSON.parse(JSON.stringify(sysDef));
+					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
 			}
-			if (schema[key][`definition`])
-				substituteSystemGlobalDefinition(schema[key][`definition`], systemGlobalSchema);
+			if (attribute['definition'])
+				substituteSystemGlobalDefinition(attribute['definition'], systemGlobalSchema);
 		}
 	});
 }

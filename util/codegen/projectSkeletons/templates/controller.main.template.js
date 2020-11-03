@@ -1,5 +1,5 @@
-const isCosmosDB = require(`../../../../config/config`).isCosmosDB();
-const SMConfig = require(`../../../../config/config`);
+const isCosmosDB = require('../../../../config/config').isCosmosDB();
+const SMConfig = require('../../../../config/config');
 
 module.exports = function (_id, config) {
 	var collectionName = config.collectionName;
@@ -8,32 +8,32 @@ module.exports = function (_id, config) {
 	let suffix = config.idDetails.suffix ? `"${config.idDetails.suffix}"` : null;
 	let padding = config.idDetails.padding ? config.idDetails.padding : null;
 	let counter = config.idDetails.counter || config.idDetails.counter === 0 ? config.idDetails.counter : null;
-	let deleteType = !config.permanentDeleteData ? `markAsDeleted` : `destroy`;
-	let bulkDeleteType = !config.permanentDeleteData ? `bulkMarkAsDeleted` : `bulkDestroy`;
-	let expiryCode = config.versionValidity && config.versionValidity.validityType == `time` ? `auditData.expiry = new Date();` : ``;
-	let expiryCountCode = ``;
-	if (config.versionValidity && config.versionValidity.validityType == `count` && config.versionValidity.validityValue > 0)
-		expiryCountCode = `client.publish('auditQueueRemove',JSON.stringify(auditData))`;
+	let deleteType = !config.permanentDeleteData ? 'markAsDeleted' : 'destroy';
+	let bulkDeleteType = !config.permanentDeleteData ? 'bulkMarkAsDeleted' : 'bulkDestroy';
+	let expiryCode = config.versionValidity && config.versionValidity.validityType == 'time' ? 'auditData.expiry = new Date();' : '';
+	let expiryCountCode = '';
+	if (config.versionValidity && config.versionValidity.validityType == 'count' && config.versionValidity.validityValue > 0)
+		expiryCountCode = 'client.publish(\'auditQueueRemove\',JSON.stringify(auditData))';
 	function isHookGeneratedID(idDetails) {
 		return ((idDetails.padding && (idDetails.prefix || idDetails.suffix)) || idDetails.counter);
 	}
 	if (!isHookGeneratedID(config.idDetails)) {
-		prefix = prefix ? prefix : `'${config.collectionName.split(`.`).pop().toUpperCase().substr(0, 3)}'`;
+		prefix = prefix ? prefix : `'${config.collectionName.split('.').pop().toUpperCase().substr(0, 3)}'`;
 		counter = counter || counter === 0 ? counter : 1000;
 	}
 	function getSchemaKeys(list, key, definition) {
-		if (definition[`_self`]) {
-			if (definition[`_self`][`type`] === `Object`) {
-				getSchemaKeys(list, key, definition[`_self`][`definition`]);
-			} else if (definition[`_self`][`type`] === `String`) {
+		if (definition['_self']) {
+			if (definition['_self']['type'] === 'Object') {
+				getSchemaKeys(list, key, definition['_self']['definition']);
+			} else if (definition['_self']['type'] === 'String') {
 				list.push(key);
 			}
 		} else {
 			Object.keys(definition).forEach(_k => {
-				let _key = key === `` ? _k : key + `.` + _k;
-				if (definition[_k][`type`] === `Array` || definition[_k][`type`] === `Object`) {
-					getSchemaKeys(list, _key, definition[_k][`definition`]);
-				} else if (definition[_k][`type`] === `String`) {
+				let _key = key === '' ? _k : key + '.' + _k;
+				if (definition[_k]['type'] === 'Array' || definition[_k]['type'] === 'Object') {
+					getSchemaKeys(list, _key, definition[_k]['definition']);
+				} else if (definition[_k]['type'] === 'String') {
 					list.push(_key);
 				}
 			});
@@ -41,23 +41,23 @@ module.exports = function (_id, config) {
 	}
 
 	let stringFields = [];
-	getSchemaKeys(stringFields, ``, config.definition);
+	getSchemaKeys(stringFields, '', config.definition);
 	let indexObj = {};
 	stringFields.forEach(key => {
-		indexObj[key] = `text`;
+		indexObj[key] = 'text';
 	});
-	let geoIndexCode = ``;
+	let geoIndexCode = '';
 	config.geoJSONFields.forEach(key => {
 		geoIndexCode += `\nschema.index({"${key}.geometry" : "2dsphere"} , {"name": "${key}_geoJson"});`;
 	});
 
-	let relationIndexCode = ``;
+	let relationIndexCode = '';
 
 	config.relationUniqueFields.forEach(key => {
 		relationIndexCode += `\nschema.index({"${key}._id" : 1} , {unique: "${key} field should be unique", sparse: true});`;
 	});
 
-	let uniqueIndexCode = ``;
+	let uniqueIndexCode = '';
 	config.uniqueFields.forEach(obj => {
 		uniqueIndexCode += `\nschema.index({"${obj.key}" : 1} , {unique: "${obj.key} field should be unique", sparse: true, collation: { locale: "${obj.locale}", strength: 2 } });`;
 	});
@@ -69,7 +69,7 @@ module.exports = function (_id, config) {
 		});
 	}
 
-	let requiredRelationCode = ``;
+	let requiredRelationCode = '';
 	requiredRelationCode += `let requiredRelation = [${requiredRelation}];`;
 
 	let incomingRelationCode = `
@@ -87,7 +87,7 @@ module.exports = function (_id, config) {
 
 
     `;
-	if (deleteType === `markAsDeleted`) {
+	if (deleteType === 'markAsDeleted') {
 		incomingRelationCode += `schema.pre("save", function (next, req) {
             if(!this._metadata.deleted) {next(); return;};
             this._req = req;
@@ -147,7 +147,7 @@ module.exports = function (_id, config) {
     
 
     `;
-	if (deleteType === `markAsDeleted`) {
+	if (deleteType === 'markAsDeleted') {
 		incomingRelationCodePostSave += `schema.post("save", function (doc) {
             if(!this._metadata.deleted) {return;};
             `;
@@ -186,7 +186,7 @@ module.exports = function (_id, config) {
 
 
 
-	let fileDeleteCode = ``;
+	let fileDeleteCode = '';
 	if (!config.permanentDeleteData) {
 		fileDeleteCode = `schema.post("save", function(doc){
           if(doc._metadata.deleted){
@@ -231,7 +231,7 @@ module.exports = function (_id, config) {
         })`;
 	}
 
-	let searchIndexCode = config.enableSearchIndex && !isCosmosDB && Object.keys(indexObj).length > 0 ? `schema.index(${JSON.stringify(indexObj)}, {name: "searchIndex"});` : ``;
+	let searchIndexCode = config.enableSearchIndex && !isCosmosDB && Object.keys(indexObj).length > 0 ? `schema.index(${JSON.stringify(indexObj)}, {name: "searchIndex"});` : '';
 	var controllerJs = `"use strict";
 
 const mongoose = require("mongoose");

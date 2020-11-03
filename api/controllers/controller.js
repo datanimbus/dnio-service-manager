@@ -1,12 +1,12 @@
 'use strict';
 //controllers
-const serviceManagerController = require(`./serviceManager.controller.js`);
-const globalSchemaController = require(`./globalSchema.controller.js`);
-const logsController = require(`./logs.controller.js`);
-const tagsController = require(`./tags.controller.js`);
-const swaggerDocController = require(`./swaggerDoc.controller.js`);
-const serviceAuditController = require(`./service.audit.controller.js`);
-const globalSchemaAuditController = require(`./globalSchema.audit.controller.js`);
+const serviceManagerController = require('./serviceManager.controller.js');
+const globalSchemaController = require('./globalSchema.controller.js');
+const logsController = require('./logs.controller.js');
+const tagsController = require('./tags.controller.js');
+const swaggerDocController = require('./swaggerDoc.controller.js');
+const serviceAuditController = require('./service.audit.controller.js');
+const globalSchemaAuditController = require('./globalSchema.audit.controller.js');
 
 //exports
 var exports = {};

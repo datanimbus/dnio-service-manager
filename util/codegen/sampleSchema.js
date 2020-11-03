@@ -1,59 +1,61 @@
+// Not updating for now as its not used anywhere
+
 var a = {
-	name: `product`,
-	collectionName: `product`,
-	description: `Product service definition`,
+	name: 'product',
+	collectionName: 'product',
+	description: 'Product service definition',
 	port: 10017,
-	api: `product`,
-	version: `1.0`,
+	api: 'product',
+	version: '1.0',
 	definition: {
 		_id: {
-			'type': `String`,
-			'prefix': `PR`,
+			'type': 'String',
+			'prefix': 'PR',
 			'counter': 10000
 		},
 		bankDetails: {
-			type: `Object`,
+			type: 'Object',
 			definition: {
 				ifscCode: {
-					type: `String`
+					type: 'String'
 				}
 			}
 		},
 		addresses: {
-			type: `Object`,
+			type: 'Object',
 			properties: {
 				'required': true
 			},
 			definition: {
 				'ifsc_code': {
-					'type': `String`,
+					'type': 'String',
 					'properties': {
-						'enum': [`value1`, `value2`]
+						'enum': ['value1', 'value2']
 					}
 				},
 				'bank_name': {
-					'type': `String`,
+					'type': 'String',
 					'properties': {
 						'unique': true
 					}
 				},
 				'branch_address': {
-					'type': `String`,
+					'type': 'String',
 					'properties': {
 						'required': true
 					}
 				},
 				'complexObject': {
-					'type': `Object`,
+					'type': 'Object',
 					'definition': {
 						'field1': {
-							'type': `String`,
+							'type': 'String',
 							'properties': {
 								'required': true
 							}
 						},
 						'field2': {
-							'type': `Number`,
+							'type': 'Number',
 							'properties': {
 								'enum': [1, 2, 3, 4]
 							}
@@ -64,19 +66,19 @@ var a = {
 					}
 				},
 				'complexObjectArray': {
-					'type': `Array`,
+					'type': 'Array',
 					'definition': {
 						'_self': {
-							'type': `Object`,
+							'type': 'Object',
 							'definition': {
 								'complexObjectArrayfield1': {
-									'type': `String`,
+									'type': 'String',
 									'properties': {
 										'required': true
 									}
 								},
 								'complexObjectArrayfield2': {
-									'type': `Number`,
+									'type': 'Number',
 									'properties': {
 										'enum': [1, 2, 3, 4]
 									}
@@ -92,10 +94,10 @@ var a = {
 					}
 				},
 				'simpleArray': {
-					'type': `Array`,
+					'type': 'Array',
 					'definition': {
 						'_self': {
-							'type': `String`,
+							'type': 'String',
 							'properties': {
 								'required': true
 							}
@@ -106,16 +108,16 @@ var a = {
 					}
 				},
 				'ArrayArrayString': {
-					'type': `Array`,
+					'type': 'Array',
 					'properties': {
 						'required': true
 					},
 					'definition': {
 						'_self': {
-							'type': `Array`,
+							'type': 'Array',
 							'definition': {
 								'_self': {
-									'type': `String`,
+									'type': 'String',
 									'properties': {
 										'required': true
 									}
@@ -128,25 +130,25 @@ var a = {
 					}
 				},
 				'ArrayArrayObject': {
-					'type': `Array`,
+					'type': 'Array',
 					'properties': {
 						'required': true
 					},
 					'definition': {
 						'_self': {
-							'type': `Array`,
+							'type': 'Array',
 							'definition': {
 								'_self': {
-									'type': `Object`,
+									'type': 'Object',
 									'definition': {
 										'fieldOb1': {
-											'type': `String`,
+											'type': 'String',
 											'properties': {
 												'required': true
 											}
 										},
 										'fieldOb2': {
-											'type': `Number`,
+											'type': 'Number',
 											'properties': {
 												'enum': [1, 2, 3, 4]
 											}

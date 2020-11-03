@@ -1,10 +1,10 @@
 const logger = global.logger;
 
-let dockerRegistryType = process.env.DOCKER_REGISTRY_TYPE ? process.env.DOCKER_REGISTRY_TYPE : ``;
+let dockerRegistryType = process.env.DOCKER_REGISTRY_TYPE ? process.env.DOCKER_REGISTRY_TYPE : '';
 if (dockerRegistryType.length > 0) dockerRegistryType = dockerRegistryType.toUpperCase();
 
-let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : ``;
-if (dockerReg.length > 0 && !dockerReg.endsWith(`/`) && dockerRegistryType != `ECR`) dockerReg += `/`;
+let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : '';
+if (dockerReg.length > 0 && !dockerReg.endsWith('/') && dockerRegistryType != 'ECR') dockerReg += '/';
 
 function packageJson(config) {
 	return `{
@@ -47,10 +47,10 @@ function packageJson(config) {
 
 function dockerFile(config) {
 	if (process.env.RELEASE) {
-		process.env.RELEASE = `dev`;
+		process.env.RELEASE = 'dev';
 	}
 	let base = `${dockerReg}odp:base.${process.env.RELEASE}`;
-	if (dockerRegistryType == `ECR`) base = `${dockerReg}:odp.base.${process.env.RELEASE}`;
+	if (dockerRegistryType == 'ECR') base = `${dockerReg}:odp.base.${process.env.RELEASE}`;
 	logger.debug(`Base image :: ${base}`);
 	return `FROM ${base}
 WORKDIR /app
@@ -62,9 +62,9 @@ ENV SERVICE_NAME ${config.name}
 ENV SERVICE_PORT ${config.port}
 ENV SERVICE_ENDPOINT ${config.api}
 ENV SERVICE_COLLECTION ${config.collectionName}
-ENV ID_PADDING ${config.idDetails.padding || `""`}
-ENV ID_PREFIX ${config.idDetails.prefix || `""`}
-ENV ID_SUFFIX ${config.idDetails.suffix || `""`}
+ENV ID_PADDING ${config.idDetails.padding || '""'}
+ENV ID_PREFIX ${config.idDetails.prefix || '""'}
+ENV ID_SUFFIX ${config.idDetails.suffix || '""'}
 ENV ID_COUNTER ${config.idDetails.counter}
 ENV PERMANENT_DELETE ${config.permanentDeleteData}
 EXPOSE ${config.port}
@@ -84,9 +84,9 @@ SERVICE_NAME="${config.name}"
 SERVICE_PORT="${config.port}"
 SERVICE_ENDPOINT="${config.api}"
 SERVICE_COLLECTION="${config.collectionName}"
-ID_PADDING="${config.idDetails.padding || ``}"
-ID_PREFIX="${config.idDetails.prefix || ``}"
-ID_SUFFIX="${config.idDetails.suffix || ``}"
+ID_PADDING="${config.idDetails.padding || ''}"
+ID_PREFIX="${config.idDetails.prefix || ''}"
+ID_SUFFIX="${config.idDetails.suffix || ''}"
 ID_COUNTER="${config.idDetails.counter}"
 PERMANENT_DELETE=${config.permanentDeleteData}
 `;

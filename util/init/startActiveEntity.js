@@ -1,9 +1,9 @@
-let mongoose = require(`mongoose`);
-const kubeutil = require(`@appveen/odp-utils`).kubeutil;
-let deploymentUtil = require(`../../api/deploy/deploymentUtil`);
-let globalDefHelper = require(`../../api/helpers/util/globalDefinitionHelper`);
-let dm = require(`../../api/deploy/deploymentManager`);
-let config = require(`../../config/config`);
+let mongoose = require('mongoose');
+const kubeutil = require('@appveen/odp-utils').kubeutil;
+let deploymentUtil = require('../../api/deploy/deploymentUtil');
+let globalDefHelper = require('../../api/helpers/util/globalDefinitionHelper');
+let dm = require('../../api/deploy/deploymentManager');
+let config = require('../../config/config');
 let logger = global.logger;
 function createNSifNotExist(ns) {
 	return kubeutil.namespace.getNamespace(ns)
@@ -25,8 +25,8 @@ function createNSifNotExist(ns) {
 }
 
 function startEntityifStop(_schemaDetails) {
-	let ns = _schemaDetails.app.toLowerCase().replace(/ /g, ``);
-	let deploymentName = _schemaDetails.api.split(`/`)[1].toLowerCase();
+	let ns = _schemaDetails.app.toLowerCase().replace(/ /g, '');
+	let deploymentName = _schemaDetails.api.split('/')[1].toLowerCase();
 	return createNSifNotExist(ns)
 		.then(() => kubeutil.deployment.getDeployment(ns, deploymentName))
 		.then(_d => {
@@ -37,14 +37,14 @@ function startEntityifStop(_schemaDetails) {
 				'File': [],
 				'Geojson': []
 			};
-			deploymentUtil.getSystemFields(systemFields, ``, _schemaDetails.definition, [`File`, `Geojson`]);
+			deploymentUtil.getSystemFields(systemFields, '', _schemaDetails.definition, ['File', 'Geojson']);
 			_schemaDetails.definition = globalDefHelper.expandSchemaWithSystemGlobalDef(_schemaDetails.definition);
 			_schemaDetails.geoJSONFields = systemFields.Geojson;
 			_schemaDetails.fileFields = systemFields.File;
 			return dm.deployService(_schemaDetails, false, false);
 		})
 		.then(() => {
-			logger.info(deploymentName + ` deployment started in ` + ns);
+			logger.info(deploymentName + ' deployment started in ' + ns);
 		})
 		.catch(err=>{
 			logger.error(err.message);
@@ -53,9 +53,9 @@ function startEntityifStop(_schemaDetails) {
 
 function init() {
 	setTimeout(() => {
-		logger.info(`-------Starting Active Entities-------`);
+		logger.info('-------Starting Active Entities-------');
 		if(config.isK8sEnv()){
-			mongoose.model(`services`).find({ 'status': `Active` })
+			mongoose.model('services').find({ 'status': 'Active' })
 				.then(services => {
 					let promises = services.map(_s => startEntityifStop(_s));
 					return Promise.all(promises);

@@ -109,7 +109,7 @@ describe("Testing serviceManager main", function () {
                 app: 'Adam',
                 api: '/test',
                 wizard: [],
-                attributeList: [],
+                //attributeList: [],
                 webHooks: [],
                 preHooks: []
             }));

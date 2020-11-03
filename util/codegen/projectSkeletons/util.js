@@ -1,4 +1,4 @@
-const envConfig = require(`../../../config/config`);
+const envConfig = require('../../../config/config');
 
 function helperUtil(config) {
 	var modelName = config.collectionName;
