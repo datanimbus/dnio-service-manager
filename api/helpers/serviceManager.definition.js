@@ -94,39 +94,42 @@ var definition = {
 		'type': 'Boolean',
 		'default': false
 	},
-	'definition': [{
-		'key': {
-			'type': 'String',
-			'required': true
-		},
-		'type': {
-			'type': 'String',
-			'required': true
-		},
-		'prefix': {
-			'type': 'String',
-			'required': false
-		},
-		'suffix': {
-			'type': 'String',
-			'required': false
-		},
-		'padding': {
-			'type': 'Number',
-			'required': false
-		},
-		'counter': {
-			'type': 'Number',
-			'required': false
-		},
-		'definition': {
-			'type': 'Object',
-			'required': false
-		},
-		'properties': {
-			'type': 'Object'
-		}
-	}],
+	'definition': {
+		'type': [{
+			'key': {
+				'type': 'String',
+				'required': true
+			},
+			'type': {
+				'type': 'String',
+				'required': true
+			},
+			'prefix': {
+				'type': 'String',
+				'required': false
+			},
+			'suffix': {
+				'type': 'String',
+				'required': false
+			},
+			'padding': {
+				'type': 'Number',
+				'required': false
+			},
+			'counter': {
+				'type': 'Number',
+				'required': false
+			},
+			'definition': {
+				'type': 'Object',
+				'required': false
+			},
+			'properties': {
+				'type': 'Object'
+			}
+		}],
+		'default': undefined
+	},
 	// 'attributeList': [{
 	// 	'key': 'String',
 	// 	'name': 'String',
@@ -295,8 +298,8 @@ var definition = {
 	'draftVersion': {
 		'type': 'Number'
 	},
-	'role':{
-		'type':'Object'
+	'role': {
+		'type': 'Object'
 	},
 	'_metadata': {
 		'type': {
