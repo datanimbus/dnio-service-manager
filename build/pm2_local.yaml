@@ -9,8 +9,8 @@ apps:
     MONGO_APPCENTER_BASE_URL: mongodb://root:itworks%40123123123@localhost:27017
     MONGO_AUTHOR_DBNAME: odpConfig
     MONGO_LOGS_DBNAME: odpLogs
-    ODP_NAMESPACE: appveen
+    DATA_STACK_NAMESPACE: appveen
     MONGO_RECONN_TRIES: 1000
-    MONGO_RECONN_TIME: 21600
+    MONGO_RECONN_TIME_MILLI: 21600
     MODE: dev
     LOG_LEVEL: debug

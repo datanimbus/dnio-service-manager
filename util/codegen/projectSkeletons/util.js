@@ -18,7 +18,7 @@ function helperUtil(config) {
     let e = {};
     let queueMgmt = require('../../queueManagement');
     var client = queueMgmt.client;
-    const odpNS = process.env.ODP_NAMESPACE;
+    const dataStackNS = process.env.DATA_STACK_NAMESPACE;
     let uniqueFields = '${config.uniqueFields.map(_obj => _obj.key)}'.split(',');
     let config = require('./../../config');
     e.generateCodeToExpand = function(schema, key, action) {
@@ -438,7 +438,7 @@ function helperUtil(config) {
                     if (_sId == 'USER') {
                         _service = { port: 80, uri: '/api/a/rbac/usr/app/${config.app}' };
                         if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
-                            _service.host = "gw." + odpNS;
+                            _service.host = "gw." + dataStackNS;
                         } else {
                             _service.host = 9080
                             _service.host = "localhost";
@@ -446,7 +446,7 @@ function helperUtil(config) {
                     } else {
                         _service = { port: 80, uri: "/api/c/" + _sd.app + _sd.api };
                         if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
-                            _service.host = "gw." + odpNS;
+                            _service.host = "gw." + dataStackNS;
                         } else {
                             _service.port = 9080;
                             _service.host = "localhost";
