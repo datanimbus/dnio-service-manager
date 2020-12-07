@@ -227,15 +227,15 @@ function webHookConfig() {
   e.baseUrlUSR = process.env.BASE_URL_USER || "http://localhost:10004/rbac"
   e.baseUrlWF = process.env.BASE_URL_WF || "http://localhost:10006/workflow"
   e.NATSConfig = {
-    url: process.env.NATS_HOST || "nats://127.0.0.1:4222",
-    user: process.env.NATS_USER || "",
-    pass: process.env.NATS_PASS || "",
-    maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
-    reconnectTimeWait: process.env.NATS_RECONN_TIMEWAIT || 500
+    url: process.env.MESSAGING_HOST || "nats://127.0.0.1:4222",
+    user: process.env.MESSAGING_USER || "",
+    pass: process.env.MESSAGING_PASS || "",
+    maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
+    reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
 }
    e.mongoOptions = {
     reconnectTries: process.env.MONGO_RECONN_TRIES,
-    reconnectInterval: process.env.MONGO_RECONN_TIME,
+    reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
     useNewUrlParser: true
    }
    e.allowedExt = '${envConfig.allowedExt}'.split(',');

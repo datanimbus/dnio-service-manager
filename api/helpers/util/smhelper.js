@@ -59,7 +59,7 @@ function schemaValidateDefault(schema, app) {
 							var colname = data.collectionName;
 							var obj = {};
 							obj['_id'] = defValue;
-							let dbName = envConfig.isK8sEnv() ? `${envConfig.odpNS}-${data.app}` : data.app;
+							let dbName = envConfig.isK8sEnv() ? `${envConfig.dataStackNS}-${data.app}` : data.app;
 							return global.mongoConnection.db(dbName).collection(colname).findOne(obj)
 								.then(_d => {
 									if (!_d) {
@@ -148,7 +148,7 @@ function getFlows(id, _req) {
 
 function checkData(uri) {
 	let uriSplit = uri.split('/');
-	let db = `${envConfig.odpNS}-${uriSplit[1]}`;
+	let db = `${envConfig.dataStackNS}-${uriSplit[1]}`;
 	let lastSeg = uriSplit[2];
 	let lastSegSplit = lastSeg.split('?');
 	let collection = `${lastSegSplit[0]}`;

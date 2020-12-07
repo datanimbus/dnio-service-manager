@@ -21,12 +21,12 @@ e.deploymentCreate = (_schema) => {
 	logger.info('Creating deployment ' + _schema._id.toLowerCase());
 	let envVars = [];
 	envVars.push({ name: 'MONGO_APPCENTER_URL', value: process.env.MONGO_APPCENTER_URL });
-	envVars.push({ name: 'NATS_HOST', value: process.env.NATS_HOST });
+	envVars.push({ name: 'MESSAGING_HOST', value: process.env.MESSAGING_HOST });
 	envVars.push({ name: 'NATS_PORT', value: process.env.NATS_PORT });
 	envVars.push({ name: 'NATS_USR', value: process.env.NATS_USR });
-	envVars.push({ name: 'NATS_PASS', value: process.env.NATS_PASS });
-	envVars.push({ name: 'NATS_RECONN_ATTEMPTS', value: process.env.NATS_RECONN_ATTEMPTS });
-	envVars.push({ name: 'NATS_RECONN_TIMEWAIT', value: process.env.NATS_RECONN_TIMEWAIT });
+	envVars.push({ name: 'MESSAGING_PASS', value: process.env.MESSAGING_PASS });
+	envVars.push({ name: 'MESSAGING_RECONN_ATTEMPTS', value: process.env.MESSAGING_RECONN_ATTEMPTS });
+	envVars.push({ name: 'MESSAGING_RECONN_TIMEWAIT_MILLI', value: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI });
 	envVars.push({ name: 'AMQ_PORT', value: process.env.AMQ_PORT });
 	envVars.push({ name: 'AMQ_HOST', value: process.env.AMQ_HOST });
 	envVars.push({ name: 'MODE', value: process.env.MODE });
@@ -36,7 +36,7 @@ e.deploymentCreate = (_schema) => {
 	envVars.push({ name: 'TLS_REJECT_UNAUTHORIZED', value: process.env.TLS_REJECT_UNAUTHORIZED });
 	envVars.push({ name: 'HOOK_CONNECTION_TIMEOUT', value: process.env.HOOK_CONNECTION_TIMEOUT });
 	envVars.push({ name: 'MONGO_RECONN_TRIES', value: process.env.MONGO_RECONN_TRIES });
-	envVars.push({ name: 'MONGO_RECONN_TIME', value: process.env.MONGO_RECONN_TIME });
+	envVars.push({ name: 'MONGO_RECONN_TIME_MILLI', value: process.env.MONGO_RECONN_TIME_MILLI });
 	envVars.push({ name: 'MONGO_LOGS_BASE_URL', value: process.env.MONGO_LOGS_BASE_URL });
 	envVars.push({ name: 'MONGO_LOGS_DBNAME', value: process.env.MONGO_LOGS_DBNAME });
 	envVars.push({ name: 'LOG_LEVEL', value: process.env.LOG_LEVEL });
@@ -49,7 +49,7 @@ e.deploymentCreate = (_schema) => {
 	options.readinessProbe.httpGet.path = '/' + _schema.app + _schema.api + '/readiness';
 	options.readinessProbe.httpGet.port = _schema.port;
 	// (_namespace, _name, _image, _port, _envVars)
-	const ns = envConfig.odpNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	return kubeutil.deployment.createDeployment(
 		ns,
 		_schema.api.split('/')[1].toLowerCase(),
@@ -76,12 +76,12 @@ e.deploymentCreate = (_schema) => {
 e.deploymentUpdate = (_schema) => {
 	let envVars = [];
 	envVars.push({ name: 'MONGO_APPCENTER_URL', value: process.env.MONGO_APPCENTER_URL });
-	envVars.push({ name: 'NATS_HOST', value: process.env.NATS_HOST });
+	envVars.push({ name: 'MESSAGING_HOST', value: process.env.MESSAGING_HOST });
 	envVars.push({ name: 'NATS_PORT', value: process.env.NATS_PORT });
 	envVars.push({ name: 'NATS_USR', value: process.env.NATS_USR });
-	envVars.push({ name: 'NATS_PASS', value: process.env.NATS_PASS });
-	envVars.push({ name: 'NATS_RECONN_ATTEMPTS', value: process.env.NATS_RECONN_ATTEMPTS });
-	envVars.push({ name: 'NATS_RECONN_TIMEWAIT', value: process.env.NATS_RECONN_TIMEWAIT });
+	envVars.push({ name: 'MESSAGING_PASS', value: process.env.MESSAGING_PASS });
+	envVars.push({ name: 'MESSAGING_RECONN_ATTEMPTS', value: process.env.MESSAGING_RECONN_ATTEMPTS });
+	envVars.push({ name: 'MESSAGING_RECONN_TIMEWAIT_MILLI', value: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI });
 	envVars.push({ name: 'AMQ_PORT', value: process.env.AMQ_PORT });
 	envVars.push({ name: 'AMQ_HOST', value: process.env.AMQ_HOST });
 	envVars.push({ name: 'MODE', value: process.env.MODE });
@@ -91,7 +91,7 @@ e.deploymentUpdate = (_schema) => {
 	envVars.push({ name: 'TLS_REJECT_UNAUTHORIZED', value: process.env.TLS_REJECT_UNAUTHORIZED });
 	envVars.push({ name: 'HOOK_CONNECTION_TIMEOUT', value: process.env.HOOK_CONNECTION_TIMEOUT });
 	envVars.push({ name: 'MONGO_RECONN_TRIES', value: process.env.MONGO_RECONN_TRIES });
-	envVars.push({ name: 'MONGO_RECONN_TIME', value: process.env.MONGO_RECONN_TIME });
+	envVars.push({ name: 'MONGO_RECONN_TIME_MILLI', value: process.env.MONGO_RECONN_TIME_MILLI });
 	envVars.push({ name: 'MONGO_LOGS_BASE_URL', value: process.env.MONGO_LOGS_BASE_URL });
 	envVars.push({ name: 'MONGO_LOGS_DBNAME', value: process.env.MONGO_LOGS_DBNAME });
 	envVars.push({ name: 'LOG_LEVEL', value: process.env.LOG_LEVEL });
@@ -103,7 +103,7 @@ e.deploymentUpdate = (_schema) => {
 	options.livenessProbe.httpGet.port = _schema.port;
 	options.readinessProbe.httpGet.path = '/' + _schema.app + _schema.api + '/health';
 	options.readinessProbe.httpGet.port = _schema.port;
-	const ns = envConfig.odpNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	// (_namespace, _name, _image, _port, _envVars)
 	logger.debug({
 		ns,
@@ -136,7 +136,7 @@ e.deploymentUpdate = (_schema) => {
 
 e.deploymentDelete = (_schema) => {
 	// (_namespace, _name)
-	const ns = envConfig.odpNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	return kubeutil.deployment.deleteDeployment(
 		ns,
 		_schema.api.split('/')[1].toLowerCase())
@@ -156,7 +156,7 @@ e.deploymentDelete = (_schema) => {
 
 e.serviceStart = (_schema) => {
 	// (_namespace, _name, _port)
-	const ns = envConfig.odpNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	logger.info('Creating service ' + ns + ' ' + _schema.api.split('/')[1].toLowerCase() + ' ' + _schema.port);
 	return kubeutil.service.createService(
 		ns,
@@ -181,7 +181,7 @@ e.serviceStart = (_schema) => {
 e.serviceDelete = (_schema) => {
 	// (_namespace, _name)
 	logger.debug(_schema);
-	const ns = envConfig.odpNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	return kubeutil.service.deleteService(
 		ns,
 		_schema.api.split('/')[1].toLowerCase())

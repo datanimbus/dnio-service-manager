@@ -10,7 +10,7 @@ function informDSHrefChange(srvcObj, body, _req) {
 	let app = pathSplit[1], api = pathSplit[2];
 	let baseurl = 'http://';
 	if(envConfig.isK8sEnv()){
-		baseurl += `${api.toLowerCase()}.${envConfig.odpNS}-${app.toLowerCase()}`;
+		baseurl += `${api.toLowerCase()}.${envConfig.dataStackNS}-${app.toLowerCase()}`;
 	}else{
 		baseurl += `localhost:${srvcObj.port}`;
 	}

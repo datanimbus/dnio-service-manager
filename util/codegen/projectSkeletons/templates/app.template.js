@@ -40,7 +40,7 @@ let init = require("./init")
 const loglevel = "${process.env.LOG_LEVEL}";
 
 if(debugDB) mongoose.set("debug", true);
-let dbName = '${process.env.ODP_NAMESPACE}-${config.app}';
+let dbName = '${process.env.DATA_STACK_NAMESPACE}-${config.app}';
 let options = {
     reconnectTries: conf.mongoOptions.reconnectTries,
     reconnectInterval: conf.mongoOptions.reconnectInterval,
@@ -72,7 +72,7 @@ mongoose.connect(mongoUrl,options, err =>{
         logger.error(err);
     }
     else{
-        logger.info("Connected to ${process.env.ODP_NAMESPACE}-${config.app} DB");
+        logger.info("Connected to ${process.env.DATA_STACK_NAMESPACE}-${config.app} DB");
         global.gfsBucket = new mongodb.GridFSBucket(mongoose.connection.db, { bucketName: '${config.collectionName}' });
         global.gfsBucketExport = new mongodb.GridFSBucket(mongoose.connection.db, { bucketName: '${config.collectionName}.exportedFile' });
         global.gfsBucketImport = new mongodb.GridFSBucket(mongoose.connection.db, { bucketName: '${config.collectionName}.fileImport' });

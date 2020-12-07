@@ -1348,7 +1348,7 @@ e.deployAPIHandler = (_req, _res) => {
 									_res.status(202).json({ message: 'Deployment process started' });
 									if (!envConfig.isCosmosDB() && srvcObj.collectionName != oldData.collectionName) {
 										isReDeploymentRequired = true;
-										return renameCollections(oldData.collectionName, srvcObj.collectionName, `${process.env.ODP_NAMESPACE}-${srvcObj.app}`);
+										return renameCollections(oldData.collectionName, srvcObj.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
 									}
 								})
 								.then(() => smHooks.updateServicesInGlobalSchema(srvcObj, _req))
@@ -1358,7 +1358,7 @@ e.deployAPIHandler = (_req, _res) => {
 								.then(() => logger.info('Service details for ' + _d._id + ' under app ' + _d.app + ' has been saved!'))
 								.then(() => {
 									if (isCounterChangeRequired) {
-										return global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${srvcObj.app}`).collection('counters')
+										return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`).collection('counters')
 											.update({ _id: oldData.collectionName }, { next: parseInt(newIdElement['counter'], 10) - 1 });
 									}
 								})
@@ -1395,7 +1395,7 @@ e.deployAPIHandler = (_req, _res) => {
 										logger.info('Redeploying service ' + _d._id + ' under app ' + _d.app);
 										var data = JSON.parse(JSON.stringify(_d));
 										// data.definition = JSON.parse(_d.definition);
-										let mongoDBVishnu = global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${srvcObj.app}`);
+										let mongoDBVishnu = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
 										if (envConfig.isCosmosDB()) {
 											return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
 										} else {
@@ -1470,7 +1470,7 @@ e.startAPIHandler = (_req, _res) => {
 						// doc.save(_req);
 						doc = doc.toObject();
 						// doc.definition = JSON.parse(doc.definition);
-						const ns = envConfig.odpNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+						const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 						if (process.env.SM_ENV == 'K8s') {
 							let instances = doc.instances ? doc.instances : 1;
 							logger.info('Scaling to ' + instances);
@@ -1549,7 +1549,7 @@ e.stopAPIHandler = (_req, _res) => {
 				})
 					.then(_d => {
 						if (!_d) throw new Error('No service found with given id');
-						const ns = envConfig.odpNS + '-' + _d.app.toLowerCase().replace(/ /g, '');
+						const ns = envConfig.dataStackNS + '-' + _d.app.toLowerCase().replace(/ /g, '');
 						return kubeutil.deployment.scaleDeployment(ns, _d.api.split('/')[1].toLowerCase(), 0);
 					})
 					.then(_d => {
@@ -1819,7 +1819,7 @@ e.destroyService = (_req, _res) => {
 		.then(() => smHooks.removeServicesInGlobalSchema(id, _req))
 		.then(() => {
 			if (originalDoc && originalDoc.permanentDeleteData) {
-				dropCollections(originalDoc.collectionName, `${process.env.ODP_NAMESPACE}-${originalDoc.app}`);
+				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
 			}
 		})
 		.then(() => {
@@ -1899,7 +1899,7 @@ e.documentCount = (_req, _res) => {
 			if (_doc) {
 				if (Array.isArray(_doc)) {
 					return Promise.all(_doc.map(e => {
-						return global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${e.app}`).collection(e.collectionName).count()
+						return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${e.app}`).collection(e.collectionName).count()
 							.then(_count => {
 								return {
 									_id: e._id,
@@ -1908,7 +1908,7 @@ e.documentCount = (_req, _res) => {
 							});
 					}));
 				} else {
-					return global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${_doc.app}`).collection(_doc.collectionName).count();
+					return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${_doc.app}`).collection(_doc.collectionName).count();
 				}
 			} else {
 				_res.status(404).json({
@@ -1950,7 +1950,7 @@ e.deleteApp = function (_req, _res) {
 					});
 					deployUtil.deleteServiceInUserMgmt(doc._id, _req);
 					deployUtil.deleteServiceInWorkflow(doc._id, _req);
-					dropCollections(doc.collectionName, `${process.env.ODP_NAMESPACE}-${doc.app}`);
+					dropCollections(doc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${doc.app}`);
 					deployUtil.sendToSocket(socket, 'deleteService', {
 						_id: doc._id,
 						app: doc.app,
@@ -2165,7 +2165,7 @@ function getIdCounter(serviceId, app) {
 	return crudder.model.findOne({ _id: serviceId, '_metadata.deleted': false }, 'collectionName')
 		.then(_doc => {
 			if (_doc) {
-				var dbName = `${process.env.ODP_NAMESPACE}` + '-' + app;
+				var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + app;
 				return global.mongoConnection.db(dbName).collection('counters').findOne({ _id: _doc.collectionName }, { next: 1 });
 			}
 		})
@@ -2189,7 +2189,7 @@ e.startAllServices = (_req, _res) => {
 				let promises = docs.map(doc => {
 					doc = doc.toObject();
 					// doc.definition = JSON.parse(doc.definition);
-					const ns = envConfig.odpNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					if (process.env.SM_ENV == 'K8s') {
 						let instances = doc.instances ? doc.instances : 1;
 						logger.info('Scaling to ' + instances);
@@ -2236,7 +2236,7 @@ e.stopAllServices = (_req, _res) => {
 			let promises = _services.map(doc => {
 				if (process.env.SM_ENV == 'K8s') {
 					logger.info('Scaling down to 0');
-					const ns = envConfig.odpNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), 0)
 						.then(_d => {
 							let instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
@@ -2423,7 +2423,7 @@ function scaleDeployments(req, socket, ids, srvcId, instance) {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
 			.then(doc => {
 				if (doc) {
-					const ns = envConfig.odpNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					if (process.env.SM_ENV == 'K8s') {
 						logger.info('Scaling of ' + id + 'to ' + instance);
 						return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instance)
@@ -2443,7 +2443,7 @@ function scaleDeploymentsFromStart(req, socket, ids, srvcId, instance) {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
 			.then(doc => {
 				if (doc) {
-					const ns = envConfig.odpNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					if (process.env.SM_ENV == 'K8s') {
 						logger.info('Scaling of ' + id + 'to ' + instance);
 						return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instance)
@@ -2470,7 +2470,7 @@ function scaleDeploymentsToOriginal(req, socket, ids, srvcId) {
 			.then(doc => {
 				if (doc) {
 					logger.info('the value of instance in db', doc.instances);
-					const ns = envConfig.odpNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					let instances = doc.instances ? doc.instances : 1;
 					if (process.env.SM_ENV == 'K8s') {
 						logger.info('Scaling of ' + id + 'to ' + instances);
@@ -2561,7 +2561,7 @@ e.lockDocumentCount = (req, res) => {
 				_sd = data;
 				collectionName = _sd.collectionName;
 				app = _sd.app;
-				let dbName = envConfig.isK8sEnv() ? `${envConfig.odpNS}-${app}` : `${envConfig.odpNS}-${app}`;
+				let dbName = envConfig.isK8sEnv() ? `${envConfig.dataStackNS}-${app}` : `${envConfig.dataStackNS}-${app}`;
 
 				return global.mongoConnection.db(dbName).collection(collectionName).find({ '_metadata.workflow': { $exists: true } }).count()
 					.then(count => {
@@ -2638,7 +2638,7 @@ function validateUserDeletion(req, res) {
 	crudder.model.find({ 'relatedSchemas.internal.users.0': { $exists: true }, app: app })
 		.then(_d => {
 			promise = _d.map(data => {
-				let db = global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${data.app}`);
+				let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
 				let filter = data.relatedSchemas.internal.users.map(doc => {
 					doc.filter = doc.filter.replace('{{id}}', id);
 					return doc;
@@ -2672,7 +2672,7 @@ function userDeletion(req, res) {
 	crudder.model.find({ 'relatedSchemas.internal.users.0': { $exists: true }, app: app })
 		.then(_d => {
 			promise = _d.map(data => {
-				let db = global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${data.app}`);
+				let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
 				let filter = data.relatedSchemas.internal.users.map(doc => doc.filter.replace('{{id}}', id));
 				let path = data.relatedSchemas.internal.users.map(doc => doc.path);
 				filter = filter.map(doc => JSON.parse(doc));
@@ -2902,7 +2902,7 @@ function checkUniqueField(app, collectionName, field) {
 	];
 	aggregateQuery[0]['$match'][field] = { '$ne': null };
 	return new Promise((resolve, reject) => {
-		global.mongoConnection.db(`${process.env.ODP_NAMESPACE}-${app}`)
+		global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${app}`)
 			.collection(collectionName).aggregate(aggregateQuery).toArray()
 			.then(result => {
 				let res = {};

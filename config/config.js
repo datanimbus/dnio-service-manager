@@ -22,8 +22,8 @@ if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT &
 function isK8sEnv() {
 	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s';
 }
-const odpNS = process.env.ODP_NAMESPACE;
-if (isK8sEnv() && !odpNS) throw new Error('ODP_NAMESPACE not found. Please check your configMap');
+const dataStackNS = process.env.DATA_STACK_NAMESPACE;
+if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
 
 function isDockerEnv() {
 	return fs.existsSync('/.dockerenv');
@@ -36,16 +36,16 @@ function getHostOSBasedLocation() {
 
 function get(_service) {
 	if (isK8sEnv()) {
-		if (_service == 'dm') return `http://dm.${odpNS}`;
-		if (_service == 'ne') return `http://ne.${odpNS}`;
-		if (_service == 'sm') return `http://sm.${odpNS}`;
-		if (_service == 'pm') return `http://pm.${odpNS}`;
-		if (_service == 'user') return `http://user.${odpNS}`;
-		if (_service == 'gw') return `http://gw.${odpNS}`;
-		if (_service == 'wf') return `http://wf.${odpNS}`;
-		if (_service == 'sec') return `http://sec.${odpNS}`;
-		if (_service == 'mon') return `http://mon.${odpNS}`;
-		if (_service == 'gw') return `http://gw.${odpNS}`;
+		if (_service == 'dm') return `http://dm.${dataStackNS}`;
+		if (_service == 'ne') return `http://ne.${dataStackNS}`;
+		if (_service == 'sm') return `http://sm.${dataStackNS}`;
+		if (_service == 'pm') return `http://pm.${dataStackNS}`;
+		if (_service == 'user') return `http://user.${dataStackNS}`;
+		if (_service == 'gw') return `http://gw.${dataStackNS}`;
+		if (_service == 'wf') return `http://wf.${dataStackNS}`;
+		if (_service == 'sec') return `http://sec.${dataStackNS}`;
+		if (_service == 'mon') return `http://mon.${dataStackNS}`;
+		if (_service == 'gw') return `http://gw.${dataStackNS}`;
 	} else if (fs.existsSync('/.dockerenv')) {
 		if (_service == 'dm') return 'http://' + getHostOSBasedLocation() + ':10709';
 		if (_service == 'ne') return 'http://' + getHostOSBasedLocation() + ':10010';
@@ -102,27 +102,27 @@ module.exports = {
 	isDockerEnv: isDockerEnv,
 	isCosmosDB: isCosmosDB,
 	logQueueName: 'systemService',
-	odpNS: odpNS,
+	dataStackNS: dataStackNS,
 	fsMount: process.env.DS_FS_MOUNT_PATH || '/tmp/ds',
 	NATSConfig: {
-		url: process.env.NATS_HOST || 'nats://127.0.0.1:4222',
-		user: process.env.NATS_USER || '',
-		pass: process.env.NATS_PASS || '',
-		// maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
-		// reconnectTimeWait: process.env.NATS_RECONN_TIMEWAIT || 500
-		maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
+		url: process.env.MESSAGING_HOST || 'nats://127.0.0.1:4222',
+		user: process.env.MESSAGING_USER || '',
+		pass: process.env.MESSAGING_PASS || '',
+		// maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
+		// reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
+		maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
 		connectTimeout: 2000,
-		stanMaxPingOut: process.env.NATS_RECONN_TIMEWAIT || 500
+		stanMaxPingOut: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME,
+		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'odpConfig',
 		useNewUrlParser: true
 	},
 	mongoAppcenterOptions: {
 		numberOfRetries: process.env.MONGO_RECONN_TRIES,
-		retryMiliSeconds: process.env.MONGO_RECONN_TIME,
+		retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true
 	},
 	enableSearchIndex: (process.env.DS_FUZZY_SEARCH && process.env.DS_FUZZY_SEARCH.toLowerCase() === 'true') || false,
