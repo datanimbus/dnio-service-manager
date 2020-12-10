@@ -993,9 +993,8 @@ function helperUtil(config) {
         })
     }
 
-    function getData(filter, page, count) {
-        page = (page === 0) ? 0 : page * count;
-        return mongoose.connection.db.collection('${config.collectionName}').find(filter).skip(page).limit(count).toArray();
+    function getData(filter, count) {
+        return mongoose.connection.db.collection('${config.collectionName}').find(filter).limit(count).toArray();
     }
 
     function fixData(data, field) {
@@ -1096,7 +1095,7 @@ function helperUtil(config) {
                 return arr.reduce((_p, curr) => {
                     return _p
                         .then(() => {
-                            return getData(filter, curr, batchSize);
+                            return getData(filter, batchSize);
                         })
                         .then(_data => _data.map(_d => updateData(model, field, _d)))
                         .then(_updatePromises => Promise.all(_updatePromises))
