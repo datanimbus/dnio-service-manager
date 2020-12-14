@@ -125,6 +125,9 @@ function getFileValidatorMiddleware(req, res, next){
         let filename = req.files[file].name;
 		let fileExt = filename.split('.').pop();
 		if (allowedExt.indexOf(fileExt.toLowerCase()) == -1) return false;
+		// No validation is required for text based files
+		const textFormat = ['csv', 'txt', 'html', 'htm', 'css', 'ini', 'json', 'tsv', 'xml', 'yaml', 'yml', 'rst', 'md'];
+		if (textFormat.indexOf(fileExt.toLowerCase()) > -1) return true;
 		(fileExt == 'jpeg') ? fileExt='jpg' : (fileExt == 'webm') ? fileExt='mkv': fileExt;
         let isValid = fileValidator({ type: 'Buffer', data: req.files[file].data }, fileExt.toLowerCase());
         return isValid;

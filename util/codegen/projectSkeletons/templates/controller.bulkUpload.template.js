@@ -1037,18 +1037,16 @@ e.bulkCreate = (_req, _res) => {
             }
         });
     })
-    .then(stagedDocs => {
-        stagedDocs.forEach(_s => {
+    .then(async (stagedDocs) => {
+        for(let _s of stagedDocs) {
             let id = _s.data._id;
             if (id) {
-                return model.findOne({ _id: id })
-                .then(oldDoc => {
-                    if(_s.data){
-                        updatePromise.push(updateDocPromise(_req, oldDoc, _s.data, errors, _s.sNo, fileId));
-                    }    
-                })
+                let oldDoc = await model.findOne({ _id: id })
+                if(_s.data){
+                    updatePromise.push(updateDocPromise(_req, oldDoc, _s.data, errors, _s.sNo, fileId));
+                }
             }
-        });
+        };
         return Promise.all(updatePromise);
     })
     .then(() => {

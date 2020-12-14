@@ -1481,6 +1481,8 @@ e.startAPIHandler = (_req, _res) => {
 										return k8s.serviceStart(doc)
 											.then(() => deployUtil.deployService(doc, socket, _req, false, false))
 											.then(() => odputils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
+									} else {
+										odputils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
 									}
 								})
 								.catch(err => {
