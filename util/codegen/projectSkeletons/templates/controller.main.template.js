@@ -62,15 +62,15 @@ module.exports = function (_id, config) {
 		uniqueIndexCode += `\nschema.index({"${obj.key}" : 1} , {unique: "${obj.key} field should be unique", sparse: true, collation: { locale: "${obj.locale}", strength: 2 } });`;
 	});
 
-	let requiredRelation = [];
-	if (config.relationRequiredFields) {
-		config.relationRequiredFields.forEach(key => {
-			requiredRelation.push(`"${key}"`);
-		});
-	}
+	// let requiredRelation = [];
+	// if (config.relationRequiredFields) {
+	// 	config.relationRequiredFields.forEach(key => {
+	// 		requiredRelation.push(`"${key}"`);
+	// 	});
+	// }
 
-	let requiredRelationCode = '';
-	requiredRelationCode += `let requiredRelation = [${requiredRelation}];`;
+	// let requiredRelationCode = '';
+	// requiredRelationCode += `let requiredRelation = [${requiredRelation}];`;
 
 	let incomingRelationCode = `
     let serviceId = process.env.SERVICE_ID || '${config._id}';
@@ -275,7 +275,7 @@ var exportOptions = {
     collectionName:"${collectionName}.fileTransfers"
 };
 
-${requiredRelationCode} ;
+// $// {requiredRelationCode} ;
 
 
 ${searchIndexCode}
@@ -650,18 +650,18 @@ function doPrecision(data, nestedKey, val){
     return data;
 }
 
-schema.pre('validate', function (next) {
-    let obj = this;
-    let data = null;
-    requiredRelation.forEach(key => {
-        let keys = key.split('.');
-        let val = keys.reduce((acc, curr, i) => acc ? acc[curr] : undefined, obj);
-        if (!val  || !val._id) {
-            next(new Error("Required relation can not be empty"));
-        }
-    })
-    next();
-});
+// schema.pre('validate', function (next) {
+//     let obj = this;
+//     let data = null;
+//     requiredRelation.forEach(key => {
+//         let keys = key.split('.');
+//         let val = keys.reduce((acc, curr, i) => acc ? acc[curr] : undefined, obj);
+//         if (!val  || !val._id) {
+//             next(new Error("Required relation can not be empty"));
+//         }
+//     })
+//     next();
+// });
 
 schema.pre("save", function(next, req){
     let self = this;
@@ -733,78 +733,107 @@ schema.pre("save", function(next, req){
 schema.pre("save", function (next, req) {
     let self = this;
     var obje = {};
-    let selfCopy = JSON.parse(JSON.stringify(self));
-    selfCopy._metadata.createdAt = self._metadata.createdAt;
-    return helperUtil.getPreHooks().reduce(function(acc, curr){
-        let oldData = null;
-        let preHookLog = null;
-        let newData = null;
-        return acc
-            .then(data => {
-                oldData = data;
-                 obje = {
-                    "docId": data._id,
-                    "service": process.env.SERVICE_ID || '${config._id}',
-                    "colName": '${config.app}.${config.collectionName}.preHook',
-                    "timestamp": new Date(),
-                    "url": curr.url,
-                    "operation": self.isNew ? 'POST' : 'PUT', // Changed from req.method
-                    "txnId": req.get('txnId'),
-                    "name": curr.name,
-                    "data": {
-                        "old": oldData
-                    },
-                    "status": "Pending",
-                    "_metadata":{                      
+    let promise;
+    if (!self.isNew)
+        promise = helperUtil.decryptCreateOnlySecuredFields(JSON.parse(JSON.stringify(self)));
+    else
+        promise = Promise.resolve(JSON.parse(JSON.stringify(self)));
+    return promise.then(selfCopy => {
+        selfCopy._metadata.createdAt = self._metadata.createdAt;
+        return helperUtil.getPreHooks().reduce(function (acc, curr) {
+            let oldData = null;
+            let preHookLog = null;
+            let newData = null;
+            return acc
+                .then(data => {
+                    oldData = data;
+                    obje = {
+                        "docId": data._id,
+                        "service": process.env.SERVICE_ID || '${config._id}',
+                        "colName": '${config.app}.${config.collectionName}.preHook',
+                        "timestamp": new Date(),
+                        "url": curr.url,
+                        "operation": self.isNew ? 'POST' : 'PUT', // Changed from req.method
+                        "txnId": req.get('txnId'),
+                        "name": curr.name,
+                        "data": {
+                            "old": oldData
+                        },
+                        "status": "Pending",
+                        "_metadata": {}
                     }
-                }
 
-                let options = {
-                    operation: self.isNew ? 'POST' : 'PUT', // Changed from req.method
-                    data: oldData,
-                    trigger:{
-                        source: 'presave',
-                        simulate: false
-                    },
-                    txnId: req.get('txnId'),
-                    user: req.get('user'),
-                    dataService: process.env.SERVICE_ID || '${config._id}'
-                } 
-                return helperUtil.invokeHook(curr.url, options, curr.failMessage)
-            })
-            .then(data => {
-                newData = Object.assign({}, oldData, data.data);
-                newData._metadata = oldData._metadata;
-                obje["status"] = "Completed";
-                obje.app = '${config.app}';
-                obje._metadata.createdAt= new Date();
-                obje._metadata.lastUpdated = new Date();
-                obje.data.new = newData;
-               // {"status": "Completed", "data.new": newData, "_metadata.lastUpdated": new Date()}
-                client.publish("prehookCreate", JSON.stringify(obje));
-            })
-            .then(() => {
-                return newData;
-            })
-            .catch(err=>{
-                next(err);
-                      obje["status"] = "Error";
-                      obje.data.new = newData;
-                      obje["comment"] = err.message;
-                      obje._metadata.lastUpdated= new Date();
+                    let options = {
+                        operation: self.isNew ? 'POST' : 'PUT', // Changed from req.method
+                        data: oldData,
+                        trigger: {
+                            source: 'presave',
+                            simulate: false
+                        },
+                        txnId: req.get('txnId'),
+                        user: req.get('user'),
+                        dataService: process.env.SERVICE_ID || '${config._id}'
+                    }
+                    return helperUtil.invokeHook(curr.url, options, curr.failMessage)
+                })
+                .then(data => {
+                    newData = Object.assign({}, oldData, data.data);
+                    newData._metadata = oldData._metadata;
+                    obje["status"] = "Completed";
+                    obje.app = '${config.app}';
+                    obje._metadata.createdAt = new Date();
+                    obje._metadata.lastUpdated = new Date();
+                    obje.data.new = newData;
+                    // {"status": "Completed", "data.new": newData, "_metadata.lastUpdated": new Date()}
+                    client.publish("prehookCreate", JSON.stringify(obje));
+                })
+                .then(() => {
+                    return newData;
+                })
+                .catch(err => {
+                    next(err);
+                    obje["status"] = "Error";
+                    obje.data.new = newData;
+                    obje["comment"] = err.message;
+                    obje._metadata.lastUpdated = new Date();
                     client.publish("prehookCreate", JSON.stringify(obje));
                     //mongoose.model("preHooks").updateOne({ _id: preHookLog._id }, {"status": "Error","comment": err.message, "data.new": newData, "_metadata.lastUpdated": new Date()}).then();
-                
-            })           
-    }, Promise.resolve(selfCopy))
-        .then(data=>{
-            Object.assign(self, data);
-            return self.validate();
-        })
-        .then(() => next())
-        .catch(err=>{
+
+                })
+        }, Promise.resolve(selfCopy))
+            .then(data => {
+                Object.assign(self, data);
+                return self.validate();
+            })
+            .then(() => next())
+    })
+        .catch(err => {
+            logger.error('Error in prehook presave hook :: ', err)
             next(err);
         })
+});
+
+function retainCreateOnlyFields(newData, oldData, nestedKey) {
+    let keys = nestedKey.split('.');
+    if (keys.length == 1) {
+        newData[keys[0]] = oldData[keys[0]];
+        return newData;
+    } else {
+        let nextKey = keys.shift();
+        newData[nextKey] = retainCreateOnlyFields(newData[nextKey], oldData[nextKey], keys.join('.'));
+        return newData;
+    }
+}
+
+schema.pre("save", function (next, req) {
+    let self = this;
+    if (!self.isNew && createOnlyFields && createOnlyFields.length && createOnlyFields[0] !== '') {
+        let oldData = self._oldDoc ? self._oldDoc : null;
+        createOnlyFields.reduce((acc, curr) => retainCreateOnlyFields(acc, oldData, curr), self);
+        next();
+    } else {
+        next();
+    }
 });
 
 function getWebHookAndAuditData(req, id, isNew) {
@@ -972,30 +1001,6 @@ schema.pre("save", function(next, req){
             logger.error(err.message);
             next(err);
         })
-    }
-});
-
-function retainCreateOnlyFields(newData, oldData, nestedKey) {
-    let keys = nestedKey.split('.');
-    if(keys.length == 1) {
-        newData[keys[0]] = oldData[keys[0]];
-        return newData;
-    } else {
-        let nextKey = keys.shift();
-        newData[nextKey] = retainCreateOnlyFields(newData[nextKey], oldData[nextKey], keys.join('.'));
-        return newData;
-    }
-}
-
-schema.pre("save", function(next, req){
-    let self = this;
-    if(!self.isNew && createOnlyFields && createOnlyFields.length){
-        let oldData = self._webHookData && self._webHookData.data && self._webHookData.data.old ? JSON.parse(self._webHookData.data.old) : null;
-        let newData = JSON.parse(JSON.stringify(self));
-        self = createOnlyFields.reduce((acc, curr)=> retainCreateOnlyFields(acc, oldData, curr), newData);
-        next();
-    }else{
-        next();
     }
 });
 
@@ -3301,7 +3306,7 @@ function customCreate(req, res){
         healthCheck: e.healthCheck,
         readiness: e.readiness,
         securedFields: getSecuredFields,
-        requiredRelation:requiredRelation,
+        // requiredRelation:requiredRelation,
         aggregate: crudder.aggregate,
         updateHref: updateHref
     };
