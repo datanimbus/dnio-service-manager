@@ -1,4 +1,4 @@
-const envConfig = require(`../../../../config/config.js`);
+const envConfig = require('../../../../config/config.js');
 module.exports = function (config) {
 	var appJs = `
 "use strict";
@@ -40,7 +40,7 @@ let init = require("./init")
 const loglevel = "${process.env.LOG_LEVEL}";
 
 if(debugDB) mongoose.set("debug", true);
-let dbName = '${process.env.ODP_NAMESPACE}-${config.app}';
+let dbName = '${process.env.DATA_STACK_NAMESPACE}-${config.app}';
 let options = {
     reconnectTries: conf.mongoOptions.reconnectTries,
     reconnectInterval: conf.mongoOptions.reconnectInterval,
@@ -72,7 +72,7 @@ mongoose.connect(mongoUrl,options, err =>{
         logger.error(err);
     }
     else{
-        logger.info("Connected to ${process.env.ODP_NAMESPACE}-${config.app} DB");
+        logger.info("Connected to ${process.env.DATA_STACK_NAMESPACE}-${config.app} DB");
         global.gfsBucket = new mongodb.GridFSBucket(mongoose.connection.db, { bucketName: '${config.collectionName}' });
         global.gfsBucketExport = new mongodb.GridFSBucket(mongoose.connection.db, { bucketName: '${config.collectionName}.exportedFile' });
         global.gfsBucketImport = new mongodb.GridFSBucket(mongoose.connection.db, { bucketName: '${config.collectionName}.fileImport' });
@@ -101,10 +101,10 @@ app.use(liveness);
 let queueMgmt = require('./queueManagement.js');
 
 let secureFields = '${config.secureFields}'.split(',').map(_d=>_d+'.value');
-let baseURL = '${`/` + config.app + config.api}';
+let baseURL = '${'/' + config.app + config.api}';
 let masking = [
 	{ url: \`\${baseURL}\`, path: secureFields },
-    { url: \`\${baseURL}/simulate\`, path: secureFields },
+    { url: \`\${baseURL}/utils/simulate\`, path: secureFields },
     { url: \`\${baseURL}/{id}\`, path: secureFields },
 	{ url: \`\${baseURL}/experienceHook\`, path: secureFields }
 ];
@@ -125,6 +125,9 @@ function getFileValidatorMiddleware(req, res, next){
         let filename = req.files[file].name;
 		let fileExt = filename.split('.').pop();
 		if (allowedExt.indexOf(fileExt.toLowerCase()) == -1) return false;
+		// No validation is required for text based files
+		const textFormat = ['csv', 'txt', 'html', 'htm', 'css', 'ini', 'json', 'tsv', 'xml', 'yaml', 'yml', 'rst', 'md'];
+		if (textFormat.indexOf(fileExt.toLowerCase()) > -1) return true;
 		(fileExt == 'jpeg') ? fileExt='jpg' : (fileExt == 'webm') ? fileExt='mkv': fileExt;
         let isValid = fileValidator({ type: 'Buffer', data: req.files[file].data }, fileExt.toLowerCase());
         return isValid;

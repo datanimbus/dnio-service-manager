@@ -1,35 +1,47 @@
 var definition = {
 	'_id': {
-		'type': `String`,
+		'type': 'String',
 		'default': null
 	},
 	'description': {
-		'type': `String`
+		'type': 'String'
 	},
 	'name': {
-		'type': `String`,
+		'type': 'String',
 		'required': true
 	},
 	'definition': {
-		'type': `String`,
+		'type': {
+			'definition': [{
+				'key': 'String',
+				'type': 'String',
+				'definition': {
+					'type': 'Object',
+					'required': false
+				},
+				'properties': {
+					'type': 'Object'
+				}
+			}]
+		}
 	},
 	'services': {
-		'type': [`String`]
+		'type': ['String']
 	},
 	'app': {
-		'type': `String`
+		'type': 'String'
 	},
-	'attributeList': [{
-		'key': `String`,
-		'name': `String`,
-		'properties': {
-			'type': `Object`
-		}
-	}],
+	// 'attributeList': [{
+	// 	'key': 'String',
+	// 	'name': 'String',
+	// 	'properties': {
+	// 		'type': 'Object'
+	// 	}
+	// }],
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': { 'type': `Number` }
+				'release': { 'type': 'Number' }
 			}
 		}
 	}

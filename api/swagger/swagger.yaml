@@ -1158,7 +1158,9 @@ definitions:
               items:
                 type: string   
       definition:
-        type: object
+        type: [array, 'null']
+        items:
+          type: object
       webHooks:
         type: [array, 'null']
         items:
@@ -1263,9 +1265,11 @@ definitions:
           validityType: 
             type: string
       definition:
-        type: object
-      attributeList:
-        type: [array]
+        type: [array, 'null']
+        items:
+          type: object
+      # attributeList:
+      #   type: [array]
       webHooks:
         type: [array, 'null']
         items:

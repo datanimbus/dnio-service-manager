@@ -2,8 +2,8 @@
 set -e
 if [ -f $WORKSPACE/../TOGGLE ]; then
     echo "****************************************************"
-    echo "odp:sm :: Toggle mode is on, terminating build"
-    echo "odp:sm :: BUILD CANCLED"
+    echo "data.stack:sm :: Toggle mode is on, terminating build"
+    echo "data.stack:sm :: BUILD CANCLED"
     echo "****************************************************"
     exit 0
 fi
@@ -13,8 +13,8 @@ cDate=`date +%Y.%m.%d.%H.%M` #Current date and time
 if [ -f $WORKSPACE/../CICD ]; then
     CICD=`cat $WORKSPACE/../CICD`
 fi
-if [ -f $WORKSPACE/../ODP_RELEASE ]; then
-    REL=`cat $WORKSPACE/../ODP_RELEASE`
+if [ -f $WORKSPACE/../DATA_STACK_RELEASE ]; then
+    REL=`cat $WORKSPACE/../DATA_STACK_RELEASE`
 fi
 if [ -f $WORKSPACE/../DOCKER_REGISTRY ]; then
     DOCKER_REG=`cat $WORKSPACE/../DOCKER_REGISTRY`
@@ -28,8 +28,8 @@ if [ $1 ]; then
 fi
 if [ ! $REL ]; then
     echo "****************************************************"
-    echo "odp:sm :: Please Create file ODP_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
-    echo "odp:sm :: BUILD FAILED"
+    echo "data.stack:sm :: Please Create file DATA_STACK_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
+    echo "data.stack:sm :: BUILD FAILED"
     echo "****************************************************"
     exit 0
 fi
@@ -42,96 +42,96 @@ if [ $3 ]; then
 fi
 if [ $CICD ]; then
     echo "****************************************************"
-    echo "odp:sm :: CICI env found"
+    echo "data.stack:sm :: CICI env found"
     echo "****************************************************"
     TAG=$TAG"_"$cDate
-    if [ ! -f $WORKSPACE/../ODP_NAMESPACE ]; then
+    if [ ! -f $WORKSPACE/../DATA_STACK_NAMESPACE ]; then
         echo "****************************************************"
-        echo "odp:sm :: Please Create file ODP_NAMESPACE with the namespace at $WORKSPACE"
-        echo "odp:sm :: BUILD FAILED"
+        echo "data.stack:sm :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
+        echo "data.stack:sm :: BUILD FAILED"
         echo "****************************************************"
         exit 0
     fi
-    ODP_NS=`cat $WORKSPACE/../ODP_NAMESPACE`
+    DATA_STACK_NS=`cat $WORKSPACE/../DATA_STACK_NAMESPACE`
 fi
 
 sh $WORKSPACE/scripts/prepare_yaml.sh $REL $2
 
 echo "****************************************************"
-echo "odp:sm :: Using build :: "$TAG
+echo "data.stack:sm :: Using build :: "$TAG
 echo "****************************************************"
 
 cd $WORKSPACE
 
 echo "****************************************************"
-echo "odp:sm :: Adding IMAGE_TAG in Dockerfile :: "$TAG
+echo "data.stack:sm :: Adding IMAGE_TAG in Dockerfile :: "$TAG
 echo "****************************************************"
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
-    echo "odp:sm :: Doing a clean build"
+    echo "data.stack:sm :: Doing a clean build"
     echo "****************************************************"
     
-    docker build --no-cache -t odp:sm.$TAG .
+    docker build --no-cache -t data.stack:sm.$TAG .
 
     echo "****************************************************"
-    echo "odp:sm :: Building base image"
+    echo "data.stack:sm :: Building base image"
     echo "****************************************************"
-    docker build --no-cache -t odp:base.$TAG -f Dockerfile_base .
+    docker build --no-cache -t data.stack:base.$TAG -f Dockerfile_base .
     rm $WORKSPACE/../CLEAN_BUILD_SM
 
     echo "****************************************************"
-    echo "odp:sm :: Copying deployment files"
+    echo "data.stack:sm :: Copying deployment files"
     echo "****************************************************"
 
     if [ $CICD ]; then
         sed -i.bak s#__docker_registry_server__#$DOCKER_REG# sm.yaml
         sed -i.bak s/__release_tag__/"'$REL'"/ sm.yaml
         sed -i.bak s#__release__#$TAG# sm.yaml
-        sed -i.bak s#__namespace__#$ODP_NS# sm.yaml
+        sed -i.bak s#__namespace__#$DATA_STACK_NS# sm.yaml
         sed -i.bak '/imagePullSecrets/d' sm.yaml
         sed -i.bak '/- name: regsecret/d' sm.yaml
 
-        kubectl delete deploy sm -n $ODP_NS || true # deleting old deployement
-        kubectl delete service sm -n $ODP_NS || true # deleting old service
+        kubectl delete deploy sm -n $DATA_STACK_NS || true # deleting old deployement
+        kubectl delete service sm -n $DATA_STACK_NS || true # deleting old service
         #creating new deployment
         kubectl create -f sm.yaml
     fi
 
 else
     echo "****************************************************"
-    echo "odp:sm :: Doing a normal build"
+    echo "data.stack:sm :: Doing a normal build"
     echo "****************************************************"
 
-    docker build -t odp:sm.$TAG .
+    docker build -t data.stack:sm.$TAG .
 
     echo "****************************************************"
-    echo "odp:sm :: Building base image"
+    echo "data.stack:sm :: Building base image"
     echo "****************************************************"
 
-    docker build -t odp:base.$TAG -f Dockerfile_base .
+    docker build -t data.stack:base.$TAG -f Dockerfile_base .
 
     if [ $CICD ]; then
-        kubectl set image deployment/sm sm=odp:sm.$TAG -n $ODP_NS --record=true
+        kubectl set image deployment/sm sm=data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
     fi
 fi
 if [ $DOCKER_REG ]; then
     echo "****************************************************"
-    echo "odp:sm :: Docker Registry found, pushing image"
+    echo "data.stack:sm :: Docker Registry found, pushing image"
     echo "****************************************************"
 
-    echo "docker tag odp:sm.$TAG $DOCKER_REG/odp:sm.$TAG"
-    docker tag odp:sm.$TAG $DOCKER_REG/odp:sm.$TAG
-    echo "docker push $DOCKER_REG/odp:sm.$TAG"
-    docker push $DOCKER_REG/odp:sm.$TAG
+    echo "docker tag data.stack:sm.$TAG $DOCKER_REG/data.stack:sm.$TAG"
+    docker tag data.stack:sm.$TAG $DOCKER_REG/data.stack:sm.$TAG
+    echo "docker push $DOCKER_REG/data.stack:sm.$TAG"
+    docker push $DOCKER_REG/data.stack:sm.$TAG
 
-    echo "docker tag odp:base.$TAG $DOCKER_REG/odp:base.$TAG"
-    docker tag odp:base.$TAG $DOCKER_REG/odp:base.$TAG
-    echo "docker push $DOCKER_REG/odp:base.$TAG"
-    docker push $DOCKER_REG/odp:base.$TAG
+    echo "docker tag data.stack:base.$TAG $DOCKER_REG/data.stack:base.$TAG"
+    docker tag data.stack:base.$TAG $DOCKER_REG/data.stack:base.$TAG
+    echo "docker push $DOCKER_REG/data.stack:base.$TAG"
+    docker push $DOCKER_REG/data.stack:base.$TAG
 fi
 echo "****************************************************"
-echo "odp:sm :: BUILD SUCCESS :: odp:sm.$TAG"
+echo "data.stack:sm :: BUILD SUCCESS :: data.stack:sm.$TAG"
 echo "****************************************************"
 echo $TAG > $WORKSPACE/../LATEST_SM

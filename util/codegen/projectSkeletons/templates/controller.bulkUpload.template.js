@@ -1,13 +1,13 @@
-let envConfigSM = require(`../../../../config/config`);
-const _ = require(`lodash`);
+let envConfigSM = require('../../../../config/config');
+const _ = require('lodash');
 let code = [];
 
 module.exports = function (config) {
 	code = [];
-	code.push(`function fixBoolean(req, newData, oldData) {`);
-	functiontoParseBooleans(config.definition, ``);
-	code.push(`}`);
-	code.join(`\n`);
+	code.push('function fixBoolean(req, newData, oldData) {');
+	functiontoParseBooleans(config.definition, '');
+	code.push('}');
+	code.join('\n');
 	return `"use strict";
 
 const mongoose = require("mongoose");
@@ -653,7 +653,7 @@ function getSheetDataFromGridFS(fileId){
     })
 }
 
-${code.join(`\n`)}
+${code.join('\n')}
 
 e.validateData = (_req, _res) => {
     let data = _req.body;
@@ -1037,18 +1037,16 @@ e.bulkCreate = (_req, _res) => {
             }
         });
     })
-    .then(stagedDocs => {
-        stagedDocs.forEach(_s => {
+    .then(async (stagedDocs) => {
+        for(let _s of stagedDocs) {
             let id = _s.data._id;
             if (id) {
-                return model.findOne({ _id: id })
-                .then(oldDoc => {
-                    if(_s.data){
-                        updatePromise.push(updateDocPromise(_req, oldDoc, _s.data, errors, _s.sNo, fileId));
-                    }    
-                })
+                let oldDoc = await model.findOne({ _id: id })
+                if(_s.data){
+                    updatePromise.push(updateDocPromise(_req, oldDoc, _s.data, errors, _s.sNo, fileId));
+                }
             }
-        });
+        };
         return Promise.all(updatePromise);
     })
     .then(() => {
@@ -1117,54 +1115,54 @@ module.exports = e;`;
 const functiontoParseBooleans = (definition, pathAsOfNow) => {
 	const keys = Object.keys(definition);
 	for (const key of keys) {
-		if (key === `_id`) continue;
+		if (key === '_id') continue;
 		const currentKeyValue = definition[key];
-		let newPath = pathAsOfNow == `` ? key : `${pathAsOfNow}.${key}`;
+		let newPath = pathAsOfNow == '' ? key : `${pathAsOfNow}.${key}`;
 
-		if (currentKeyValue.type === `Object`) {
+		if (currentKeyValue.type === 'Object') {
 			if (currentKeyValue.definition)
 				functiontoParseBooleans(currentKeyValue.definition, newPath);
 		}
-		if (currentKeyValue.type === `Boolean`) {
-			code.push(`\tlet ${_.camelCase(newPath)} = _.get(newData, '${newPath}');`);
-			code.push(`if(typeof ${_.camelCase(newPath)} === 'string' && (${_.camelCase(newPath)} === 'Y' || ${_.camelCase(newPath)} === 'y')){`);
-			code.push(` ${_.camelCase(newPath)} = true;`);
-			code.push(`}`);
-			code.push(`if(typeof ${_.camelCase(newPath)} === 'string' && (${_.camelCase(newPath)} === 'N' || ${_.camelCase(newPath)} === 'n')){`);
-			code.push(` ${_.camelCase(newPath)} = false;`);
-			code.push(`}`);
-			code.push(`if(typeof ${_.camelCase(newPath)} === 'string'){`);
-			code.push(` ${_.camelCase(newPath)} = ${_.camelCase(newPath)}.toLowerCase();`);
-			code.push(`}`);
-			code.push(`\t_.set(newData, '${newPath}', ${_.camelCase(newPath)});\n`);
+		if (currentKeyValue.type === 'Boolean') {
+			code.push(`\tlet var_${_.camelCase(newPath)} = _.get(newData, '${newPath}');`);
+			code.push(`if(typeof var_${_.camelCase(newPath)} === 'string' && (var_${_.camelCase(newPath)} === 'Y' || var_${_.camelCase(newPath)} === 'y')){`);
+			code.push(` var_${_.camelCase(newPath)} = true;`);
+			code.push('}');
+			code.push(`if(typeof var_${_.camelCase(newPath)} === 'string' && (var_${_.camelCase(newPath)} === 'N' || var_${_.camelCase(newPath)} === 'n')){`);
+			code.push(` var_${_.camelCase(newPath)} = false;`);
+			code.push('}');
+			code.push(`if(typeof var_${_.camelCase(newPath)} === 'string'){`);
+			code.push(` var_${_.camelCase(newPath)} = var_${_.camelCase(newPath)}.toLowerCase();`);
+			code.push('}');
+			code.push(`\t_.set(newData, '${newPath}', var_${_.camelCase(newPath)});\n`);
 		}
 
-		if (currentKeyValue.type === `Array`) {
-			if (currentKeyValue.definition._self.type === `Object`) {
-				code.push(`\tlet ${_.camelCase(newPath)} = _.get(newData, '${newPath}');`);
-				code.push(`if (Array.isArray(${_.camelCase(newPath)})) {`);
-				code.push(`    ${_.camelCase(newPath)}.forEach(newData => {`);
-				functiontoParseBooleans(currentKeyValue.definition._self.definition, ``);
-				code.push(`    })`);
-				code.push(`}`);
-				code.push(`\t_.set(newData, '${newPath}', ${_.camelCase(newPath)});\n`);
-			} else if (currentKeyValue.definition._self.type === `Boolean`) {
-				code.push(`\tlet ${_.camelCase(newPath)} = _.get(newData, '${newPath}');`);
-				code.push(`if (Array.isArray(${_.camelCase(newPath)})) {`);
-				code.push(`    ${_.camelCase(newPath)} = ${_.camelCase(newPath)}.map(i => {`);
-				code.push(`        if (typeof i === 'string' && (i === 'Y' || i === 'y')) {`);
-				code.push(`            return i = true`);
-				code.push(`        }`);
-				code.push(`        if (typeof i === 'string' && (i === 'N' || i === 'n')) {`);
-				code.push(`            return i = false;`);
-				code.push(`        }`);
-				code.push(`        if (typeof i === 'string') {`);
-				code.push(`            return i.toLowerCase();`);
-				code.push(`        }`);
-				code.push(`        return i;`);
-				code.push(`    })`);
-				code.push(`}`);
-				code.push(`\t_.set(newData, '${newPath}', ${_.camelCase(newPath)});\n`);
+		if (currentKeyValue.type === 'Array') {
+			if (currentKeyValue.definition._self.type === 'Object') {
+				code.push(`\tlet var_${_.camelCase(newPath)} = _.get(newData, '${newPath}');`);
+				code.push(`if (Array.isArray(var_${_.camelCase(newPath)})) {`);
+				code.push(`    var_${_.camelCase(newPath)}.forEach(newData => {`);
+				functiontoParseBooleans(currentKeyValue.definition._self.definition, '');
+				code.push('    })');
+				code.push('}');
+				code.push(`\t_.set(newData, '${newPath}', var_${_.camelCase(newPath)});\n`);
+			} else if (currentKeyValue.definition._self.type === 'Boolean') {
+				code.push(`\tlet var_${_.camelCase(newPath)} = _.get(newData, '${newPath}');`);
+				code.push(`if (Array.isArray(var_${_.camelCase(newPath)})) {`);
+				code.push(`    var_${_.camelCase(newPath)} = var_${_.camelCase(newPath)}.map(i => {`);
+				code.push('        if (typeof i === \'string\' && (i === \'Y\' || i === \'y\')) {');
+				code.push('            return i = true');
+				code.push('        }');
+				code.push('        if (typeof i === \'string\' && (i === \'N\' || i === \'n\')) {');
+				code.push('            return i = false;');
+				code.push('        }');
+				code.push('        if (typeof i === \'string\') {');
+				code.push('            return i.toLowerCase();');
+				code.push('        }');
+				code.push('        return i;');
+				code.push('    })');
+				code.push('}');
+				code.push(`\t_.set(newData, '${newPath}', var_${_.camelCase(newPath)});\n`);
 			}
 		}
 	}

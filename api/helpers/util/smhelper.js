@@ -1,107 +1,105 @@
-const _ = require(`lodash`);
-const bluebird = require(`bluebird`);
+const _ = require('lodash');
+const bluebird = require('bluebird');
 global.Promise = bluebird;
-var log4js = require(`log4js`);
+var log4js = require('log4js');
 var logger = log4js.getLogger();
-let envConfig = require(`../../../config/config`);
-const request = require(`request`);
-logger.level = `info`;
+let envConfig = require('../../../config/config');
+const request = require('request');
+logger.level = 'info';
 
-function schemaValidate(schemaObj) {
-	if (schemaObj[`_self`]) {
-		if (schemaObj[`_self`][`type`] === `Object`) {
-			schemaValidate(schemaObj[`_self`][`definition`]);
-		} else if (schemaObj[`_self`][`type`] === `Array`) {
-			schemaValidate(schemaObj[`_self`][`definition`]);
+function schemaValidate(schema) {
+	schema.forEach(attribute => {
+		if (attribute.key == '_self') {
+			if (attribute['type'] === 'Object' || attribute['type'] === 'Array') {
+				schemaValidate(attribute['definition']);
+			}
+			return;
 		}
-	} else {
-		Object.keys(schemaObj).forEach(key => {
-			if (key.length <= 40) {
-				if (schemaObj[key][`type`] === `Object` || schemaObj[key][`type`] === `Array`) {
-					schemaValidate(schemaObj[key][`definition`]);
-				}
-			} else {
-				throw new Error(`Attribute name should not be more than 40 characters.`);
+		if (attribute.key.length <= 40) {
+			if (attribute['type'] === 'Object' || attribute['type'] === 'Array') {
+				schemaValidate(attribute['definition']);
 			}
-			if (schemaObj[key][`properties`]) {
-				if (!schemaObj[key][`properties`][`name`] || schemaObj[key][`properties`][`name`].length > 40) {
-					throw new Error(`Name is invalid.`);
-				}
-				if (schemaObj[key][`properties`][`enum`] && schemaObj[key][`type`] == `Number`) {
-					let listVal = schemaObj[key][`properties`][`enum`].length;
-					let uniqueListVal = _.uniq(schemaObj[key][`properties`][`enum`]).length;
-					if (listVal != uniqueListVal) {
-						throw new Error(`List value is duplicate.`);
-					}
+		} else {
+			throw new Error('Attribute name should not be more than 40 characters.');
+		}
+		if (attribute['properties']) {
+			if (!attribute['properties']['name'] || attribute['properties']['name'].length > 40) {
+				throw new Error('Name is invalid.');
+			}
+			if (attribute['properties']['enum'] && attribute['type'] == 'Number') {
+				let listVal = attribute['properties']['enum'].length;
+				let uniqueListVal = _.uniq(attribute['properties']['enum']).length;
+				if (listVal != uniqueListVal) {
+					throw new Error('List value is duplicate.');
 				}
 			}
-		});
-	}
+		}
+	});
 }
 
-function schemaValidateDefault(schemaObj, app) {
-	var promises = Object.keys(schemaObj).map(function (key) {
-		if (schemaObj[key][`type`] == `Object` || schemaObj[key][`type`] == `Array`) {
-			if (!(schemaObj[key][`properties`][`relatedTo`]))
-				return schemaValidateDefault(schemaObj[key][`definition`], app);
+function schemaValidateDefault(schema, app) {
+	var promises = schema.map(function (attribute) {
+		if (attribute['type'] == 'Object' || attribute['type'] == 'Array') {
+			if (!(attribute['properties']['relatedTo']))
+				return schemaValidateDefault(attribute['definition'], app);
 		}
-		if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`unique`] && schemaObj[key][`properties`] && schemaObj[key][`properties`][`default`]) {
-			throw new Error(`Field cannot be both default and unique for ` + key);
+		if (attribute['properties'] && attribute['properties']['unique'] && attribute['properties'] && attribute['properties']['default']) {
+			throw new Error('Field cannot be both default and unique for ' + attribute.key);
 		}
-		if (schemaObj[key][`properties`] && schemaObj[key][`properties`][`default`]) {
-			let ty = schemaObj[key].type;
-			if (ty == `Object` && schemaObj[key][`properties`][`relatedTo`] && schemaObj[key][`properties`][`relatedSearchField`]) {
-				if (schemaObj[key][`properties`][`default`]) {
-					var defValue = schemaObj[key][`properties`][`default`];
-					var nameID = schemaObj[key][`properties`][`relatedTo`];
+		if (attribute['properties'] && attribute['properties']['default']) {
+			let ty = attribute.type;
+			if (ty == 'Object' && attribute['properties']['relatedTo'] && attribute['properties']['relatedSearchField']) {
+				if (attribute['properties']['default']) {
+					var defValue = attribute['properties']['default'];
+					var nameID = attribute['properties']['relatedTo'];
 					var obj1 = {};
-					obj1[`_id`] = nameID;
-					return global.mongoDB.db.collection(`services`).findOne(obj1)
+					obj1['_id'] = nameID;
+					return global.mongoDB.db.collection('services').findOne(obj1)
 						.then(data => {
 							var colname = data.collectionName;
 							var obj = {};
-							obj[`_id`] = defValue;
-							let dbName = envConfig.isK8sEnv() ? `${envConfig.odpNS}-${data.app}` : data.app;
+							obj['_id'] = defValue;
+							let dbName = envConfig.isK8sEnv() ? `${envConfig.dataStackNS}-${data.app}` : data.app;
 							return global.mongoConnection.db(dbName).collection(colname).findOne(obj)
 								.then(_d => {
 									if (!_d) {
-										throw new Error(`Default value is invalid for ` + key);
+										throw new Error('Default value is invalid for ' + attribute.key);
 									}
 								});
 						});
 				}
 			}
-			if (schemaObj[key][`properties`][`enum`]) {
-				if (!((schemaObj[key][`properties`][`enum`]).indexOf(schemaObj[key][`properties`][`default`]) > -1)) {
-					throw new Error(`default value not found in list of values for ` + key);
+			if (attribute['properties']['enum']) {
+				if (!((attribute['properties']['enum']).indexOf(attribute['properties']['default']) > -1)) {
+					throw new Error('default value not found in list of values for ' + attribute.key);
 				}
 			}
-			if (ty == `String`) {
-				if (schemaObj[key][`properties`][`email`]) {
-					let mailid = (schemaObj[key][`properties`][`default`]);
+			if (ty == 'String') {
+				if (attribute['properties']['email']) {
+					let mailid = (attribute['properties']['default']);
 					if (!(mailid.match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i))) {
-						throw new Error(`Default value is not a valid email id for ` + key);
+						throw new Error('Default value is not a valid email id for ' + attribute.key);
 					}
 				}
-				else if (schemaObj[key][`properties`][`pattern`]) {
-					let defaulPatt = (schemaObj[key][`properties`][`default`]);
-					var patt = new RegExp(schemaObj[key][`properties`][`pattern`]);
+				else if (attribute['properties']['pattern']) {
+					let defaulPatt = (attribute['properties']['default']);
+					var patt = new RegExp(attribute['properties']['pattern']);
 					if (!(patt.test(defaulPatt))) {
-						throw new Error(`default value is not a valid pattern for ` + key);
+						throw new Error('default value is not a valid pattern for ' + attribute.key);
 					}
 				}
-				else if ((typeof schemaObj[key][`properties`][`default`]) != `string`) {
-					throw new Error(`Default value type mismatch for ` + key);
+				else if ((typeof attribute['properties']['default']) != 'string') {
+					throw new Error('Default value type mismatch for ' + attribute.key);
 				}
 			}
-			if (ty == `Number`) {
-				if ((typeof schemaObj[key][`properties`][`default`]) != `number`) {
-					throw new Error(`Default value type mismatch for ` + key);
+			if (ty == 'Number') {
+				if ((typeof attribute['properties']['default']) != 'number') {
+					throw new Error('Default value type mismatch for ' + attribute.key);
 				}
 			}
-			if (ty == `Boolean`) {
-				if ((typeof schemaObj[key][`properties`][`default`]) != `boolean`) {
-					throw new Error(`Default value type mismatch for ` + key);
+			if (ty == 'Boolean') {
+				if ((typeof attribute['properties']['default']) != 'boolean') {
+					throw new Error('Default value type mismatch for ' + attribute.key);
 				}
 			}
 			return Promise.resolve();
@@ -113,17 +111,17 @@ function schemaValidateDefault(schemaObj, app) {
 
 function getFlows(id, _req) {
 	var options = {
-		url: envConfig.baseUrlPM + `/flow`,
-		method: `GET`,
+		url: envConfig.baseUrlPM + '/flow',
+		method: 'GET',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		qs: {
 			filter: { dataService: id },
-			select: `_id,name`
+			select: '_id,name'
 		},
 		json: true
 	};
@@ -134,13 +132,13 @@ function getFlows(id, _req) {
 				return reject(err);
 			}
 			else if (!res) {
-				logger.error(`PM Service DOWN`);
-				return reject(new Error(`PM Service DOWN`));
+				logger.error('PM Service DOWN');
+				return reject(new Error('PM Service DOWN'));
 			} else {
 				if (res.statusCode >= 200 && res.statusCode < 400) {
 					resolve(body);
 				} else {
-					reject(new Error(body.message ? body.message : `API returned ` + res.statusCode));
+					reject(new Error(body.message ? body.message : 'API returned ' + res.statusCode));
 				}
 			}
 		});
@@ -149,12 +147,12 @@ function getFlows(id, _req) {
 }
 
 function checkData(uri) {
-	let uriSplit = uri.split(`/`);
-	let db = `${envConfig.odpNS}-${uriSplit[1]}`;
+	let uriSplit = uri.split('/');
+	let db = `${envConfig.dataStackNS}-${uriSplit[1]}`;
 	let lastSeg = uriSplit[2];
-	let lastSegSplit = lastSeg.split(`?`);
+	let lastSegSplit = lastSeg.split('?');
 	let collection = `${lastSegSplit[0]}`;
-	let filter = lastSegSplit[1].replace(`filter=`, ``).replace(`"{{id}}"`, `{"$exists": true}`);
+	let filter = lastSegSplit[1].replace('filter=', '').replace('"{{id}}"', '{"$exists": true}');
 	return global.mongoConnection.db(db).collection(collection).findOne(JSON.parse(filter));
 }
 
@@ -165,7 +163,7 @@ function canUpdateAPI(relations) {
 	return Promise.all(promises)
 		.then(_d => {
 			let flag = _d.some(_e => _e);
-			if (flag) throw new Error(`Cannot update api endpoint as it is related to other data service`);
+			if (flag) throw new Error('Cannot update api endpoint as it is related to other data service');
 		});
 }
 

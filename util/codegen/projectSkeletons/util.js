@@ -1,4 +1,4 @@
-const envConfig = require(`../../../config/config`);
+const envConfig = require('../../../config/config');
 
 function helperUtil(config) {
 	var modelName = config.collectionName;
@@ -18,7 +18,7 @@ function helperUtil(config) {
     let e = {};
     let queueMgmt = require('../../queueManagement');
     var client = queueMgmt.client;
-    const odpNS = process.env.ODP_NAMESPACE;
+    const dataStackNS = process.env.DATA_STACK_NAMESPACE;
     let uniqueFields = '${config.uniqueFields.map(_obj => _obj.key)}'.split(',');
     let config = require('./../../config');
     e.generateCodeToExpand = function(schema, key, action) {
@@ -308,68 +308,76 @@ function helperUtil(config) {
     }
 
     e.enrichDataWithPreHooks = function(data, req, operation){
-        let self = JSON.parse(JSON.stringify(data));
-        return e.getPreHooks().reduce(function(acc, curr){
-            let oldData = null;
-            let preHookLog = null;
-            let newData = null;
-            return acc
-            .then(data => {
-                oldData = data;
-                 obje = {
-                    "docId": data._id,
-                    "service": process.env.SERVICE_ID || '${config._id}',
-                    "colName": '${config.collectionName}.preHook',
-                    "timestamp": new Date(),
-                    "url": curr.url,
-                    "operation": operation,
-                    "txnId": req.get('txnId'),
-                    "userId": req.get('user'),
-                    "name": curr.name,
-                    "data": {
-                        "old": oldData
-                    },
-                    "status": "Pending",
-                    "_metadata":{                      
+        let promise;
+        if(data._id && operation == 'PUT') 
+            promise = e.decryptCreateOnlySecuredFields(JSON.parse(JSON.stringify(data)))
+        else
+            promise = Promise.resolve(JSON.parse(JSON.stringify(data)));
+        return promise.then(self => {
+            return e.getPreHooks().reduce(function(acc, curr){
+                let oldData = null;
+                let preHookLog = null;
+                let newData = null;
+                return acc
+                .then(data => {
+                    oldData = data;
+                     obje = {
+                        "docId": data._id,
+                        "service": process.env.SERVICE_ID || '${config._id}',
+                        "colName": '${config.collectionName}.preHook',
+                        "timestamp": new Date(),
+                        "url": curr.url,
+                        "operation": operation,
+                        "txnId": req.get('txnId'),
+                        "userId": req.get('user'),
+                        "name": curr.name,
+                        "data": {
+                            "old": oldData
+                        },
+                        "status": "Pending",
+                        "_metadata":{}
                     }
-                }
-
-                let options = {
-                    operation: operation,
-                    data: oldData,
-                    trigger:{
-                        source: req.query ? req.query.source: null,
-                        simulate: true
-                    },
-                    txnId: req.get('txnId'),
-                    user: req.get('user'),
-                    dataService: process.env.SERVICE_ID || '${config._id}'
-                } 
-                return e.invokeHook(curr.url, options, curr.failMessage)
-            })
-            .then(data => {
-                newData = Object.assign({}, oldData, data.data);
-                newData._metadata = oldData._metadata;
-                obje["status"] = "Completed";
-                obje._metadata.createdAt= new Date();
-                obje._metadata.lastUpdated = new Date();
-                obje.data.new = newData;
-               // {"status": "Completed", "data.new": newData, "_metadata.lastUpdated": new Date()}
-                client.publish("prehookCreate", JSON.stringify(obje));
-            })
-            .then(() => {
-                return newData;
-            })
-            .catch(err=>{
-                      obje["status"] = "Error";
-                      obje.data.new = newData;
-                      obje["comment"] = err.message;
-                      obje._metadata.lastUpdated = new Date();
+    
+                    let options = {
+                        operation: operation,
+                        data: oldData,
+                        trigger:{
+                            source: req.query ? req.query.source: null,
+                            simulate: true
+                        },
+                        txnId: req.get('txnId'),
+                        user: req.get('user'),
+                        dataService: process.env.SERVICE_ID || '${config._id}'
+                    } 
+                    return e.invokeHook(curr.url, options, curr.failMessage)
+                })
+                .then(data => {
+                    newData = Object.assign({}, oldData, data.data);
+                    newData._metadata = oldData._metadata;
+                    obje["status"] = "Completed";
+                    obje._metadata.createdAt= new Date();
+                    obje._metadata.lastUpdated = new Date();
+                    obje.data.new = newData;
+                   // {"status": "Completed", "data.new": newData, "_metadata.lastUpdated": new Date()}
                     client.publish("prehookCreate", JSON.stringify(obje));
-                    //mongoose.model("preHooks").updateOne({ _id: preHookLog._id }, {"status": "Error","comment": err.message, "data.new": newData, "_metadata.lastUpdated": new Date()}).then();
-                throw err;
-            })
-       }, Promise.resolve(self));  
+                })
+                .then(() => {
+                    return newData;
+                })
+                .catch(err=>{
+                          obje["status"] = "Error";
+                          obje.data.new = newData;
+                          obje["comment"] = err.message;
+                          obje._metadata.lastUpdated = new Date();
+                        client.publish("prehookCreate", JSON.stringify(obje));
+                        //mongoose.model("preHooks").updateOne({ _id: preHookLog._id }, {"status": "Error","comment": err.message, "data.new": newData, "_metadata.lastUpdated": new Date()}).then();
+                    throw err;
+                })
+           }, Promise.resolve(self)); 
+        }).catch(err => {
+            logger.error('Error occured in enrichDataWithPreHooks :: ', err);
+            return Promise.reject(err);
+        });
     }
 
     function fetchReferenceIdsForARelation(path, document) {
@@ -438,7 +446,7 @@ function helperUtil(config) {
                     if (_sId == 'USER') {
                         _service = { port: 80, uri: '/api/a/rbac/usr/app/${config.app}' };
                         if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
-                            _service.host = "gw." + odpNS;
+                            _service.host = "gw." + dataStackNS;
                         } else {
                             _service.host = 9080
                             _service.host = "localhost";
@@ -446,7 +454,7 @@ function helperUtil(config) {
                     } else {
                         _service = { port: 80, uri: "/api/c/" + _sd.app + _sd.api };
                         if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
-                            _service.host = "gw." + odpNS;
+                            _service.host = "gw." + dataStackNS;
                         } else {
                             _service.port = 9080;
                             _service.host = "localhost";
@@ -582,21 +590,45 @@ function helperUtil(config) {
         return doc.toObject();
     }
 
-    // function checkForCreateOnlySecuredFields(_d) {
-    //     let createOnlySecuredFields = [];
-    //     createOnlyFields.forEach(coField => {
-    //         if (secureFields.includes(coField))
-    //             createOnlySecuredFields.push(coField);
-    //     });
-    //     if (createOnlySecuredFields && createOnlySecuredFields.length) {
-    //         return createOnlySecuredFields.reduce((acc, curr) => {
-    //             return acc.then(doc => decryptData(doc, curr));
-    //         }, Promise.resolve(_d));
-    //     } else {
-    //         return Promise.resolve(_d)
-    //     }
-    // }
+    e.decryptCreateOnlySecuredFields = (_d) => {
+        let createOnlySecuredFields = [];
+        createOnlyFields.forEach(coField => {
+            if (secureFields.includes(coField))
+                createOnlySecuredFields.push(coField);
+        });
+        if (createOnlySecuredFields && createOnlySecuredFields.length) {
+            return createOnlySecuredFields.reduce((acc, curr) => {
+                return acc.then(doc => decryptData(doc, curr));
+            }, Promise.resolve(_d));
+        } else {
+            return Promise.resolve(_d)
+        }
+    }
 
+    function retainCreateOnlyFields(newData, oldData, nestedKey) {
+        let keys = nestedKey.split('.');
+        if (keys.length == 1) {
+            newData[keys[0]] = oldData[keys[0]];
+            return newData;
+        } else {
+            let nextKey = keys.shift();
+            newData[nextKey] = retainCreateOnlyFields(newData[nextKey], oldData[nextKey], keys.join('.'));
+            return newData;
+        }
+    }
+
+    function retainCreateOnlySecuredFields(oldData, newData) {
+        let createOnlySecuredFields = [];
+        createOnlyFields.forEach(coField => {
+            if (secureFields.includes(coField))
+                createOnlySecuredFields.push(coField);
+        });
+        if (createOnlySecuredFields && createOnlySecuredFields.length) {
+            return createOnlySecuredFields.reduce((acc, curr)=> retainCreateOnlyFields(acc, oldData, curr), newData);
+        } else {
+            return newData;
+        }
+    }
     function allValidation(data, serviceDetail, idList, generateId, _req, operation) {
         if (data._id && idList.indexOf(data._id) > -1) return { _id: data._id, _error: 'Id already present in payload' };
         data = castType(data);
@@ -625,7 +657,7 @@ function helperUtil(config) {
         return promise
             .then(_d => e.enrichDataWithPreHooks(_d, _req, operation))
             .then(_d => {
-                preHookData = _d;
+                preHookData = data._id && operation == 'PUT' ? retainCreateOnlySecuredFields(oldData, _d) : _d;
                 return schemaValidation(JSON.parse(JSON.stringify(preHookData)), operation);
             })
             .then(() => {
@@ -986,16 +1018,15 @@ function helperUtil(config) {
                         logger.error('Error in decrypting text ', d)
                         logger.error('Error in decrypting text ', res.statusCode)
                         logger.error('Error in decrypting text ', res.body)
-                        reject(new Error('Error encrypting text'))
+                        reject(new Error('Error decrypting text'))
                     }
                 }
             });
         })
     }
 
-    function getData(filter, page, count) {
-        page = (page === 0) ? 0 : page * count;
-        return mongoose.connection.db.collection('${config.collectionName}').find(filter).skip(page).limit(count).toArray();
+    function getData(filter, count) {
+        return mongoose.connection.db.collection('${config.collectionName}').find(filter).limit(count).toArray();
     }
 
     function fixData(data, field) {
@@ -1096,7 +1127,7 @@ function helperUtil(config) {
                 return arr.reduce((_p, curr) => {
                     return _p
                         .then(() => {
-                            return getData(filter, curr, batchSize);
+                            return getData(filter, batchSize);
                         })
                         .then(_data => _data.map(_d => updateData(model, field, _d)))
                         .then(_updatePromises => Promise.all(_updatePromises))

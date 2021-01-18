@@ -1,5 +1,5 @@
-const isCosmosDB = require(`../../../../config/config`).isCosmosDB();
-const SMConfig = require(`../../../../config/config`);
+const isCosmosDB = require('../../../../config/config').isCosmosDB();
+const SMConfig = require('../../../../config/config');
 
 module.exports = function (_id, config) {
 	var collectionName = config.collectionName;
@@ -8,32 +8,32 @@ module.exports = function (_id, config) {
 	let suffix = config.idDetails.suffix ? `"${config.idDetails.suffix}"` : null;
 	let padding = config.idDetails.padding ? config.idDetails.padding : null;
 	let counter = config.idDetails.counter || config.idDetails.counter === 0 ? config.idDetails.counter : null;
-	let deleteType = !config.permanentDeleteData ? `markAsDeleted` : `destroy`;
-	let bulkDeleteType = !config.permanentDeleteData ? `bulkMarkAsDeleted` : `bulkDestroy`;
-	let expiryCode = config.versionValidity && config.versionValidity.validityType == `time` ? `auditData.expiry = new Date();` : ``;
-	let expiryCountCode = ``;
-	if (config.versionValidity && config.versionValidity.validityType == `count` && config.versionValidity.validityValue > 0)
-		expiryCountCode = `client.publish('auditQueueRemove',JSON.stringify(auditData))`;
+	let deleteType = !config.permanentDeleteData ? 'markAsDeleted' : 'destroy';
+	let bulkDeleteType = !config.permanentDeleteData ? 'bulkMarkAsDeleted' : 'bulkDestroy';
+	let expiryCode = config.versionValidity && config.versionValidity.validityType == 'time' ? 'auditData.expiry = new Date();' : '';
+	let expiryCountCode = '';
+	if (config.versionValidity && config.versionValidity.validityType == 'count' && config.versionValidity.validityValue > 0)
+		expiryCountCode = 'client.publish(\'auditQueueRemove\',JSON.stringify(auditData))';
 	function isHookGeneratedID(idDetails) {
 		return ((idDetails.padding && (idDetails.prefix || idDetails.suffix)) || idDetails.counter);
 	}
 	if (!isHookGeneratedID(config.idDetails)) {
-		prefix = prefix ? prefix : `'${config.collectionName.split(`.`).pop().toUpperCase().substr(0, 3)}'`;
+		prefix = prefix ? prefix : `'${config.collectionName.split('.').pop().toUpperCase().substr(0, 3)}'`;
 		counter = counter || counter === 0 ? counter : 1000;
 	}
 	function getSchemaKeys(list, key, definition) {
-		if (definition[`_self`]) {
-			if (definition[`_self`][`type`] === `Object`) {
-				getSchemaKeys(list, key, definition[`_self`][`definition`]);
-			} else if (definition[`_self`][`type`] === `String`) {
+		if (definition['_self']) {
+			if (definition['_self']['type'] === 'Object') {
+				getSchemaKeys(list, key, definition['_self']['definition']);
+			} else if (definition['_self']['type'] === 'String') {
 				list.push(key);
 			}
 		} else {
 			Object.keys(definition).forEach(_k => {
-				let _key = key === `` ? _k : key + `.` + _k;
-				if (definition[_k][`type`] === `Array` || definition[_k][`type`] === `Object`) {
-					getSchemaKeys(list, _key, definition[_k][`definition`]);
-				} else if (definition[_k][`type`] === `String`) {
+				let _key = key === '' ? _k : key + '.' + _k;
+				if (definition[_k]['type'] === 'Array' || definition[_k]['type'] === 'Object') {
+					getSchemaKeys(list, _key, definition[_k]['definition']);
+				} else if (definition[_k]['type'] === 'String') {
 					list.push(_key);
 				}
 			});
@@ -41,36 +41,36 @@ module.exports = function (_id, config) {
 	}
 
 	let stringFields = [];
-	getSchemaKeys(stringFields, ``, config.definition);
+	getSchemaKeys(stringFields, '', config.definition);
 	let indexObj = {};
 	stringFields.forEach(key => {
-		indexObj[key] = `text`;
+		indexObj[key] = 'text';
 	});
-	let geoIndexCode = ``;
+	let geoIndexCode = '';
 	config.geoJSONFields.forEach(key => {
 		geoIndexCode += `\nschema.index({"${key}.geometry" : "2dsphere"} , {"name": "${key}_geoJson"});`;
 	});
 
-	let relationIndexCode = ``;
+	let relationIndexCode = '';
 
 	config.relationUniqueFields.forEach(key => {
 		relationIndexCode += `\nschema.index({"${key}._id" : 1} , {unique: "${key} field should be unique", sparse: true});`;
 	});
 
-	let uniqueIndexCode = ``;
+	let uniqueIndexCode = '';
 	config.uniqueFields.forEach(obj => {
 		uniqueIndexCode += `\nschema.index({"${obj.key}" : 1} , {unique: "${obj.key} field should be unique", sparse: true, collation: { locale: "${obj.locale}", strength: 2 } });`;
 	});
 
-	let requiredRelation = [];
-	if (config.relationRequiredFields) {
-		config.relationRequiredFields.forEach(key => {
-			requiredRelation.push(`"${key}"`);
-		});
-	}
+	// let requiredRelation = [];
+	// if (config.relationRequiredFields) {
+	// 	config.relationRequiredFields.forEach(key => {
+	// 		requiredRelation.push(`"${key}"`);
+	// 	});
+	// }
 
-	let requiredRelationCode = ``;
-	requiredRelationCode += `let requiredRelation = [${requiredRelation}];`;
+	// let requiredRelationCode = '';
+	// requiredRelationCode += `let requiredRelation = [${requiredRelation}];`;
 
 	let incomingRelationCode = `
     let serviceId = process.env.SERVICE_ID || '${config._id}';
@@ -87,7 +87,7 @@ module.exports = function (_id, config) {
 
 
     `;
-	if (deleteType === `markAsDeleted`) {
+	if (deleteType === 'markAsDeleted') {
 		incomingRelationCode += `schema.pre("save", function (next, req) {
             if(!this._metadata.deleted) {next(); return;};
             this._req = req;
@@ -115,7 +115,7 @@ module.exports = function (_id, config) {
                 inService.forEach(obj => {
                     if(process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT){
                         let split = obj.uri.split('/');
-                        obj.host=split[2].split("?")[0].toLowerCase() + "." + odpNS + "-"+split[1].toLowerCase().replace(/ /g, "");
+                        obj.host=split[2].split("?")[0].toLowerCase() + "." + dataStackNS + "-"+split[1].toLowerCase().replace(/ /g, "");
                         obj.port = 80;
                     }else{
                         obj.host = "localhost"
@@ -147,7 +147,7 @@ module.exports = function (_id, config) {
     
 
     `;
-	if (deleteType === `markAsDeleted`) {
+	if (deleteType === 'markAsDeleted') {
 		incomingRelationCodePostSave += `schema.post("save", function (doc) {
             if(!this._metadata.deleted) {return;};
             `;
@@ -165,7 +165,7 @@ module.exports = function (_id, config) {
                 let _service = { port: _o.port, uri: _o.uri.split("?")[0] + "/" + _oDoc._id }
                 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
                     _service.port = 80;
-                    _service.host = uriSplit[2].split("?")[0].toLowerCase() + "." + odpNS + "-" + uriSplit[1].toLowerCase().replace(/ /g, "");
+                    _service.host = uriSplit[2].split("?")[0].toLowerCase() + "." + dataStackNS + "-" + uriSplit[1].toLowerCase().replace(/ /g, "");
                 } else {
                     _service.host = "localhost";
                 }
@@ -186,7 +186,7 @@ module.exports = function (_id, config) {
 
 
 
-	let fileDeleteCode = ``;
+	let fileDeleteCode = '';
 	if (!config.permanentDeleteData) {
 		fileDeleteCode = `schema.post("save", function(doc){
           if(doc._metadata.deleted){
@@ -231,7 +231,7 @@ module.exports = function (_id, config) {
         })`;
 	}
 
-	let searchIndexCode = config.enableSearchIndex && !isCosmosDB && Object.keys(indexObj).length > 0 ? `schema.index(${JSON.stringify(indexObj)}, {name: "searchIndex"});` : ``;
+	let searchIndexCode = config.enableSearchIndex && !isCosmosDB && Object.keys(indexObj).length > 0 ? `schema.index(${JSON.stringify(indexObj)}, {name: "searchIndex"});` : '';
 	var controllerJs = `"use strict";
 
 const mongoose = require("mongoose");
@@ -251,7 +251,7 @@ const BATCH = 500;
 const logger = global.logger;
 const _ = require('lodash');
 const init = require("../../init");
-const odpNS = process.env.ODP_NAMESPACE
+const dataStackNS = process.env.DATA_STACK_NAMESPACE
 var jsonexport = require('jsonexport');
 let XLSX = require('xlsx');
 const path = require('path');
@@ -275,7 +275,7 @@ var exportOptions = {
     collectionName:"${collectionName}.fileTransfers"
 };
 
-${requiredRelationCode} ;
+// $// {requiredRelationCode} ;
 
 
 ${searchIndexCode}
@@ -650,18 +650,18 @@ function doPrecision(data, nestedKey, val){
     return data;
 }
 
-schema.pre('validate', function (next) {
-    let obj = this;
-    let data = null;
-    requiredRelation.forEach(key => {
-        let keys = key.split('.');
-        let val = keys.reduce((acc, curr, i) => acc ? acc[curr] : undefined, obj);
-        if (!val  || !val._id) {
-            next(new Error("Required relation can not be empty"));
-        }
-    })
-    next();
-});
+// schema.pre('validate', function (next) {
+//     let obj = this;
+//     let data = null;
+//     requiredRelation.forEach(key => {
+//         let keys = key.split('.');
+//         let val = keys.reduce((acc, curr, i) => acc ? acc[curr] : undefined, obj);
+//         if (!val  || !val._id) {
+//             next(new Error("Required relation can not be empty"));
+//         }
+//     })
+//     next();
+// });
 
 schema.pre("save", function(next, req){
     let self = this;
@@ -733,78 +733,107 @@ schema.pre("save", function(next, req){
 schema.pre("save", function (next, req) {
     let self = this;
     var obje = {};
-    let selfCopy = JSON.parse(JSON.stringify(self));
-    selfCopy._metadata.createdAt = self._metadata.createdAt;
-    return helperUtil.getPreHooks().reduce(function(acc, curr){
-        let oldData = null;
-        let preHookLog = null;
-        let newData = null;
-        return acc
-            .then(data => {
-                oldData = data;
-                 obje = {
-                    "docId": data._id,
-                    "service": process.env.SERVICE_ID || '${config._id}',
-                    "colName": '${config.app}.${config.collectionName}.preHook',
-                    "timestamp": new Date(),
-                    "url": curr.url,
-                    "operation": self.isNew ? 'POST' : 'PUT', // Changed from req.method
-                    "txnId": req.get('txnId'),
-                    "name": curr.name,
-                    "data": {
-                        "old": oldData
-                    },
-                    "status": "Pending",
-                    "_metadata":{                      
+    let promise;
+    if (!self.isNew)
+        promise = helperUtil.decryptCreateOnlySecuredFields(JSON.parse(JSON.stringify(self)));
+    else
+        promise = Promise.resolve(JSON.parse(JSON.stringify(self)));
+    return promise.then(selfCopy => {
+        selfCopy._metadata.createdAt = self._metadata.createdAt;
+        return helperUtil.getPreHooks().reduce(function (acc, curr) {
+            let oldData = null;
+            let preHookLog = null;
+            let newData = null;
+            return acc
+                .then(data => {
+                    oldData = data;
+                    obje = {
+                        "docId": data._id,
+                        "service": process.env.SERVICE_ID || '${config._id}',
+                        "colName": '${config.app}.${config.collectionName}.preHook',
+                        "timestamp": new Date(),
+                        "url": curr.url,
+                        "operation": self.isNew ? 'POST' : 'PUT', // Changed from req.method
+                        "txnId": req.get('txnId'),
+                        "name": curr.name,
+                        "data": {
+                            "old": oldData
+                        },
+                        "status": "Pending",
+                        "_metadata": {}
                     }
-                }
 
-                let options = {
-                    operation: self.isNew ? 'POST' : 'PUT', // Changed from req.method
-                    data: oldData,
-                    trigger:{
-                        source: 'presave',
-                        simulate: false
-                    },
-                    txnId: req.get('txnId'),
-                    user: req.get('user'),
-                    dataService: process.env.SERVICE_ID || '${config._id}'
-                } 
-                return helperUtil.invokeHook(curr.url, options, curr.failMessage)
-            })
-            .then(data => {
-                newData = Object.assign({}, oldData, data.data);
-                newData._metadata = oldData._metadata;
-                obje["status"] = "Completed";
-                obje.app = '${config.app}';
-                obje._metadata.createdAt= new Date();
-                obje._metadata.lastUpdated = new Date();
-                obje.data.new = newData;
-               // {"status": "Completed", "data.new": newData, "_metadata.lastUpdated": new Date()}
-                client.publish("prehookCreate", JSON.stringify(obje));
-            })
-            .then(() => {
-                return newData;
-            })
-            .catch(err=>{
-                next(err);
-                      obje["status"] = "Error";
-                      obje.data.new = newData;
-                      obje["comment"] = err.message;
-                      obje._metadata.lastUpdated= new Date();
+                    let options = {
+                        operation: self.isNew ? 'POST' : 'PUT', // Changed from req.method
+                        data: oldData,
+                        trigger: {
+                            source: 'presave',
+                            simulate: false
+                        },
+                        txnId: req.get('txnId'),
+                        user: req.get('user'),
+                        dataService: process.env.SERVICE_ID || '${config._id}'
+                    }
+                    return helperUtil.invokeHook(curr.url, options, curr.failMessage)
+                })
+                .then(data => {
+                    newData = Object.assign({}, oldData, data.data);
+                    newData._metadata = oldData._metadata;
+                    obje["status"] = "Completed";
+                    obje.app = '${config.app}';
+                    obje._metadata.createdAt = new Date();
+                    obje._metadata.lastUpdated = new Date();
+                    obje.data.new = newData;
+                    // {"status": "Completed", "data.new": newData, "_metadata.lastUpdated": new Date()}
+                    client.publish("prehookCreate", JSON.stringify(obje));
+                })
+                .then(() => {
+                    return newData;
+                })
+                .catch(err => {
+                    next(err);
+                    obje["status"] = "Error";
+                    obje.data.new = newData;
+                    obje["comment"] = err.message;
+                    obje._metadata.lastUpdated = new Date();
                     client.publish("prehookCreate", JSON.stringify(obje));
                     //mongoose.model("preHooks").updateOne({ _id: preHookLog._id }, {"status": "Error","comment": err.message, "data.new": newData, "_metadata.lastUpdated": new Date()}).then();
-                
-            })           
-    }, Promise.resolve(selfCopy))
-        .then(data=>{
-            Object.assign(self, data);
-            return self.validate();
-        })
-        .then(() => next())
-        .catch(err=>{
+
+                })
+        }, Promise.resolve(selfCopy))
+            .then(data => {
+                Object.assign(self, data);
+                return self.validate();
+            })
+            .then(() => next())
+    })
+        .catch(err => {
+            logger.error('Error in prehook presave hook :: ', err)
             next(err);
         })
+});
+
+function retainCreateOnlyFields(newData, oldData, nestedKey) {
+    let keys = nestedKey.split('.');
+    if (keys.length == 1) {
+        newData[keys[0]] = oldData[keys[0]];
+        return newData;
+    } else {
+        let nextKey = keys.shift();
+        newData[nextKey] = retainCreateOnlyFields(newData[nextKey], oldData[nextKey], keys.join('.'));
+        return newData;
+    }
+}
+
+schema.pre("save", function (next, req) {
+    let self = this;
+    if (!self.isNew && createOnlyFields && createOnlyFields.length && createOnlyFields[0] !== '') {
+        let oldData = self._oldDoc ? self._oldDoc : null;
+        createOnlyFields.reduce((acc, curr) => retainCreateOnlyFields(acc, oldData, curr), self);
+        next();
+    } else {
+        next();
+    }
 });
 
 function getWebHookAndAuditData(req, id, isNew) {
@@ -972,30 +1001,6 @@ schema.pre("save", function(next, req){
             logger.error(err.message);
             next(err);
         })
-    }
-});
-
-function retainCreateOnlyFields(newData, oldData, nestedKey) {
-    let keys = nestedKey.split('.');
-    if(keys.length == 1) {
-        newData[keys[0]] = oldData[keys[0]];
-        return newData;
-    } else {
-        let nextKey = keys.shift();
-        newData[nextKey] = retainCreateOnlyFields(newData[nextKey], oldData[nextKey], keys.join('.'));
-        return newData;
-    }
-}
-
-schema.pre("save", function(next, req){
-    let self = this;
-    if(!self.isNew && createOnlyFields && createOnlyFields.length){
-        let oldData = self._webHookData && self._webHookData.data && self._webHookData.data.old ? JSON.parse(self._webHookData.data.old) : null;
-        let newData = JSON.parse(JSON.stringify(self));
-        self = createOnlyFields.reduce((acc, curr)=> retainCreateOnlyFields(acc, oldData, curr), newData);
-        next();
-    }else{
-        next();
     }
 });
 
@@ -1321,7 +1326,7 @@ function fetchExtData(id, serviceId, select, documentCache, serviceDetailCache, 
             let _service = { port: _sd.port, uri: "/api/c/" + _sd.app + _sd.api };
             if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
                 _service.port = 80;
-                _service.host = "gw." + odpNS;
+                _service.host = "gw." + dataStackNS;
             } else {
                 _service.port = 9080;
                 _service.host = "localhost";
@@ -1872,7 +1877,7 @@ function getExtIds(filter, service, req){
             let _service = {port: _sd.port, uri: "/"+_sd.app+_sd.api};
             if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
                     _service.port = 80;
-                    _service.host = _sd.api.substr(1).toLowerCase() + "." + odpNS + "-" + _sd.app.toLowerCase().replace(/ /g, "");
+                    _service.host = _sd.api.substr(1).toLowerCase() + "." + dataStackNS + "-" + _sd.app.toLowerCase().replace(/ /g, "");
             } else {
                 _service.host = "localhost";
             }
@@ -1896,7 +1901,7 @@ function getIdList(filterArr, req){
             let _service = {port: _sd.port, uri: "/"+_sd.app+_sd.api};
             if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
                     _service.port = 80;
-                    _service.host = _sd.api.substr(1).toLowerCase() + "." + odpNS + "-" + _sd.app.toLowerCase().replace(/ /g, "");
+                    _service.host = _sd.api.substr(1).toLowerCase() + "." + dataStackNS + "-" + _sd.app.toLowerCase().replace(/ /g, "");
             } else {
                 _service.host = "localhost";
             }
@@ -3301,7 +3306,7 @@ function customCreate(req, res){
         healthCheck: e.healthCheck,
         readiness: e.readiness,
         securedFields: getSecuredFields,
-        requiredRelation:requiredRelation,
+        // requiredRelation:requiredRelation,
         aggregate: crudder.aggregate,
         updateHref: updateHref
     };

@@ -1,132 +1,132 @@
 'use strict';
-const fs = require(`fs`);
-const odputils = require(`@appveen/odp-utils`);
+const fs = require('fs');
+const odputils = require('@appveen/odp-utils');
 let debugDB = false;
-if (process.env.LOG_LEVEL == `DB_DEBUG`) { process.env.LOG_LEVEL = `debug`; debugDB = true; }
+if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
 
 let logger = global.logger;
 
 function mongoUrl() {
-	let mongoUrl = process.env.MONGO_AUTHOR_URL || `mongodb://localhost`;
+	let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 	return mongoUrl;
 }
-if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == `K8s`) {
+if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s') {
 	odputils.kubeutil.check()
 		.then(
-			() => logger.info(`Connection to Kubernetes API server successful!`),
+			() => logger.info('Connection to Kubernetes API server successful!'),
 			_e => {
-				logger.error(`ERROR :: Unable to connect to Kubernetes API server`);
+				logger.error('ERROR :: Unable to connect to Kubernetes API server');
 				logger.log(_e.message);
 			});
 }
 function isK8sEnv() {
-	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == `K8s`;
+	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s';
 }
-const odpNS = process.env.ODP_NAMESPACE;
-if (isK8sEnv() && !odpNS) throw new Error(`ODP_NAMESPACE not found. Please check your configMap`);
+const dataStackNS = process.env.DATA_STACK_NAMESPACE;
+if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
 
 function isDockerEnv() {
-	return fs.existsSync(`/.dockerenv`);
+	return fs.existsSync('/.dockerenv');
 }
 
 function getHostOSBasedLocation() {
-	if (process.env.PLATFORM == `NIX`) return `localhost`;
-	return `host.docker.internal`;
+	if (process.env.PLATFORM == 'NIX') return 'localhost';
+	return 'host.docker.internal';
 }
 
 function get(_service) {
 	if (isK8sEnv()) {
-		if (_service == `dm`) return `http://dm.${odpNS}`;
-		if (_service == `ne`) return `http://ne.${odpNS}`;
-		if (_service == `sm`) return `http://sm.${odpNS}`;
-		if (_service == `pm`) return `http://pm.${odpNS}`;
-		if (_service == `user`) return `http://user.${odpNS}`;
-		if (_service == `gw`) return `http://gw.${odpNS}`;
-		if (_service == `wf`) return `http://wf.${odpNS}`;
-		if (_service == `sec`) return `http://sec.${odpNS}`;
-		if (_service == `mon`) return `http://mon.${odpNS}`;
-		if (_service == `gw`) return `http://gw.${odpNS}`;
-	} else if (fs.existsSync(`/.dockerenv`)) {
-		if (_service == `dm`) return `http://` + getHostOSBasedLocation() + `:10709`;
-		if (_service == `ne`) return `http://` + getHostOSBasedLocation() + `:10010`;
-		if (_service == `sm`) return `http://` + getHostOSBasedLocation() + `:10003`;
-		if (_service == `pm`) return `http://` + getHostOSBasedLocation() + `:10011`;
-		if (_service == `user`) return `http://` + getHostOSBasedLocation() + `:10004`;
-		if (_service == `gw`) return `http://` + getHostOSBasedLocation() + `:9080`;
-		if (_service == `wf`) return `http://` + getHostOSBasedLocation() + `:10006`;
-		if (_service == `sec`) return `http://` + getHostOSBasedLocation() + `:10007`;
-		if (_service == `mon`) return `http://` + getHostOSBasedLocation() + `:10005`;
-		if (_service == `gw`) return `http://` + getHostOSBasedLocation() + `:9080`;
+		if (_service == 'dm') return `http://dm.${dataStackNS}`;
+		if (_service == 'ne') return `http://ne.${dataStackNS}`;
+		if (_service == 'sm') return `http://sm.${dataStackNS}`;
+		if (_service == 'pm') return `http://pm.${dataStackNS}`;
+		if (_service == 'user') return `http://user.${dataStackNS}`;
+		if (_service == 'gw') return `http://gw.${dataStackNS}`;
+		if (_service == 'wf') return `http://wf.${dataStackNS}`;
+		if (_service == 'sec') return `http://sec.${dataStackNS}`;
+		if (_service == 'mon') return `http://mon.${dataStackNS}`;
+		if (_service == 'gw') return `http://gw.${dataStackNS}`;
+	} else if (fs.existsSync('/.dockerenv')) {
+		if (_service == 'dm') return 'http://' + getHostOSBasedLocation() + ':10709';
+		if (_service == 'ne') return 'http://' + getHostOSBasedLocation() + ':10010';
+		if (_service == 'sm') return 'http://' + getHostOSBasedLocation() + ':10003';
+		if (_service == 'pm') return 'http://' + getHostOSBasedLocation() + ':10011';
+		if (_service == 'user') return 'http://' + getHostOSBasedLocation() + ':10004';
+		if (_service == 'gw') return 'http://' + getHostOSBasedLocation() + ':9080';
+		if (_service == 'wf') return 'http://' + getHostOSBasedLocation() + ':10006';
+		if (_service == 'sec') return 'http://' + getHostOSBasedLocation() + ':10007';
+		if (_service == 'mon') return 'http://' + getHostOSBasedLocation() + ':10005';
+		if (_service == 'gw') return 'http://' + getHostOSBasedLocation() + ':9080';
 	} else {
-		if (_service == `dm`) return `http://localhost:10709`;
-		if (_service == `ne`) return `http://localhost:10010`;
-		if (_service == `sm`) return `http://localhost:10003`;
-		if (_service == `pm`) return `http://localhost:10011`;
-		if (_service == `user`) return `http://localhost:10004`;
-		if (_service == `gw`) return `http://localhost:9080`;
-		if (_service == `wf`) return `http://localhost:10006`;
-		if (_service == `sec`) return `http://localhost:10007`;
-		if (_service == `mon`) return `http://localhost:10005`;
-		if (_service == `gw`) return `http://localhost:9080`;
+		if (_service == 'dm') return 'http://localhost:10709';
+		if (_service == 'ne') return 'http://localhost:10010';
+		if (_service == 'sm') return 'http://localhost:10003';
+		if (_service == 'pm') return 'http://localhost:10011';
+		if (_service == 'user') return 'http://localhost:10004';
+		if (_service == 'gw') return 'http://localhost:9080';
+		if (_service == 'wf') return 'http://localhost:10006';
+		if (_service == 'sec') return 'http://localhost:10007';
+		if (_service == 'mon') return 'http://localhost:10005';
+		if (_service == 'gw') return 'http://localhost:9080';
 	}
 }
 
 function isCosmosDB() {
 	let val = process.env.COSMOS_DB;
-	if (typeof val === `boolean`) return val;
-	else if (typeof val === `string`) {
-		return process.env.COSMOS_DB.toLowerCase() === `true`;
+	if (typeof val === 'boolean') return val;
+	else if (typeof val === 'string') {
+		return process.env.COSMOS_DB.toLowerCase() === 'true';
 	} else {
 		return false;
 	}
 }
 
-let allowedExtArr = [`ppt`, `xls`, `csv`, `doc`, `jpg`, `png`, `apng`, `gif`, `webp`, `flif`, `cr2`, `orf`, `arw`, `dng`, `nef`, `rw2`, `raf`, `tif`, `bmp`, `jxr`, `psd`, `zip`, `tar`, `rar`, `gz`, `bz2`, `7z`, `dmg`, `mp4`, `mid`, `mkv`, `webm`, `mov`, `avi`, `mpg`, `mp2`, `mp3`, `m4a`, `oga`, `ogg`, `ogv`, `opus`, `flac`, `wav`, `spx`, `amr`, `pdf`, `epub`, `exe`, `swf`, `rtf`, `wasm`, `woff`, `woff2`, `eot`, `ttf`, `otf`, `ico`, `flv`, `ps`, `xz`, `sqlite`, `nes`, `crx`, `xpi`, `cab`, `deb`, `ar`, `rpm`, `Z`, `lz`, `msi`, `mxf`, `mts`, `blend`, `bpg`, `docx`, `pptx`, `xlsx`, `3gp`, `3g2`, `jp2`, `jpm`, `jpx`, `mj2`, `aif`, `qcp`, `odt`, `ods`, `odp`, `xml`, `mobi`, `heic`, `cur`, `ktx`, `ape`, `wv`, `wmv`, `wma`, `dcm`, `ics`, `glb`, `pcap`, `dsf`, `lnk`, `alias`, `voc`, `ac3`, `m4v`, `m4p`, `m4b`, `f4v`, `f4p`, `f4b`, `f4a`, `mie`, `asf`, `ogm`, `ogx`, `mpc`];
-let allowedExt = process.env.ODP_ALLOWED_FILE_TYPE ? process.env.ODP_ALLOWED_FILE_TYPE.split(`,`) : allowedExtArr;
+let allowedExtArr = ['ppt', 'xls', 'csv', 'doc', 'jpg', 'png', 'apng', 'gif', 'webp', 'flif', 'cr2', 'orf', 'arw', 'dng', 'nef', 'rw2', 'raf', 'tif', 'bmp', 'jxr', 'psd', 'zip', 'tar', 'rar', 'gz', 'bz2', '7z', 'dmg', 'mp4', 'mid', 'mkv', 'webm', 'mov', 'avi', 'mpg', 'mp2', 'mp3', 'm4a', 'oga', 'ogg', 'ogv', 'opus', 'flac', 'wav', 'spx', 'amr', 'pdf', 'epub', 'exe', 'swf', 'rtf', 'wasm', 'woff', 'woff2', 'eot', 'ttf', 'otf', 'ico', 'flv', 'ps', 'xz', 'sqlite', 'nes', 'crx', 'xpi', 'cab', 'deb', 'ar', 'rpm', 'Z', 'lz', 'msi', 'mxf', 'mts', 'blend', 'bpg', 'docx', 'pptx', 'xlsx', '3gp', '3g2', 'jp2', 'jpm', 'jpx', 'mj2', 'aif', 'qcp', 'odt', 'ods', 'odp', 'xml', 'mobi', 'heic', 'cur', 'ktx', 'ape', 'wv', 'wmv', 'wma', 'dcm', 'ics', 'glb', 'pcap', 'dsf', 'lnk', 'alias', 'voc', 'ac3', 'm4v', 'm4p', 'm4b', 'f4v', 'f4p', 'f4b', 'f4a', 'mie', 'asf', 'ogm', 'ogx', 'mpc'];
+let allowedExt = process.env.ODP_ALLOWED_FILE_TYPE ? process.env.ODP_ALLOWED_FILE_TYPE.split(',') : allowedExtArr;
 
 module.exports = {
-	baseUrlSM: get(`sm`) + `/sm`,
-	baseUrlNE: get(`ne`) + `/ne`,
+	baseUrlSM: get('sm') + '/sm',
+	baseUrlNE: get('ne') + '/ne',
 	mongoUrl: mongoUrl(),
-	baseUrlUSR: get(`user`) + `/rbac`,
-	baseUrlMON: get(`mon`) + `/mon`,
-	baseUrlWF: get(`wf`) + `/workflow`,
-	baseUrlSEC: get(`sec`) + `/sec`,
-	baseUrlDM: get(`dm`) + `/dm`,
-	baseUrlPM: get(`pm`) + `/pm`,
-	baseUrlGW: get(`gw`) + `/gw`,
+	baseUrlUSR: get('user') + '/rbac',
+	baseUrlMON: get('mon') + '/mon',
+	baseUrlWF: get('wf') + '/workflow',
+	baseUrlSEC: get('sec') + '/sec',
+	baseUrlDM: get('dm') + '/dm',
+	baseUrlPM: get('pm') + '/pm',
+	baseUrlGW: get('gw') + '/gw',
 	debugDB: debugDB,
-	mongoAppcenterUrl: process.env.MONGO_APPCENTER_URL || `mongodb://localhost:27017`,
-	validationApi: get(`user`) + `/rbac/validate`,
+	mongoAppcenterUrl: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017',
+	validationApi: get('user') + '/rbac/validate',
 	isK8sEnv: isK8sEnv,
 	isDockerEnv: isDockerEnv,
 	isCosmosDB: isCosmosDB,
-	logQueueName: `systemService`,
-	odpNS: odpNS,
-	fsMount: process.env.DS_FS_MOUNT_PATH || `/tmp/ds`,
+	logQueueName: 'systemService',
+	dataStackNS: dataStackNS,
+	fsMount: process.env.DS_FS_MOUNT_PATH || '/tmp/ds',
 	NATSConfig: {
-		url: process.env.NATS_HOST || `nats://127.0.0.1:4222`,
-		user: process.env.NATS_USER || ``,
-		pass: process.env.NATS_PASS || ``,
-		// maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
-		// reconnectTimeWait: process.env.NATS_RECONN_TIMEWAIT || 500
-		maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
+		url: process.env.MESSAGING_HOST || 'nats://127.0.0.1:4222',
+		user: process.env.MESSAGING_USER || '',
+		pass: process.env.MESSAGING_PASS || '',
+		// maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
+		// reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
+		maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
 		connectTimeout: 2000,
-		stanMaxPingOut: process.env.NATS_RECONN_TIMEWAIT || 500
+		stanMaxPingOut: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME,
-		dbName: process.env.MONGO_AUTHOR_DBNAME || `odpConfig`,
+		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		dbName: process.env.MONGO_AUTHOR_DBNAME || 'odpConfig',
 		useNewUrlParser: true
 	},
 	mongoAppcenterOptions: {
 		numberOfRetries: process.env.MONGO_RECONN_TRIES,
-		retryMiliSeconds: process.env.MONGO_RECONN_TIME,
+		retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true
 	},
-	enableSearchIndex: (process.env.DS_FUZZY_SEARCH && process.env.DS_FUZZY_SEARCH.toLowerCase() === `true`) || false,
+	enableSearchIndex: (process.env.DS_FUZZY_SEARCH && process.env.DS_FUZZY_SEARCH.toLowerCase() === 'true') || false,
 	allowedExt,
-	maxHeapSize: process.env.NODE_MAX_HEAP_SIZE || `4096`,
+	maxHeapSize: process.env.NODE_MAX_HEAP_SIZE || '4096',
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60
 };

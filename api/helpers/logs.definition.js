@@ -1,27 +1,27 @@
 var definition = {
 	'name': {
-		'type': `String`
+		'type': 'String'
 	},
 	'timestamp':{
-		'type': `Date`
+		'type': 'Date'
 	},
 	'timeStamp':{
-		'type': `Date`
+		'type': 'Date'
 	},
 	'url': {
-		'type': `String`
+		'type': 'String'
 	},
 	'method': {
-		'type': `String`
+		'type': 'String'
 	},
 	'resStatusCode': {
-		'type': `Number`
+		'type': 'Number'
 	},
 	'source': {
-		'type': `String`
+		'type': 'String'
 	},
 	'completionTime': {
-		'type': `Number`
+		'type': 'Number'
 	}
 };
 module.exports.definition = definition;

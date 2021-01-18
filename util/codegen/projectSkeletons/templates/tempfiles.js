@@ -1,4 +1,4 @@
-const envConfig = require(`../../../../config/config.js`);
+const envConfig = require('../../../../config/config.js');
 let logger = global.logger;
 
 function gitIgnore() {
@@ -227,15 +227,15 @@ function webHookConfig() {
   e.baseUrlUSR = process.env.BASE_URL_USER || "http://localhost:10004/rbac"
   e.baseUrlWF = process.env.BASE_URL_WF || "http://localhost:10006/workflow"
   e.NATSConfig = {
-    url: process.env.NATS_HOST || "nats://127.0.0.1:4222",
-    user: process.env.NATS_USER || "",
-    pass: process.env.NATS_PASS || "",
-    maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
-    reconnectTimeWait: process.env.NATS_RECONN_TIMEWAIT || 500
+    url: process.env.MESSAGING_HOST || "nats://127.0.0.1:4222",
+    user: process.env.MESSAGING_USER || "",
+    pass: process.env.MESSAGING_PASS || "",
+    maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
+    reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
 }
    e.mongoOptions = {
     reconnectTries: process.env.MONGO_RECONN_TRIES,
-    reconnectInterval: process.env.MONGO_RECONN_TIME,
+    reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
     useNewUrlParser: true
    }
    e.allowedExt = '${envConfig.allowedExt}'.split(',');
@@ -589,12 +589,12 @@ function exportDefinition(){
     module.exports.definition = definition;`;
 }
 function auditLogsDefinition(config) {
-	let expiryCode = config.versionValidity && config.versionValidity.validityType == `time` ? `,
+	let expiryCode = config.versionValidity && config.versionValidity.validityType == 'time' ? `,
     "expiry": {
         "type": "Date",
         "default": new Date(),
         "expires": "${config.versionValidity.validityValue}"
-    }` : ``;
+    }` : '';
 	return `const mongoose = require('mongoose');
     var definition = {
         "name": {
@@ -730,16 +730,16 @@ function crudderHelper() {
     module.exports = e;`;
 }
 
-let dockerRegistryType = process.env.DOCKER_REGISTRY_TYPE ? process.env.DOCKER_REGISTRY_TYPE : ``;
+let dockerRegistryType = process.env.DOCKER_REGISTRY_TYPE ? process.env.DOCKER_REGISTRY_TYPE : '';
 if (dockerRegistryType.length > 0) dockerRegistryType = dockerRegistryType.toUpperCase();
 
-let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : ``;
-if (dockerReg.length > 0 && !dockerReg.endsWith(`/`) && dockerRegistryType != `ECR` ) dockerReg += `/`;
+let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : '';
+if (dockerReg.length > 0 && !dockerReg.endsWith('/') && dockerRegistryType != 'ECR' ) dockerReg += '/';
 
 function dockerFile(_port) {
 	// let base = `${dockerReg}odp:base.${process.env.RELEASE}`;
 	let base = `${dockerReg}odp:base.${process.env.IMAGE_TAG}`;
-	if(dockerRegistryType == `ECR`) base = `${dockerReg}:odp.base.${process.env.IMAGE_TAG}`;
+	if(dockerRegistryType == 'ECR') base = `${dockerReg}:odp.base.${process.env.IMAGE_TAG}`;
 	logger.debug(`Base image :: ${base}`);
 	return ` 
 FROM ${base}

@@ -1,68 +1,68 @@
-const mongoose = require(`mongoose`);
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-let envConfig = require(`../../config/config`);
+let envConfig = require('../../config/config');
 var definition = {
 	'_id': {
-		'type': `String`,
+		'type': 'String',
 		'default': null
 	},
 	'name': {
-		'type': `String`,
+		'type': 'String',
 		'required': true
 	},
 	'description': {
-		'type': `String`
+		'type': 'String'
 	},
 	'collectionName': {
-		'type': `String`
+		'type': 'String'
 	},
 	'app': {
-		'type': `String`,
+		'type': 'String',
 		'required': true
 	},
 	'api': {
-		'type': `String`,
+		'type': 'String',
 		'required': true
 	},
 	'port': {
-		'type': `Number`,
+		'type': 'Number',
 		'required': true
 	},
 	'headers': {
-		'type': `Object`
+		'type': 'Object'
 	},
 	'wizard': {
 		'type': [{
-			'name': `String`,
+			'name': 'String',
 			'fields': {
-				'type': [`String`]
+				'type': ['String']
 			},
 			'actions': {
 				'type': [{
 					'name': {
-						'type': `String`
+						'type': 'String'
 					},
 					'url': {
-						'type': `String`
+						'type': 'String'
 					},
 					'label': {
-						'type': `String`
+						'type': 'String'
 					},
 					'type': {
-						'type': `String`
+						'type': 'String'
 					},
 					'errorMessage': {
-						'type': `String`
+						'type': 'String'
 					},
 					'button': {
 						'name': {
-							'type': `String`
+							'type': 'String'
 						},
 						'type': {
-							'type': `String`
+							'type': 'String'
 						},
 						'color': {
-							'type': `String`
+							'type': 'String'
 						}
 					}
 				}]
@@ -70,53 +70,86 @@ var definition = {
 		}]
 	},
 	'version': {
-		'type': `Number`,
+		'type': 'Number',
 		'default': 1
 	},
 	'instances': {
-		'type': `Number`,
+		'type': 'Number',
 		'default': 1
 	},
 	'versionValidity': {
 		'type': {
 			'validityValue': Schema.Types.Mixed,
 			'validityType': {
-				'type': `String`,
-				'enum': [`count`, `time`]
+				'type': 'String',
+				'enum': ['count', 'time']
 			}
 		}
 	},
 	'permanentDeleteData': {
-		'type': `Boolean`,
+		'type': 'Boolean',
 		'default': true
 	},
 	'disableInsights': {
-		'type': `Boolean`,
+		'type': 'Boolean',
 		'default': false
 	},
 	'definition': {
-		'type': `String`
+		'type': [{
+			'key': {
+				'type': 'String',
+				'required': true
+			},
+			'type': {
+				'type': 'String',
+				'required': true
+			},
+			'prefix': {
+				'type': 'String',
+				'required': false
+			},
+			'suffix': {
+				'type': 'String',
+				'required': false
+			},
+			'padding': {
+				'type': 'Number',
+				'required': false
+			},
+			'counter': {
+				'type': 'Number',
+				'required': false
+			},
+			'definition': {
+				'type': 'Object',
+				'required': false
+			},
+			'properties': {
+				'type': 'Object'
+			}
+		}],
+		'default': undefined
 	},
-	'attributeList': [{
-		'key': `String`,
-		'name': `String`,
-		'properties': {
-			'type': `Object`
-		}
-	}],
+	// 'attributeList': [{
+	// 	'key': 'String',
+	// 	'name': 'String',
+	// 	'properties': {
+	// 		'type': 'Object'
+	// 	}
+	// }],
 	'status': {
-		'type': `String`,
-		'enum': [`Pending`, `Active`, `Undeployed`, `Maintenance`, `Draft`],
-		'default': `Draft`
+		'type': 'String',
+		'enum': ['Pending', 'Active', 'Undeployed', 'Maintenance', 'Draft'],
+		'default': 'Draft'
 	},
 	'comment': {
-		'type': `String`
+		'type': 'String'
 	},
 	'maintenanceInfo': {
-		'type': `String`
+		'type': 'String'
 	},
 	'enableSearchIndex': {
-		'type': `Boolean`,
+		'type': 'Boolean',
 		'default': envConfig.enableSearchIndex
 	},
 	'relatedSchemas': {
@@ -124,29 +157,29 @@ var definition = {
 			'incoming': [{
 				'type': {
 					'service': {
-						'type': `String`
+						'type': 'String'
 					},
 					'uri': {
-						'type': `String`
+						'type': 'String'
 					},
 					'port': {
-						'type': `Number`
+						'type': 'Number'
 					},
 					'app': {
-						'type': `String`
+						'type': 'String'
 					},
 					'isRequired': {
-						'type': `Boolean`
+						'type': 'Boolean'
 					}
 				}
 			}],
 			'outgoing': [{
 				'type': {
 					'service': {
-						'type': `String`
+						'type': 'String'
 					},
 					'path': {
-						'type': `String`
+						'type': 'String'
 					}
 				}
 			}],
@@ -154,13 +187,13 @@ var definition = {
 				'users': [{
 					'type': {
 						'isRequired': {
-							'type': `Boolean`
+							'type': 'Boolean'
 						},
 						'path': {
-							'type': `String`
+							'type': 'String'
 						},
 						'uri': {
-							'type': `String`
+							'type': 'String'
 						}
 					}
 				}]
@@ -170,26 +203,26 @@ var definition = {
 	'webHooks': {
 		'type': [{
 			'name': {
-				'type': `String`
+				'type': 'String'
 			},
 			'url': {
-				'type': `String`
+				'type': 'String'
 			},
 			'failMessage': {
-				'type': `String`
+				'type': 'String'
 			}
 		}]
 	},
 	'preHooks': {
 		'type': [{
 			'name': {
-				'type': `String`
+				'type': 'String'
 			},
 			'url': {
-				'type': `String`
+				'type': 'String'
 			},
 			'failMessage': {
-				'type': `String`
+				'type': 'String'
 			}
 		}]
 	},
@@ -198,50 +231,50 @@ var definition = {
 			'submit': {
 				'type': [{
 					'name': {
-						'type': `String`
+						'type': 'String'
 					},
 					'url': {
-						'type': `String`
+						'type': 'String'
 					}
 				}]
 			},
 			'discard': {
 				'type': [{
 					'name': {
-						'type': `String`
+						'type': 'String'
 					},
 					'url': {
-						'type': `String`
+						'type': 'String'
 					}
 				}]
 			},
 			'approve': {
 				'type': [{
 					'name': {
-						'type': `String`
+						'type': 'String'
 					},
 					'url': {
-						'type': `String`
+						'type': 'String'
 					}
 				}]
 			},
 			'rework': {
 				'type': [{
 					'name': {
-						'type': `String`
+						'type': 'String'
 					},
 					'url': {
-						'type': `String`
+						'type': 'String'
 					}
 				}]
 			},
 			'reject': {
 				'type': [{
 					'name': {
-						'type': `String`
+						'type': 'String'
 					},
 					'url': {
-						'type': `String`
+						'type': 'String'
 					}
 				}]
 			}
@@ -250,33 +283,33 @@ var definition = {
 	'flags': {
 		'type': {
 			'apiEndpointChanged': {
-				'type': `String`,
+				'type': 'String',
 				'default': true
 			}
 		}
 	},
 	'tags': {
-		'type': `Object`
+		'type': 'Object'
 	},
 	'attributeCount': {
-		'type': `Number`,
+		'type': 'Number',
 		'default': 0
 	},
 	'draftVersion': {
-		'type': `Number`
+		'type': 'Number'
 	},
-	'role':{
-		'type':`Object`
+	'role': {
+		'type': 'Object'
 	},
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': { 'type': `Number` }
+				'release': { 'type': 'Number' }
 			}
 		}
 	},
 	'type': {
-		'type': `String`,
+		'type': 'String',
 		'required': false,
 		'default': null
 	},

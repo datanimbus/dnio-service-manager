@@ -1,28 +1,28 @@
 
 let logger = global.logger;
-const request = require(`request`);
-const envConfig = require(`../../../config/config`);
+const request = require('request');
+const envConfig = require('../../../config/config');
 let e = {};
 
 function informDSHrefChange(srvcObj, body, _req) {
-	let path = srvcObj.uri.split(`?`)[0];
-	let pathSplit = path.split(`/`);
+	let path = srvcObj.uri.split('?')[0];
+	let pathSplit = path.split('/');
 	let app = pathSplit[1], api = pathSplit[2];
-	let baseurl = `http://`;
+	let baseurl = 'http://';
 	if(envConfig.isK8sEnv()){
-		baseurl += `${api.toLowerCase()}.${envConfig.odpNS}-${app.toLowerCase()}`;
+		baseurl += `${api.toLowerCase()}.${envConfig.dataStackNS}-${app.toLowerCase()}`;
 	}else{
 		baseurl += `localhost:${srvcObj.port}`;
 	}
 	let url = `${baseurl}/${app}/${api}/utils/hrefUpdate`;
 	var options = {
 		url: url,
-		method: `PUT`,
+		method: 'PUT',
 		headers: {
-			'Content-Type': `application/json`,
-			'TxnId': _req.get(`txnId`),
-			'Authorization': _req.get(`Authorization`),
-			'User': _req.get(`user`)
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('txnId'),
+			'Authorization': _req.get('Authorization'),
+			'User': _req.get('user')
 		},
 		body: body,
 		json: true

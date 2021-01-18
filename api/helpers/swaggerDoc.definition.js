@@ -1,9 +1,9 @@
 var definition = {
 	'_id': {
-		'type': `String`
+		'type': 'String'
 	},
 	'documentation':{
-		'type': `String`
+		'type': 'String'
 	}
 };
 module.exports.definition = definition;
