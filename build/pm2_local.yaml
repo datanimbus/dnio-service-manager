@@ -14,3 +14,4 @@ apps:
     MONGO_RECONN_TIME_MILLI: 21600
     MODE: dev
     LOG_LEVEL: debug
+    VERIFY_DEPLOYMENT_USER: false

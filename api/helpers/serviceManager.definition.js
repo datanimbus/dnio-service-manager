@@ -305,7 +305,8 @@ var definition = {
 		'type': {
 			'version': {
 				'release': { 'type': 'Number' }
-			}
+			},
+			'lastUpdatedBy': { 'type': 'String' }
 		}
 	},
 	'type': {

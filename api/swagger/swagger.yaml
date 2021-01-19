@@ -43,6 +43,10 @@ paths:
           in: query
           type: string
           description: sort parameter
+        - name: draft
+          in: query
+          type: boolean
+          description: Returns draft documents if true
       responses:
         '200':
           description: List of the entites

@@ -156,19 +156,23 @@ schema.pre('validate', function (next) {
 	next();
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	let self = this;
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
+	let user = req.get('User');
+	self._metadata.lastUpdatedBy = user;
 	next();
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
+	let user = req.get('User');
+	self._metadata.lastUpdatedBy = user;
 	next();
 });
 
@@ -193,7 +197,7 @@ draftSchema.pre('save', function (next) {
 });
 
 function reserved(def) {
-	var keywords = ['schema', 'collection', 'db', 'save', 'get', 'model', 'default'];
+	var keywords = ['schema', 'collection', 'db', 'save', 'get', 'model', 'default', 'modelname'];
 	var promise = def.map(ele => {
 		if(ele.key && keywords.includes(ele.key.toLowerCase()))
 			throw new Error(ele.key + ' cannot be used as an attribute name');
@@ -1176,6 +1180,8 @@ function rollBackDeploy(id, req) {
 
 e.deployAPIHandler = (_req, _res) => {
 	logger.debug('Inside deployAPIHandler');
+	let user = _req.get('User');
+	let isSuperAdmin = JSON.parse(_req.get('isSuperAdmin'));
 	let socket = _req.app.get('socket');
 	let isReDeploymentRequired = false;
 	let preHookUpdated = false;
@@ -1184,6 +1190,7 @@ e.deployAPIHandler = (_req, _res) => {
 	let isDeleteAndCreateRequired = false;
 	let isAuditIndexDeleteRequired = false;
 	let isApiEndpointChanged = false;
+	let removeSoftDeletedRecords = false;
 	let ID = _req.swagger.params.id.value;
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
@@ -1198,6 +1205,9 @@ e.deployAPIHandler = (_req, _res) => {
 				}
 				if (_d.status === 'Draft') {
 					let svcObject = _d.toObject();
+					if (envConfig.verifyDeploymentUser && !isSuperAdmin && svcObject && svcObject._metadata && svcObject._metadata.lastUpdatedBy == user) {
+						return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
+					}
 					if (!svcObject.definition) throw new Error('Data service definition not found.');
 					if (!svcObject.versionValidity) throw new Error('Data settings are not configured for the data service.');
 					// svcObject.definition = JSON.parse(svcObject.definition);
@@ -1232,6 +1242,9 @@ e.deployAPIHandler = (_req, _res) => {
 				} else {
 					return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 						.then(_newData => {
+							if (envConfig.verifyDeploymentUser && !isSuperAdmin && _newData && _newData._metadata && _newData._metadata.lastUpdatedBy == user) {
+								return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
+							}
 							if (_newData.webHooks || _newData.workflowHooks) isWebHookUpdateRequired = true;
 							if (oldData.api != _newData.api) {
 								isApiEndpointChanged = true;
@@ -1249,6 +1262,7 @@ e.deployAPIHandler = (_req, _res) => {
 							if (oldData.name != _newData.name) isReDeploymentRequired = true;
 							if (oldData.disableInsights != _newData.disableInsights) isReDeploymentRequired = true;
 							if(oldData.permanentDeleteData != _newData.permanentDeleteData) isReDeploymentRequired = true;
+							removeSoftDeletedRecords = !oldData.permanentDeleteData && _newData.permanentDeleteData;
 							logger.debug('oldWizard ' + JSON.stringify(oldData.wizard));
 							logger.debug('newWizard ' + JSON.stringify(_newData.wizard));
 							if (!_.isEqual(JSON.parse(JSON.stringify(oldData.wizard)), JSON.parse(JSON.stringify(_newData.wizard)))) isWizardUpdateRequired = true;
@@ -1388,7 +1402,8 @@ e.deployAPIHandler = (_req, _res) => {
 									logger.debug({
 										isReDeploymentRequired,
 										preHookUpdated,
-										isWizardUpdateRequired
+										isWizardUpdateRequired,
+										removeSoftDeletedRecords
 									});
 									if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) {
 										logger.debug(JSON.stringify(_d));
@@ -1400,6 +1415,7 @@ e.deployAPIHandler = (_req, _res) => {
 											return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
 										} else {
 											logger.info(`Reindexing the collection :: ${data.collectionName}`);
+											// removing soft deleted record with check
 											return mongoDBVishnu.collection(data.collectionName).dropIndexes()
 												.catch(err => {
 													logger.error(err);
@@ -2608,6 +2624,14 @@ function customShow(req, res) {
 	}
 }
 
+function customIndex(req, res) {
+	let draft = req.swagger.params.draft.value;
+	if (draft)
+		draftCrudder.index(req, res);
+	else
+		crudder.index(req, res);
+}
+
 function draftDelete(req, res) {
 	let id = req.swagger.params.id.value;
 	draftCrudder.model.findOne({ _id: id })
@@ -2990,7 +3014,7 @@ function countByStatus(req, res) {
 
 module.exports = {
 	create: e.createDoc,
-	index: crudder.index,
+	index: customIndex,
 	show: customShow,
 	destroy: e.destroyService,
 	update: e.updateDoc,

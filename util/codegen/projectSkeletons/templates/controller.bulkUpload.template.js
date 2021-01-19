@@ -692,7 +692,7 @@ e.validateData = (_req, _res) => {
         let ws = wb.Sheets[wb.SheetNames[0]];
         let sheetData = getSheetData(ws, isHeaderProvided);
         let mappedSchemaData = substituteMappingSheetToSchema(sheetData, headerMapping, timezone);
-        return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: {isHeaderProvided, headerMapping, status: "Validating"}})
+        return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: { isRead: false, isHeaderProvided, headerMapping, status: "Validating"}})
         .then(()=>{
             _res.status(202).json({message:"Validation Process Started..."});
             return mongoose.model('bulkCreate').remove({
@@ -813,7 +813,8 @@ e.validateData = (_req, _res) => {
                     valid: (finalData[0].valid).length > 0 ? finalData[0].valid[0].valid : 0,
                     errorCount: (finalData[0].error).length > 0 ? finalData[0].error[0].error : 0,
                     status: "Validated",
-                    '_metadata.lastUpdated':  new Date()
+                    '_metadata.lastUpdated':  new Date(),
+                    isRead: false
                 }
                 if(result.duplicate==0 && result.conflicts==0 && result.valid==0){
                     throw new Error('File contains only errors, cannot process');
@@ -887,7 +888,8 @@ e.validateData = (_req, _res) => {
                         errorCount: (finalData[0].error).length > 0 ? finalData[0].error[0].error : 0,
                         status: "Error",
                         message: errorMessage,
-                        '_metadata.lastUpdated': new Date()
+                        '_metadata.lastUpdated': new Date(),
+                        isRead: false
                     };
                     resultData = result;
                     return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({ fileId: fileId }, { $set: result });
@@ -1018,7 +1020,7 @@ e.bulkCreate = (_req, _res) => {
     let updatePromise = [];
     let errors = [];
     let finalResult = {};
-    return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: {status: "Importing"}})
+    return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: {status: "Importing", isRead: false }})
     .then(()=>{
         _res.status(202).json({message: "Creation Process started..."});
         return mongoose.model('bulkCreate').find({
@@ -1065,7 +1067,8 @@ e.bulkCreate = (_req, _res) => {
             updatedCount: (finalData[0].updatedCount).length > 0 ? finalData[0].updatedCount[0].updatedCount : 0,
             errorCount: (finalData[0].errorCount).length > 0 ? finalData[0].errorCount[0].errorCount : 0,
             status: "Created",
-            '_metadata.lastUpdated':  new Date()
+            '_metadata.lastUpdated':  new Date(),
+            isRead: false
         };
         finalResult = result;
         return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: result});
@@ -1090,7 +1093,7 @@ e.bulkCreate = (_req, _res) => {
             socketData.userId = _req.get('User');
             socketData.fileName = fileName;
             logger.debug('socketData', socketData);
-            return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: {status:"Error", message:err.message, '_metadata.lastUpdated':  new Date()}})
+            return mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({fileId: fileId }, {$set: { isRead: false, status:"Error", message:err.message, '_metadata.lastUpdated':  new Date()}})
             .then(()=>{
                 return informGW(socketData, _req.get('Authorization'))
             })
