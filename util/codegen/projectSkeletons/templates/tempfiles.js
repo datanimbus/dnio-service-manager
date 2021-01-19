@@ -119,8 +119,8 @@ function packageJson(config) {
     "license": "ISC",
     "dependencies": {
         "@appveen/odp-utils": "1.5.6",
-        "@appveen/swagger-mongoose-crud": "~1.1.4",
-        "@appveen/utils": "1.1.6",
+        "@appveen/swagger-mongoose-crud": "~1.2.2",
+        "@appveen/utils": "1.1.7",
         "archiver": "^5.0.0",
         "bluebird": "^3.5.0",
         "crypto": "^1.0.1",
@@ -584,6 +584,9 @@ function exportDefinition(){
         },
         'type':{
             'type': 'String',
+        },
+        'isRead': {
+            'type': 'Boolean'
         }
     };
     module.exports.definition = definition;`;
@@ -614,7 +617,8 @@ function auditLogsDefinition(config) {
 }
 
 function crudderHelper() {
-	return `let _ = require("lodash");
+    return `let _ = require("lodash");
+    let logger = global.logger;
 
     function IsString(val) {
         return val && val.constructor.name === 'String';
@@ -725,6 +729,42 @@ function crudderHelper() {
         query.lean();
         let returnDocuments = [];
         return query.exec()
+    }
+    e.cursor = function(req, model){
+        let reqParams = Object.keys(req.swagger.params).reduce((prev, curr) => {
+            prev[curr] = req.swagger.params[curr].value;
+            return prev;
+        }, {});
+        var filter = reqParams['filter'] ? reqParams.filter : {};
+        var sort = reqParams['sort'] ? {} : {
+            '_metadata.lastUpdated': -1
+        };
+        
+        reqParams['sort'] ? reqParams.sort.split(',').map(el => el.split('-').length > 1 ? sort[el.split('-')[1]] = -1 : sort[el.split('-')[0]] = 1) : null;
+        var select = reqParams['select'] ? reqParams.select.split(',') : [];
+        var skip = reqParams['skip'] ? reqParams.skip : 0;
+        var batchSize = reqParams['batchSize'] ? reqParams.batchSize : 500;
+        var search = reqParams['search'] ? reqParams.search : null;
+        if (typeof filter === 'string') {
+            try {
+                filter = JSON.parse(filter);
+                filter = FilterParse(filter);
+            } catch (err) {
+                logger.error('Failed to parse filter :' + err);
+                filter = {};
+            }
+        }
+        filter = _.assign({}, filter);
+        if (search) {
+            filter['$text'] = { '$search': search };
+        }
+        var query = model.find(filter).skip(skip).sort(sort);
+        query.lean();
+        if (select.length || select.length) {
+            var union = select.concat(select);
+            query.select(union.join(' '));
+        }
+        return query.batchSize(batchSize).cursor();
     }
     
     module.exports = e;`;

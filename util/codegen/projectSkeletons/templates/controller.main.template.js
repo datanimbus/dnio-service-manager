@@ -262,6 +262,7 @@ let async = require('async');
 const dateformat = require('dateformat');
 let mathQueue = async.priorityQueue(processMathRequest);
 let runInit = true;
+let permanentDeleteData = ${config.permanentDeleteData};
 let lineReader = require('line-reader');
 // const zlib = require('zlib');
 var archiver = require('archiver');
@@ -380,7 +381,6 @@ function encryptData(data, nestedKey, isUpdate, oldData) {
                 return Promise.reject(new Error('Secure field ' + keys[0] + ' is string :: ' + data[keys[0]]))
             } else if (data[keys[0]].value) {
                 if(!isUpdate || !oldData || !oldData[keys[0]] || (isUpdate && oldData[keys[0]].value != data[keys[0]].value)){
-                    logger.info('encrypting:: ', data[keys[0]].value);
                     return encryptText(data[keys[0]].value)
                     .then(_d => {
                         data[keys[0]] = _d;
@@ -484,11 +484,13 @@ schema.post('save', function (error, doc, next) {
                 next(new Error("ID already exists"));   
             } else {
                 var uniqueAttributeFailed = error.errmsg.substring(
-                    error.errmsg.lastIndexOf("index:") + 6, 
+                    error.errmsg.lastIndexOf("index:") + 7,
                     error.errmsg.lastIndexOf("_1")
                 );
                 if(uniqueAttributeFailed.endsWith('._id'))
                     uniqueAttributeFailed = uniqueAttributeFailed.slice(0, -4);
+                if(uniqueAttributeFailed.endsWith('.checksum') && secureFields.includes(uniqueAttributeFailed.slice(0, -9)))
+                    uniqueAttributeFailed = uniqueAttributeFailed.slice(0, -9);
                 next(new Error("Unique check validation failed for "+uniqueAttributeFailed));   
             }
         } else {
@@ -2240,8 +2242,6 @@ function expandedExport(req, res, expand) {
         timezone = -330;
     }
     let select = req.swagger.params.select.value;
-    let fileName = '${config.name}';
-    fileName = fileName.replace(/\\//g, "_");
     let d = new Date();
     Number.prototype.padLeft = function(base,chr){
         var  len = (String(base || 10).length - String(this).length)+1;
@@ -2249,6 +2249,8 @@ function expandedExport(req, res, expand) {
     }
     let formats = [(d.getDate()).padLeft(),(d.getMonth()+1).padLeft(),(d.getFullYear()-2000)].join('')+'-' +[d.getHours().padLeft(),d.getMinutes().padLeft(),d.getSeconds().padLeft()].join('');
     let downloadFile = '${config.name}-'+formats+'.zip';
+    let fileName = '${config.name}';
+    fileName = fileName.replace(/\\//g, "_") + '-' + formats;
     downloadFile = downloadFile.replace(/\\//g, "_");
     select = select ? select.split(',') : [];
     let selectionObject = null;
@@ -2264,6 +2266,7 @@ function expandedExport(req, res, expand) {
     var txtWriteStream = fs.createWriteStream(outputDir + fileName + '.txt');
     let headersObj = {};
     let serviceDetailsObj = {};
+    let cursor;
 
     res.status(200).json({_id: uuids, message: "Process queued" });
     let exportObj = {
@@ -2273,6 +2276,7 @@ function expandedExport(req, res, expand) {
         user: req.headers.user,
         type:"export",
         fileName: downloadFile,
+        isRead: false,
         "_metadata": {
             "deleted": false,
             "lastUpdated": new Date(),
@@ -2333,13 +2337,19 @@ function expandedExport(req, res, expand) {
             for (let i = 0; i < totalBatches; i++) {
                 arr.push(i);
             }
+            req.swagger.params.batchSize.value = BATCH;
+            cursor = crudderHelper.cursor(req, crudder.model);
             let promise = arr.reduce((_p, curr, i) => {
                 return _p
-                    .then(() => {
+                    .then(async () => {
                         logger.info('Running batch ' + (i + 1));
-                        req.swagger.params.page.value = (i + 1);
-                        req.swagger.params.count.value = BATCH;
-                        return crudderHelper.index(req, crudder.model);
+                        var documents = [];
+                        for(var j =0; j < BATCH; j++) {
+                            let doc = await cursor.next();
+                            if(doc) documents.push(doc);
+                            else break;
+                        }
+                        return Promise.resolve(documents);
                     })
                     .then(documents => {                        
                         return expandInBatch(documents, selectionObject, i, fileName, req,resul, serviceDetailsObj, { forFile: true})
@@ -2378,18 +2388,6 @@ function expandedExport(req, res, expand) {
                 })
             }).then(() => {
                 return new Promise((resolve, reject) => {
-                    // var gzip = zlib.createGzip();
-                    // let zipWriteStream = fs.createWriteStream(outputDir + downloadFile);
-                    // let csvReadStream = fs.createReadStream(outputDir + fileName + '.csv');
-                    // csvReadStream.pipe(gzip).pipe(zipWriteStream)
-                    // .on('finish', () => {
-                    //     logger.debug('Zip file has been created. Uploading to mongo...')
-                    //     resolve();
-                    // })
-                    // .on('error', (err) => {
-                    //     logger.error('Error in createin zip file: ', err);
-                    //     reject(err);
-                    // })
                     let archive = archiver('zip', {
                         zlib: { level: 9 } // Sets the compression level.
                       });
@@ -2430,25 +2428,26 @@ function expandedExport(req, res, expand) {
                             })
                         });
                 }).catch(err => {
-                        logger.error(err);
+                        logger.error('Error in exporting file :: ',err);
                     })
             }).catch(err => {
-                logger.error(err);
+                logger.error('Error in exporting file :: ',err);
         }).catch(err => {
-            logger.error(err);
+            logger.error('Error in exporting file :: ',err);
     }).finally(() => {
-        // Removing txt and csv files if exist
-        if(fs.existsSync(outputDir + fileName + '.txt')) {
-            fs.unlink(outputDir + fileName + '.txt', (err) => {
-                if(err) logger.error('Error in deleting txt file: ', err);
-            })
-        }
-        if(fs.existsSync(outputDir + fileName + '.csv')) {
-            fs.unlink(outputDir + fileName + '.csv', (err) => {
-                if(err) logger.error('Error in deleting csv file: ', err);
-            })
-        }
-    })
+        try {
+            if(cursor) cursor.close();
+        } catch(e) { logger.error('Error in closing cursor :: ', e) }
+        // Removing txt, csv and zip files if exist
+        let filesToRemove = [outputDir + fileName + '.txt', outputDir + fileName + '.csv', outputDir + downloadFile]
+        filesToRemove.forEach(file => {
+            if(fs.existsSync(file)) {
+                fs.unlink(file, (err) => {
+                    if(err) logger.error('Error in deleting file: ' + file, err);
+                });
+            }
+        });
+    });
 }
 
 function expandInBatch(documents, selectionObject, count, fileName, req,resul, serviceDetailsObj, options) {  
@@ -3256,6 +3255,21 @@ function customCreate(req, res){
         exportCrudder.destroy(req,res);
     }
 
+    e.exportUpdateReadStatus = (req, res) => {
+        let fileId = req.swagger.params.fileId.value;
+        let user = req.headers.user
+        let isRead = req.body.isRead;
+        exportCrudder.model.findById(fileId).then(fileData => {
+            if(!fileData) return res.status(404).json({ message: "File not found."})
+            if(fileData.user != user) return res.status(403).json({ message: "Not permitted."});
+            fileData.isRead = isRead;
+            if(fileData._metadata) fileData._metadata.lastUpdated = new Date();
+            fileData.save().then(() => {
+                return res.json({ message : "File read status updated successfully." })
+            });
+        });
+    }
+    
     function informGW(data, jwtToken){
         var options = {
             url: '${SMConfig.baseUrlGW}/fileStatus/export',
@@ -3308,7 +3322,8 @@ function customCreate(req, res){
         securedFields: getSecuredFields,
         // requiredRelation:requiredRelation,
         aggregate: crudder.aggregate,
-        updateHref: updateHref
+        updateHref: updateHref,
+        exportUpdateReadStatus: e.exportUpdateReadStatus
     };
     `;
 	return controllerJs;

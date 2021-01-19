@@ -156,6 +156,44 @@ const countParameters = [{
 	default: false
 }];
 
+const exportParameters = [{
+	name: 'filter',
+	in: 'query',
+	type: 'string',
+	description: 'Filter records based on certain fields'
+},
+{
+	name: 'select',
+	in: 'query',
+	type: 'string',
+	description: 'Comma seperated fields to be displayed'
+},
+{
+	name: 'sort',
+	in: 'query',
+	type: 'string',
+	description: 'sort parameter'
+},
+{
+	name: 'skip',
+	in: 'query',
+	type: 'integer',
+	description: 'Number of records to skip'
+},
+{
+	name: 'batchSize',
+	in: 'query',
+	type: 'integer',
+	description: 'Batch size for cursor'
+},
+{
+	name: 'authorization',
+	in: 'header',
+	type: 'string',
+	description: 'The JWT token for req.validation'
+}];
+
+
 function getType(type) {
 	type = type == 'largeString' ? 'String' : type;
 	type = type == 'String' ? 'string' : type;
@@ -1151,7 +1189,7 @@ function generateYaml(config) {
 		'get': {
 			description: `Retrieve a list of '${config.name}'`,
 			operationId: `${methodName.exportAll}`,
-			parameters: config.enableSearchIndex ? JSON.parse(JSON.stringify(getParameters)).concat([expandOption, searchOption, totalRecord]) : JSON.parse(JSON.stringify(getParameters)).concat([expandOption, totalRecord]),
+			parameters: config.enableSearchIndex ? JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, searchOption, totalRecord]) : JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, totalRecord]),
 			responses: {
 				'200': {
 					description: 'List of the entites'
@@ -1207,7 +1245,7 @@ function generateYaml(config) {
 	swagger.paths['/utils/fileTransfers/{id}'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'delete': {
-			description: 'delete file\'',
+			description: 'Deletes a file with file id',
 			operationId: `${methodName.exportAllDetailDelete}`,
 			parameters: [{
 				name: 'id',
@@ -1224,6 +1262,47 @@ function generateYaml(config) {
 			responses: {
 				'200': {
 					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
+	swagger.paths[basePath + '/utils/fileTransfers/{fileId}/readStatus'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'put': {
+			description: 'Updates File Read Status',
+			operationId: 'exportUpdateReadStatus',
+			parameters: [{
+				name: 'fileId',
+				in: 'path',
+				type: 'string',
+				required: true,
+				description: 'Id of file',
+			}, {
+				name: 'authorization',
+				in: 'header',
+				type: 'string',
+				description: 'The JWT token for req.validation'
+			}, {
+				name: 'data',
+				in: 'body',
+				description: 'Payload with read status',
+				schema: {
+					properties: {
+						'isRead': {
+							'type': 'boolean',
+						}
+					}
+				}
+			}],
+			responses: {
+				'200': {
+					description: 'File read status updated'
 				},
 				'400': {
 					description: 'Bad parameters'

@@ -48,6 +48,7 @@ exports.fileMapperList = bulkUploadController.fileMapperList;
 exports.updateFileStatus = bulkUploadController.updateFileStatus;
 exports.v1_aggregate = ${id}Controller.aggregate;
 exports.v1_updateHref = ${id}Controller.updateHref;
+exports.exportUpdateReadStatus = ${id}Controller.exportUpdateReadStatus;
 
 module.exports = exports;
     `;
