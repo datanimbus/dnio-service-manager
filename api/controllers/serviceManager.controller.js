@@ -193,7 +193,7 @@ draftSchema.pre('save', function (next) {
 });
 
 function reserved(def) {
-	var keywords = ['schema', 'collection', 'db', 'save', 'get', 'model', 'default'];
+	var keywords = ['schema', 'collection', 'db', 'save', 'get', 'model', 'default', 'modelname'];
 	var promise = def.map(ele => {
 		if(ele.key && keywords.includes(ele.key.toLowerCase()))
 			throw new Error(ele.key + ' cannot be used as an attribute name');
