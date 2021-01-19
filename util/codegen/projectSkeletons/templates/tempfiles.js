@@ -617,7 +617,7 @@ function auditLogsDefinition(config) {
 }
 
 function crudderHelper() {
-    return `let _ = require("lodash");
+	return `let _ = require("lodash");
     let logger = global.logger;
 
     function IsString(val) {
