@@ -2608,6 +2608,14 @@ function customShow(req, res) {
 	}
 }
 
+function customIndex(req, res) {
+	let draft = req.swagger.params.draft.value;
+	if (draft)
+		draftCrudder.index(req, res)
+	else
+		crudder.index(req, res)
+}
+
 function draftDelete(req, res) {
 	let id = req.swagger.params.id.value;
 	draftCrudder.model.findOne({ _id: id })
@@ -2990,7 +2998,7 @@ function countByStatus(req, res) {
 
 module.exports = {
 	create: e.createDoc,
-	index: crudder.index,
+	index: customIndex,
 	show: customShow,
 	destroy: e.destroyService,
 	update: e.updateDoc,
