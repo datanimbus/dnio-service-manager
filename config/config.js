@@ -129,5 +129,5 @@ module.exports = {
 	allowedExt,
 	maxHeapSize: process.env.NODE_MAX_HEAP_SIZE || '4096',
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60,
-	verifyDeploymentUser: process.env.VERIFY_DEPLOYMENT_USER || false,
+	verifyDeploymentUser: (process.env.VERIFY_DEPLOYMENT_USER && process.env.VERIFY_DEPLOYMENT_USER.toLowerCase() === 'true') || false
 };
