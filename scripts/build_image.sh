@@ -81,7 +81,7 @@ if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
     cd $WORKSPACE/../ds-base
     
-    docker build --no-cache -t data.stack:base.$TAG .
+    docker build --no-cache -t data.stack:base.$TAG -f Dockerfile_base .
     cd $WORKSPACE
 
     echo "****************************************************"
@@ -115,7 +115,7 @@ else
     
     cd $WORKSPACE/../ds-base
 
-    docker build -t data.stack:base.$TAG .
+    docker build -t data.stack:base.$TAG -f Dockerfile_base .
     cd $WORKSPACE
 
     if [ $CICD ]; then
