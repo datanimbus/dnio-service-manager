@@ -316,7 +316,7 @@ function getUpdateDefinition(def) {
 		});
 	} else if(def.constructor == {}.constructor) {
 		Object.keys(def).forEach(key => {
-			if (def[key] != null && typeof def[key] === `object`)
+			if (def[key] != null && typeof def[key] === 'object')
 				getUpdateDefinition(def[key]);
 		});
 	}
