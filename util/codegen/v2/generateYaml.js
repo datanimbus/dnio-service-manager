@@ -309,10 +309,17 @@ function getUpdateDefinition(def) {
 	if (def.constructor == {}.constructor && def['required']) {
 		delete def.required;
 	}
-	def.forEach(attr => {
-		if (attr != null && typeof attr === 'object')
-			getUpdateDefinition(attr);
-	});
+	if(Array.isArray(def)) {
+		def.forEach(attr => {
+			if (attr != null && typeof attr === 'object')
+				getUpdateDefinition(attr);
+		});
+	} else if(def.constructor == {}.constructor) {
+		Object.keys(def).forEach(key => {
+			if (def[key] != null && typeof def[key] === `object`)
+				getUpdateDefinition(def[key]);
+		});
+	}
 }
 
 function getMethodNames(config) {
