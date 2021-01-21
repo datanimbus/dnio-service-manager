@@ -74,12 +74,15 @@ if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
     
     docker build --no-cache -t data.stack:sm.$TAG .
+    rm $WORKSPACE/../CLEAN_BUILD_SM
 
     echo "****************************************************"
     echo "data.stack:sm :: Building base image"
     echo "****************************************************"
-    docker build --no-cache -t data.stack:base.$TAG -f Dockerfile_base .
-    rm $WORKSPACE/../CLEAN_BUILD_SM
+    cd $WORKSPACE/../ds-base
+    
+    docker build --no-cache -t data.stack:base.$TAG .
+    cd $WORKSPACE
 
     echo "****************************************************"
     echo "data.stack:sm :: Copying deployment files"
@@ -109,8 +112,11 @@ else
     echo "****************************************************"
     echo "data.stack:sm :: Building base image"
     echo "****************************************************"
+    
+    cd $WORKSPACE/../ds-base
 
-    docker build -t data.stack:base.$TAG -f Dockerfile_base .
+    docker build -t data.stack:base.$TAG .
+    cd $WORKSPACE
 
     if [ $CICD ]; then
         kubectl set image deployment/sm sm=data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
