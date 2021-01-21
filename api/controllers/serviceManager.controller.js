@@ -1181,7 +1181,7 @@ function rollBackDeploy(id, req) {
 e.deployAPIHandler = (_req, _res) => {
 	logger.debug('Inside deployAPIHandler');
 	let user = _req.get('User');
-	let isSuperAdmin = JSON.parse(_req.get('isSuperAdmin'));
+	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')): false;
 	let socket = _req.app.get('socket');
 	let isReDeploymentRequired = false;
 	let preHookUpdated = false;
@@ -1281,7 +1281,7 @@ e.deployAPIHandler = (_req, _res) => {
 							let newDefinition = _newData.definition;
 							let definitionComparison = deepEqual(oldData.definition, _newData.definition);
 							let oldIdElement = oldData.definition ? oldData.definition.find(d=> d.key == '_id') : {};
-							let newIdElement = _newData.definition ? _req.body.definition.find(d=> d.key == '_id') : {};
+							let newIdElement = _newData.definition ? _newData.definition.find(d=> d.key == '_id') : {};
 							let isCounterChangeRequired = false;
 							let padding = newIdElement ? newIdElement.padding : null;
 							if (!definitionComparison) {
