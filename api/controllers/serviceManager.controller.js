@@ -1016,7 +1016,10 @@ e.updateDoc = (_req, _res) => {
 					if (oldData.api && _req.body.api && oldData.api != _req.body.api) {
 						return apiUniqueCheck(_req.body.api, _req.body.app, ID)
 							.then(() => {
-								return smhelper.canUpdateAPI(oldData.relatedSchemas.incoming);
+								if(oldData.relatedSchemas.incoming)
+									return smhelper.canUpdateAPI(oldData.relatedSchemas.incoming);
+								else
+									return Promise.resolve();
 							});
 					} else {
 						return Promise.resolve();
