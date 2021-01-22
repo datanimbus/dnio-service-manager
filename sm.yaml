@@ -30,10 +30,10 @@ spec:
         app: sm
         release: __release_tag__
     spec:
-      serviceAccountName: odp-admin-appveen
+      serviceAccountName: odp-admin
       containers:
         - name: sm
-          image: '__docker_registry_server__/odp:sm.__release__'
+          image: '__docker_registry_server__/data.stack:sm.__release__'
           ports:
             - containerPort: 10003
           livenessProbe:
