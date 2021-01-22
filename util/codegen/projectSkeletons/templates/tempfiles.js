@@ -778,8 +778,8 @@ if (dockerReg.length > 0 && !dockerReg.endsWith('/') && dockerRegistryType != 'E
 
 function dockerFile(_port) {
 	// let base = `${dockerReg}odp:base.${process.env.RELEASE}`;
-	let base = `${dockerReg}odp:base.${process.env.IMAGE_TAG}`;
-	if(dockerRegistryType == 'ECR') base = `${dockerReg}:odp.base.${process.env.IMAGE_TAG}`;
+	let base = `${dockerReg}data.stack:base.${process.env.IMAGE_TAG}`;
+	if(dockerRegistryType == 'ECR') base = `${dockerReg}:data.stack:base.${process.env.IMAGE_TAG}`;
 	logger.debug(`Base image :: ${base}`);
 	return ` 
 FROM ${base}

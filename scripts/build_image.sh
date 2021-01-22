@@ -68,13 +68,13 @@ echo "data.stack:sm :: Adding IMAGE_TAG in Dockerfile :: "$TAG
 echo "****************************************************"
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
-if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
+# if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
     echo "data.stack:sm :: Doing a clean build"
     echo "****************************************************"
     
     docker build --no-cache -t data.stack:sm.$TAG .
-    rm $WORKSPACE/../CLEAN_BUILD_SM
+    # rm $WORKSPACE/../CLEAN_BUILD_SM
 
     echo "****************************************************"
     echo "data.stack:sm :: Building base image"
