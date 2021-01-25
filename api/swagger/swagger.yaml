@@ -1347,16 +1347,12 @@ definitions:
     properties:
       name:
         type: string
-      definition:
-        type: object
       app:
         type: string  
   globalSchema_update:
     properties:
       name:
         type: [string, 'null']
-      definition:
-        type: object
       app:
         type: string   
   
