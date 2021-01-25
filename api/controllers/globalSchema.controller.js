@@ -110,13 +110,13 @@ function updateInusrMgmt(srvcObj, definition, _req) {
 
 schema.pre('save', function (next) {
 	let self = this;
-	if(!self.definition) next();
+	if (!self.definition) next();
 	let definition = self.definition;
-	if (!definition.definition || typeof definition.definition !== 'object') {
+	if (!definition[0].definition || !Array.isArray(definition[0].definition)) {
 		next(new Error('Library definition is invalid'));
 	} else {
 		try {
-			validateDefinition(definition.definition);
+			validateDefinition(definition[0].definition);
 		} catch (err) {
 			next(new Error('Library definition is invalid'));
 		}
@@ -230,9 +230,9 @@ schema.post('save', function (doc) {
 	}
 });
 
-schema.post('save', function(doc) {
+schema.post('save', function (doc) {
 	let eventId = 'EVENT_LIBRARY_UPDATE';
-	if(doc.wasNew)
+	if (doc.wasNew)
 		eventId = 'EVENT_LIBRARY_CREATE';
 	odpUtils.eventsUtil.publishEvent(eventId, 'library', doc._req, doc);
 });
