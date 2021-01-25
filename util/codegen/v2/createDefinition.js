@@ -68,7 +68,7 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 			if (attribute['type'] === 'Array') {
 				mongoSchema[key] = {};
 				mongoSchema[key]['type'] = [];
-				if (attribute['definition']['_self']['properties'] && attribute['definition']['_self']['properties']['email']) {
+				if (attribute['definition']['properties'] && attribute['definition']['properties']['email']) {
 					const functionBody = `
 					if(value == null) return true;
 					if(value.length == 0) return false;
