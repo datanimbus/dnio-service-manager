@@ -106,7 +106,7 @@ let masking = [
 	{ url: \`\${baseURL}\`, path: secureFields },
     { url: \`\${baseURL}/utils/simulate\`, path: secureFields },
     { url: \`\${baseURL}/{id}\`, path: secureFields },
-	{ url: \`\${baseURL}/experienceHook\`, path: secureFields }
+	{ url: \`\${baseURL}/utils/experienceHook\`, path: secureFields }
 ];
 
 app.use((req, res, next) => {

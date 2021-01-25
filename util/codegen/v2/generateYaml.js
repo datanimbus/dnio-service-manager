@@ -659,7 +659,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths['/experienceHook'] = {
+	swagger.paths['/utils/experienceHook'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'post': {
 			description: 'triggers the hook with data',

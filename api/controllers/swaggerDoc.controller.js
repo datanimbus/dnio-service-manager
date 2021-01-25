@@ -2,7 +2,7 @@
 const { generateYaml } = require('../../util/codegen/projectSkeletons/generateYaml');
 const logger = global.logger;
 const mongoose = require('mongoose');
-const apiNotAllowed = ['/file/upload', '/file/{id}/view', '/file/{id}/remove', '/fileMapper/mapping', '/fileMapper/create', '/hook', '/lock', '/experienceHook', '/fileMapper/enrich', '/health/live', '/health/ready', '/fileMapper/{fileId}/create', '/fileMapper/{fileId}/mapping', '/fileMapper/{fileId}/count', '/fileMapper/{fileId}', '/fileMapper/{fileId}/enrichDataForWF', '/utils/fileTransfers/{id}', '/utils/fileTransfers/count', '/utils/fileTransfers', '/utils/hrefUpdate', '/securedFields', '/utils/fileTransfers/{id}/readStatus'];
+const apiNotAllowed = ['/file/upload', '/file/{id}/view', '/file/{id}/remove', '/fileMapper/mapping', '/fileMapper/create', '/hook', '/lock', '/utils/experienceHook', '/fileMapper/enrich', '/health/live', '/health/ready', '/fileMapper/{fileId}/create', '/fileMapper/{fileId}/mapping', '/fileMapper/{fileId}/count', '/fileMapper/{fileId}', '/fileMapper/{fileId}/enrichDataForWF', '/utils/fileTransfers/{id}', '/utils/fileTransfers/count', '/utils/fileTransfers', '/utils/hrefUpdate', '/securedFields', '/utils/fileTransfers/{id}/readStatus'];
 const definitionNotAllowed = ['mapping', 'bulkCreateData'];
 function addAuthHeader(paths, jwt) {
 	Object.keys(paths).forEach(path => {
