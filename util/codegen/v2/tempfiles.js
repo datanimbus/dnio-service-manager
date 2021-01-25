@@ -56,7 +56,7 @@ function dockerFile(config) {
 WORKDIR /app
 COPY . .
 ENV NODE_ENV production
-ENV ODP_APP ${config.app}
+ENV DATA_STACK_APP ${config.app}
 ENV SERVICE_ID ${config._id}
 ENV SERVICE_NAME ${config.name}
 ENV SERVICE_PORT ${config.port}
