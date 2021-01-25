@@ -1419,7 +1419,11 @@ e.deployAPIHandler = (_req, _res) => {
 										} else {
 											logger.info(`Reindexing the collection :: ${data.collectionName}`);
 											// removing soft deleted record with check
-											return mongoDBVishnu.collection(data.collectionName).dropIndexes()
+											let promise = Promise.resolve();
+											if(removeSoftDeletedRecords) {
+												promise = mongoDBVishnu.dropCollection(data.collectionName + '.deleted');
+											}
+											return promise.then(() => mongoDBVishnu.collection(data.collectionName).dropIndexes())
 												.catch(err => {
 													logger.error(err);
 													return Promise.resolve(err);
