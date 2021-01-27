@@ -63,15 +63,15 @@ function generateFolderStructure(config) {
 	mkdirp.sync(path.join(config.path, 'api/swagger'));
 	if (!envConfig.isK8sEnv()) {
 		logger.info('Local ENV :: Copying Structure');
-		copydir.sync(path.join(process.cwd(), '../odp-base/api'), path.join(config.path, 'api'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/.dockerignore'), path.join(config.path, '.dockerignore'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/.gitignore'), path.join(config.path, '.gitignore'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/app.js'), path.join(config.path, 'app.js'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/config.js'), path.join(config.path, 'config.js'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/http-client.js'), path.join(config.path, 'http-client.js'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/init.js'), path.join(config.path, 'init.js'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/queue.js'), path.join(config.path, 'queue.js'));
-		fs.copyFileSync(path.join(process.cwd(), '../odp-base/db-factory.js'), path.join(config.path, 'db-factory.js'));
+		copydir.sync(path.join(process.cwd(), '../ds-base/api'), path.join(config.path, 'api'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/.dockerignore'), path.join(config.path, '.dockerignore'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/.gitignore'), path.join(config.path, '.gitignore'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/app.js'), path.join(config.path, 'app.js'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/config.js'), path.join(config.path, 'config.js'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/http-client.js'), path.join(config.path, 'http-client.js'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/init.js'), path.join(config.path, 'init.js'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/queue.js'), path.join(config.path, 'queue.js'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/db-factory.js'), path.join(config.path, 'db-factory.js'));
 	}
 	return Promise.resolve();
 }
