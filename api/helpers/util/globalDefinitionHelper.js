@@ -78,7 +78,7 @@ function substituteGlobalDefinition(schema, globalSchema) {
 				}
 			}
 			if (attribute['definition'])
-			attribute['definition'] = substituteGlobalDefinition(attribute['definition'], globalSchema);
+				attribute['definition'] = substituteGlobalDefinition(attribute['definition'], globalSchema);
 		}
 		return attribute;
 	});
@@ -98,7 +98,7 @@ function substituteSystemGlobalDefinition(schema) {
 				}
 			}
 			if (attribute['definition'])
-			attribute['definition'] = substituteSystemGlobalDefinition(attribute['definition'], systemGlobalSchema);
+				attribute['definition'] = substituteSystemGlobalDefinition(attribute['definition'], systemGlobalSchema);
 		}
 		return attribute;
 	});
