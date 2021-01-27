@@ -1,5 +1,5 @@
 {
-    "name": "odp-service-manager",
+    "name": "ds-service-manager",
     "version": "3.9.0",
     "description": "",
     "main": "app.js",
@@ -11,9 +11,9 @@
     "keywords": [],
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@bitbucket.org/appveen/odp-service-manager.git"
+        "url": "git+ssh://git@bitbucket.org/appveen/ds-service-manager.git"
     },
-    "homepage": "https://bitbucket.org/appveen/odp-service-manager#readme",
+    "homepage": "https://bitbucket.org/appveen/ds-service-manager#readme",
     "author": "Shobhit Agarwal <shobhit@appveen.com>",
     "license": "ISC",
     "dependencies": {
