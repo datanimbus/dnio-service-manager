@@ -94,7 +94,7 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 					}
 				}
 				if (attribute['definition'][0]['type'] === 'Array') {
-					attribute['type'][0] = [];
+					mongoSchema[key]['type'][0] = [];
 					if (attribute['definition'][0]['properties'] && attribute['definition'][0]['properties']['email']) {
 						const functionBody = `
 						if(value == null) return true;
@@ -200,16 +200,30 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 					mongoSchema[key]['sparse'] = true;
 				}
 				if (attribute['properties']['pattern']) {
-					const functionBody = `
-                    var re = /${attribute['properties']['pattern']}/;
-                    if(value && value.trim()){
-						var arr = re.exec(value);
-						if(!arr) return false;
-                        return (arr[0] == arr.input);
-                        //return re.test(value);
-                    }
-                    return true;
-                    `;
+					let functionBody;
+					if (attribute['properties']['password']) {
+						functionBody = `
+						var re = /${attribute['properties']['pattern']}/;
+						if(value && value.value && value.value.trim()){
+							var arr = re.exec(value.value.trim());
+							if(!arr) return false;
+							return (arr[0] == arr.input);
+							//return re.test(value);
+						}
+						return true;
+						`;
+					} else {
+						functionBody = `
+						var re = /${attribute['properties']['pattern']}/;
+						if(value && value.trim()){
+							var arr = re.exec(value.trim());
+							if(!arr) return false;
+							return (arr[0] == arr.input);
+							//return re.test(value);
+						}
+						return true;
+						`;
+					}
 					const validationObj = { validator: new Function('value', functionBody), msg: key + ' regex is invalid' };
 					if (mongoSchema[key]['validate'])
 						mongoSchema[key]['validate'].push(validationObj);
@@ -238,11 +252,11 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 				if (attribute['properties'] && attribute['properties']['password']) {
 					specialFields['secureFields'].push(newNestedKey);
 				}
-				if (attribute['properties'] && attribute['properties']['unique']) {
+				if (attribute['properties'] && attribute['properties']['unique'] && !attribute['properties']['password']) {
 					let locale = attribute['properties'].locale || 'en';
 					specialFields['uniqueFields'].push({ key: newNestedKey, locale });
 				}
-				if (attribute['properties'] && attribute['properties']['relatedTo'] && attribute['properties']['unique']) {
+				if (attribute['properties'] && attribute['properties']['unique'] && (attribute['properties']['relatedTo'] || attribute['type'] === 'User')) {
 					delete mongoSchema[key]['unique'];
 					delete mongoSchema[key]['uniqueCaseInsensitive'];
 					specialFields['relationUniqueFields'].push(newNestedKey);
