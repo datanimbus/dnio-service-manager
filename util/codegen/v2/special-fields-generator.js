@@ -21,7 +21,7 @@ function genrateCode(config) {
 	code.push(`const secureFields = '${config.secureFields}'.split(',');`);
 	code.push(`const uniqueFields = ${JSON.stringify(config.uniqueFields)};`);
 	code.push(`const relationUniqueFields = '${config.relationUniqueFields}'.split(',');`);
-	code.push(`const relationRequiredFields = '${config.relationRequiredFields}'.split(',');`);
+	// code.push(`const relationRequiredFields = '${config.relationRequiredFields}'.split(',');`);
 
 	/**------------------------ CREATE ONLY ----------------------- */
 	code.push('/**');
@@ -191,7 +191,7 @@ function genrateCode(config) {
 	code.push('module.exports.secureFields = secureFields;');
 	code.push('module.exports.uniqueFields = uniqueFields;');
 	code.push('module.exports.relationUniqueFields = relationUniqueFields;');
-	code.push('module.exports.relationRequiredFields = relationRequiredFields;');
+	// code.push('module.exports.relationRequiredFields = relationRequiredFields;');
 	/**------------------------ METHODS ----------------------- */
 	code.push('module.exports.mongooseUniquePlugin = mongooseUniquePlugin;');
 	code.push('module.exports.validateCreateOnly = validateCreateOnly;');

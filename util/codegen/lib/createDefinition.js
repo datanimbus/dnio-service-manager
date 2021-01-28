@@ -260,10 +260,12 @@ function processSchema(schemaObj, mongoSchema, nestedKey, specialFields) {
 					delete mongoSchema[key]['uniqueCaseInsensitive'];
 					specialFields['relationUniqueFields'].push(newNestedKey);
 				}
-				if (schemaObj[key]['properties'] && schemaObj[key]['properties']['relatedTo'] && schemaObj[key]['properties']['required']) {
-					specialFields['relationRequiredFields'].push(newNestedKey);
+				if (schemaObj[key]['properties'] && schemaObj[key]['properties']['required'] && (schemaObj[key]['properties']['relatedTo'] || schemaObj[key]['type'] === 'User')) {
+					// pecialFields['relationRequiredFields'].push(newNestedKey);
+					const functionBody = '_id = value && value._id ?_.trim(value._id) : null;\n return !_.isEmpty(_id);';
+					mongoSchema[key]['validate'] = [{ validator: new Function('value', functionBody), msg: key + '._id is empty.' }];
 				}
-				if (schemaObj[key]['properties'] && schemaObj[key]['properties']['relatedTo'] && schemaObj[key]['properties']['default']) {
+				if (schemaObj[key]['properties'] && schemaObj[key]['properties']['default'] && (schemaObj[key]['properties']['relatedTo']|| schemaObj[key]['type'] === 'User')) {
 					mongoSchema[key]['default'] = { '_id': schemaObj[key]['properties']['default'] };
 				}
 			}
@@ -298,7 +300,7 @@ function generateDefinition(config) {
 		secureFields: [],
 		uniqueFields: [],
 		relationUniqueFields: [],
-		relationRequiredFields: []
+		// relationRequiredFields: []
 	};
 	try {
 		processSchema(data, definition, null, specialFields);
@@ -312,7 +314,7 @@ function generateDefinition(config) {
 	config.secureFields = specialFields.secureFields;
 	config.uniqueFields = specialFields.uniqueFields;
 	config.relationUniqueFields = specialFields.relationUniqueFields;
-	config.relationRequiredFields = specialFields.relationRequiredFields;
+	// config.relationRequiredFields = specialFields.relationRequiredFields;
 	definition['_id'] = {
 		type: 'String'
 	};
