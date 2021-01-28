@@ -8,7 +8,7 @@ const copydir = require('copy-dir');
 const envConfig = require('../../../config/config');
 
 const { generateDefinition } = require('./createDefinition');
-const { packageJson, dockerFile, dotEnvFile } = require('./tempfiles');
+const { dockerFile, dotEnvFile } = require('./tempfiles');
 const { generateYaml } = require('./generateYaml');
 const specialFieldsGenrator = require('./special-fields-generator');
 
@@ -35,7 +35,6 @@ function generateFiles(config) {
 		.then(() => generateDefinition(config))
 		.then((definition) => fs.writeFileSync(path.join(config.path, 'api/helpers/service.definition.js'), definition, 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, '.env'), dotEnvFile(config), 'utf-8'))
-		.then(() => fs.writeFileSync(path.join(config.path, 'package.json'), packageJson(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'Dockerfile'), dockerFile(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/swagger/swagger.yaml'), jsyaml.safeDump(generateYaml(config)), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/utils/special-fields.utils.js'), specialFieldsGenrator.genrateCode(config), 'utf-8'))

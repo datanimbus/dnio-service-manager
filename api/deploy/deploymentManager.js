@@ -29,13 +29,13 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 				else {
 					deploymentUrl = deploymentUrlCreate;
 				}
-				var envKeys = ['COSMOS_DB', 'FQDN', 'GOOGLE_API_KEY', 'HOOK_CONNECTION_TIMEOUT', 'HOOK_RETRY', 'LOG_LEVEL', 'MODE', 'MONGO_APPCENTER_URL', 'MONGO_AUTHOR_DBNAME', 'MONGO_AUTHOR_URL', 'MONGO_LOGS_DBNAME', 'MONGO_LOGS_URL', 'MONGO_RECONN_TIME_MILLI', 'MONGO_RECONN_TRIES', 'MESSAGING_HOST', 'MESSAGING_PASS', 'MESSAGING_RECONN_ATTEMPTS', 'MESSAGING_RECONN_TIMEWAIT_MILLI', 'MESSAGING_USER', 'DATA_STACK_NAMESPACE', 'ODPENV', 'CACHE_HOST', 'CACHE_PORT', 'RELEASE', 'TLS_REJECT_UNAUTHORIZED', 'API_REQUEST_TIMEOUT'];
+				var envKeys = ['FQDN', 'GOOGLE_API_KEY', 'HOOK_CONNECTION_TIMEOUT', 'HOOK_RETRY', 'LOG_LEVEL', 'MODE', 'MONGO_APPCENTER_URL', 'MONGO_AUTHOR_DBNAME', 'MONGO_AUTHOR_URL', 'MONGO_LOGS_DBNAME', 'MONGO_LOGS_URL', 'MONGO_RECONN_TIME_MILLI', 'MONGO_RECONN_TRIES', 'STREAMING_CHANNEL', 'STREAMING_HOST', 'STREAMING_PASS', 'STREAMING_RECONN_ATTEMPTS', 'STREAMING_RECONN_TIMEWAIT_MILLI', 'STREAMING_USER', 'DATA_STACK_NAMESPACE', 'CACHE_CLUSTER', 'CACHE_HOST', 'CACHE_PORT', 'RELEASE', 'TLS_REJECT_UNAUTHORIZED', 'API_REQUEST_TIMEOUT'];
 				var envObj = {};
 				for (var i in envKeys) {
 					var val = envKeys[i];
 					envObj[val] = process.env[val];
 				}
-				envObj['ODP_APP_NS'] = (config.dataStackNS + '-' + _schema.app).toLowerCase();
+				envObj['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + _schema.app).toLowerCase();
 				envObj['NODE_OPTIONS'] = `--max-old-space-size=${config.maxHeapSize}`;
 				envObj['SERVICE_ID'] = `${_schema._id}`;
 				envObj['SERVICE_PORT'] = `${_schema.port}`;
