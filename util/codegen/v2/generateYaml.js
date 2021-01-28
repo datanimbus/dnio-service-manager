@@ -267,7 +267,7 @@ function getCreateDefinition(defArr) {
 				definition['properties'][el] = {
 					type: ['array', 'null'],
 					items: {
-						type: getType(attribute['definition']['_self']['type'])
+						type: getType(attribute['definition'][0]['type'])
 					}
 				};
 			}
