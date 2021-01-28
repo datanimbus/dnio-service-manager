@@ -1,5 +1,4 @@
 'use strict';
-const fs = require('fs');
 const dataStackutils = require('@appveen/data.stack-utils');
 let debugDB = false;
 if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
@@ -25,14 +24,6 @@ function isK8sEnv() {
 const dataStackNS = process.env.DATA_STACK_NAMESPACE;
 if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
 
-function isDockerEnv() {
-	return fs.existsSync('/.dockerenv');
-}
-
-function getHostOSBasedLocation() {
-	if (process.env.PLATFORM == 'NIX') return 'localhost';
-	return 'host.docker.internal';
-}
 
 function get(_service) {
 	if (isK8sEnv()) {
@@ -46,17 +37,6 @@ function get(_service) {
 		if (_service == 'sec') return `http://sec.${dataStackNS}`;
 		if (_service == 'mon') return `http://mon.${dataStackNS}`;
 		if (_service == 'gw') return `http://gw.${dataStackNS}`;
-	} else if (fs.existsSync('/.dockerenv')) {
-		if (_service == 'dm') return 'http://' + getHostOSBasedLocation() + ':10709';
-		if (_service == 'ne') return 'http://' + getHostOSBasedLocation() + ':10010';
-		if (_service == 'sm') return 'http://' + getHostOSBasedLocation() + ':10003';
-		if (_service == 'pm') return 'http://' + getHostOSBasedLocation() + ':10011';
-		if (_service == 'user') return 'http://' + getHostOSBasedLocation() + ':10004';
-		if (_service == 'gw') return 'http://' + getHostOSBasedLocation() + ':9080';
-		if (_service == 'wf') return 'http://' + getHostOSBasedLocation() + ':10006';
-		if (_service == 'sec') return 'http://' + getHostOSBasedLocation() + ':10007';
-		if (_service == 'mon') return 'http://' + getHostOSBasedLocation() + ':10005';
-		if (_service == 'gw') return 'http://' + getHostOSBasedLocation() + ':9080';
 	} else {
 		if (_service == 'dm') return 'http://localhost:10709';
 		if (_service == 'ne') return 'http://localhost:10010';
@@ -99,7 +79,6 @@ module.exports = {
 	mongoAppcenterUrl: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017',
 	validationApi: get('user') + '/rbac/validate',
 	isK8sEnv: isK8sEnv,
-	isDockerEnv: isDockerEnv,
 	isCosmosDB: isCosmosDB,
 	logQueueName: 'systemService',
 	dataStackNS: dataStackNS,
