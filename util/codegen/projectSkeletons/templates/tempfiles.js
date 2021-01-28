@@ -198,7 +198,7 @@ function queueManagement(config) {
  };
 var clients = require('@appveen/odp-utils').natsStreaming;
 var clientId = isK8sEnv() ? process.env.HOSTNAME : '${config.app}-${config.collectionName}';
-var client = clients.init('odp-cluster',clientId,config.NATSConfig);
+var client = clients.init('odp-cluster',clientId,config.streamingConfig);
 
 function isK8sEnv() {
 	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s';
@@ -226,12 +226,12 @@ function webHookConfig() {
   e.baseUrlSM = process.env.BASE_URL_SM || "http://localhost:10003"
   e.baseUrlUSR = process.env.BASE_URL_USER || "http://localhost:10004/rbac"
   e.baseUrlWF = process.env.BASE_URL_WF || "http://localhost:10006/workflow"
-  e.NATSConfig = {
-    url: process.env.MESSAGING_HOST || "nats://127.0.0.1:4222",
-    user: process.env.MESSAGING_USER || "",
-    pass: process.env.MESSAGING_PASS || "",
-    maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
-    reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
+  e.streamingConfig = {
+    url: process.env.STREAMING_HOST || "nats://127.0.0.1:4222",
+    user: process.env.STREAMING_USER || "",
+    pass: process.env.STREAMING_PASS || "",
+    maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
+    reconnectTimeWait: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
 }
    e.mongoOptions = {
     reconnectTries: process.env.MONGO_RECONN_TRIES,

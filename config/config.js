@@ -104,15 +104,15 @@ module.exports = {
 	logQueueName: 'systemService',
 	dataStackNS: dataStackNS,
 	fsMount: process.env.DS_FS_MOUNT_PATH || '/tmp/ds',
-	NATSConfig: {
-		url: process.env.MESSAGING_HOST || 'nats://127.0.0.1:4222',
-		user: process.env.MESSAGING_USER || '',
-		pass: process.env.MESSAGING_PASS || '',
-		// maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
-		// reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
-		maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
+	streamingConfig: {
+		url: process.env.STREAMING_HOST || 'nats://127.0.0.1:4222',
+		user: process.env.STREAMING_USER || '',
+		pass: process.env.STREAMING_PASS || '',
+		// maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
+		// reconnectTimeWait: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
+		maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
 		connectTimeout: 2000,
-		stanMaxPingOut: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
+		stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,

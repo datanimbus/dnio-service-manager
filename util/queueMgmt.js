@@ -5,7 +5,7 @@ var clientId = process.env.HOSTNAME || 'SM';
 var client = require('@appveen/data.stack-utils').streaming.init(
 	process.env.STREAMING_CHANNEL || 'datastack-cluster',
 	clientId,
-	config.NATSConfig
+	config.streamingConfig
 );
 
 module.exports = {
