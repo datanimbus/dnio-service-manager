@@ -71,7 +71,9 @@ function substituteGlobalDefinition(schema, globalSchema) {
 					let properties = attribute['properties'];
 					let newDef = JSON.parse(JSON.stringify(sysDef));
 					if (attribute['properties']['unique']) {
-						newDef.definition.checksum.properties.unique = true;
+						newDef.definition.forEach(element => {
+							if(element.key == 'checksum') element.properties.unique = true;
+						});
 					}
 					attribute = newDef;
 					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
