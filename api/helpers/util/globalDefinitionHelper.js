@@ -35,7 +35,7 @@ function getAllGlobalDefinitions(app) {
 }
 
 function substituteGlobalDefinition(schema, globalSchema) {
-	schema.forEach(attribute => {
+	schema = schema.map(attribute => {
 		if (attribute.key !== 'properties' && attribute.key !== '_id') {
 			if (attribute['type'] == 'Global' || (attribute['properties'] && attribute['properties']['schema'])) {
 				if (!attribute['properties']['schema']) throw new Error('Property schema missing for type Global');
@@ -78,13 +78,15 @@ function substituteGlobalDefinition(schema, globalSchema) {
 				}
 			}
 			if (attribute['definition'])
-				substituteGlobalDefinition(attribute['definition'], globalSchema);
+				attribute['definition'] = substituteGlobalDefinition(attribute['definition'], globalSchema);
 		}
+		return attribute;
 	});
+	return schema;
 }
 
 function substituteSystemGlobalDefinition(schema) {
-	schema.forEach(attribute => {
+	schema = schema.map(attribute => {
 		if (attribute.key !== 'properties' && attribute.key !== '_id') {
 			if (mongooseDataType.indexOf(attribute['type']) == -1) {
 				let sysDef = getSystemGlobalDefinition(attribute['type'], systemGlobalSchema);
@@ -96,13 +98,15 @@ function substituteSystemGlobalDefinition(schema) {
 				}
 			}
 			if (attribute['definition'])
-				substituteSystemGlobalDefinition(attribute['definition'], systemGlobalSchema);
+				attribute['definition'] = substituteSystemGlobalDefinition(attribute['definition'], systemGlobalSchema);
 		}
+		return attribute;
 	});
+	return schema;
 }
 
 e.expandSchemaWithSystemGlobalDef = function (definition) {
-	substituteSystemGlobalDefinition(definition);
+	definition = substituteSystemGlobalDefinition(definition);
 	return definition;
 };
 
@@ -110,7 +114,7 @@ e.expandSchemaWithGlobalDef = function (app, definition) {
 	return new Promise((resolve, reject) => {
 		getAllGlobalDefinitions(app)
 			.then(globalDefinitions => {
-				if (globalDefinitions) substituteGlobalDefinition(definition, globalDefinitions);
+				if (globalDefinitions) definition = substituteGlobalDefinition(definition, globalDefinitions);
 				resolve(definition);
 			})
 			.catch(err => {

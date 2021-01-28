@@ -24,7 +24,7 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 		else if (attribute['type'] === 'User') {
 			processSchema(attribute['definition'], mongoSchema, nestedKey, specialFields);
 		} else if (attribute['type'] === 'Array') {
-			mongoSchema[0] = attribute['definition']['_self']['type'] === 'Array' ? [] : {};
+			mongoSchema[0] = attribute['definition'][0]['type'] === 'Array' ? [] : {};
 			processSchema(attribute['definition'], mongoSchema[0], nestedKey, specialFields);
 		} else {
 			mongoSchema['type'] = attribute['type'];
@@ -93,9 +93,9 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 						mongoSchema[key]['validate'] = [validationObj];
 					}
 				}
-				if (attribute['definition']['_self']['type'] === 'Array') {
+				if (attribute['definition'][0]['type'] === 'Array') {
 					attribute['type'][0] = [];
-					if (attribute['definition']['_self']['properties'] && attribute['definition']['_self']['properties']['email']) {
+					if (attribute['definition'][0]['properties'] && attribute['definition'][0]['properties']['email']) {
 						const functionBody = `
 						if(value == null) return true;
 						if(value.length == 0) return false;
@@ -114,7 +114,7 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 						return re.test(value);
 					}`;
 						const validationObj = { validator: new Function('value', functionBody), msg: key + ' is not a valid email' };
-						if (attribute['validate'])
+						if (mongoSchema[key]['validate'])
 							mongoSchema[key]['validate'].push(validationObj);
 						else {
 							mongoSchema[key]['validate'] = [validationObj];
@@ -140,6 +140,9 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 				processSchema(attribute['definition'], mongoSchema[key]['type'], newNestedKey, specialFields);
 
 			}
+			// else if(attribute['type'] === 'Date') {
+
+			// } 
 			else {
 				mongoSchema[key] = {};
 				if (attribute['properties'])
