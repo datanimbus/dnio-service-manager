@@ -16,8 +16,8 @@ const deployUtil = require('../deploy/deploymentUtil');
 const docker = require('../../util/docker.js');
 const k8s = require('../../util/k8s.js');
 const fileIO = require('../../util/codegen/lib/fileIO.js');
-const odputils = require('@appveen/odp-utils'); //Common utils for Project
-const kubeutil = require('@appveen/odp-utils').kubeutil;
+const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 const net = require('net');
 let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
 let queueMgmt = require('../../util/queueMgmt');
@@ -439,13 +439,13 @@ draftSchema.pre('save', function (next) {
 	next();
 });
 
-schema.pre('save', odputils.auditTrail.getAuditPreSaveHook('services'));
+schema.pre('save', dataStackutils.auditTrail.getAuditPreSaveHook('services'));
 
-schema.post('save', odputils.auditTrail.getAuditPostSaveHook('sm.audit', client, 'auditQueue'));
+schema.post('save', dataStackutils.auditTrail.getAuditPostSaveHook('sm.audit', client, 'auditQueue'));
 
-schema.pre('remove', odputils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackutils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', odputils.auditTrail.getAuditPostRemoveHook('sm.audit', client, 'auditQueue'));
+schema.post('remove', dataStackutils.auditTrail.getAuditPostRemoveHook('sm.audit', client, 'auditQueue'));
 
 var crudder = new SMCrud(schema, 'services', options);
 var draftCrudder = new SMCrud(draftSchema, 'services.draft', draftOptions);
@@ -821,7 +821,7 @@ e.createDoc = (_req, _res) => {
 			})
 			.then(() => {
 				let _d = serviceObj;
-				odputils.eventsUtil.publishEvent('EVENT_DS_CREATE', 'dataService', _req, _d);
+				dataStackutils.eventsUtil.publishEvent('EVENT_DS_CREATE', 'dataService', _req, _d);
 				_res.status(200).json(_d);
 				deployUtil.sendToSocket(socket, 'newService', {
 					_id: _d._id,
@@ -1239,7 +1239,7 @@ e.deployAPIHandler = (_req, _res) => {
 						})
 						.then(() => deployUtil.deployService(svcObject, socket, _req, false, false))
 						.then(() => {
-							odputils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
+							dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
 							_res.status(202).json({ message: 'Deployment process started' });
 						});
 				} else {
@@ -1361,7 +1361,7 @@ e.deployAPIHandler = (_req, _res) => {
 									return _newData.remove(_req);
 								})
 								.then(() => {
-									odputils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
+									dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
 									_res.status(202).json({ message: 'Deployment process started' });
 									if (!envConfig.isCosmosDB() && srvcObj.collectionName != oldData.collectionName) {
 										isReDeploymentRequired = true;
@@ -1441,7 +1441,7 @@ e.deployAPIHandler = (_req, _res) => {
 								})
 								.then(() => {
 									let eventsList = getAllEventsForDSUpdate(oldData, _newData);
-									eventsList.forEach(event => odputils.eventsUtil.publishEvent(event, 'dataService', _req, _newData));
+									eventsList.forEach(event => dataStackutils.eventsUtil.publishEvent(event, 'dataService', _req, _newData));
 								})
 								.catch(err => {
 									logger.debug('Inside catch');
@@ -1503,9 +1503,9 @@ e.startAPIHandler = (_req, _res) => {
 									if (_d.statusCode == 404) {
 										return k8s.serviceStart(doc)
 											.then(() => deployUtil.deployService(doc, socket, _req, false, false))
-											.then(() => odputils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
+											.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
 									} else {
-										odputils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
+										dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
 									}
 								})
 								.catch(err => {
@@ -1513,7 +1513,7 @@ e.startAPIHandler = (_req, _res) => {
 								});
 						}
 						return deployUtil.deployService(doc, socket, _req, false, false)
-							.then(() => odputils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
+							.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
 					}, (data) => {
 						let serviceMsg = '';
 						if (data.relatedEntities.length == 1) {
@@ -1606,7 +1606,7 @@ e.stopAPIHandler = (_req, _res) => {
 			}, _req);
 		})
 		.then((doc) => {
-			odputils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
+			dataStackutils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
 			deployUtil.sendToSocket(socket, 'serviceStatus', {
 				_id: id,
 				app: doc.app,
@@ -1884,7 +1884,7 @@ e.destroyService = (_req, _res) => {
 				});
 		})
 		.then(() => {
-			odputils.eventsUtil.publishEvent('EVENT_DS_DELETE', 'dataService', _req, originalDoc);
+			dataStackutils.eventsUtil.publishEvent('EVENT_DS_DELETE', 'dataService', _req, originalDoc);
 			smHooks.deleteAudit(originalDoc.app + '.' + originalDoc.collectionName, _req);
 		})
 		.catch(err => {
@@ -2651,7 +2651,7 @@ function draftDelete(req, res) {
 		})
 		.then(_d => {
 			_d.draftVersion = null;
-			odputils.eventsUtil.publishEvent('EVENT_DS_DISCARD_DRAFT', 'dataService', req, _d);
+			dataStackutils.eventsUtil.publishEvent('EVENT_DS_DISCARD_DRAFT', 'dataService', req, _d);
 			return _d.save(req);
 		}).then(() => {
 			res.status(200).json({ message: 'Draft deleted for ' + id });

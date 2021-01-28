@@ -17,7 +17,7 @@
     "author": "Shobhit Agarwal <shobhit@appveen.com>",
     "license": "ISC",
     "dependencies": {
-        "@appveen/odp-utils": "1.5.8",
+        "@appveen/data.stack-utils": "^1.0.2",
         "@appveen/swagger-mongoose-crud": "1.1.2",
         "@appveen/utils": "^2.1.1",
         "bluebird": "^3.5.1",

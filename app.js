@@ -115,10 +115,10 @@ app.use(logMiddleware);
 // Running cron jobs
 require('./util/crons')();
 
-let odputils = require('@appveen/odp-utils');
+let dataStackutils = require('@appveen/data.stack-utils');
 let queueMgmt = require('./util/queueMgmt');
-odputils.eventsUtil.setNatsClient(queueMgmt.client);
-var logToQueue = odputils.logToQueue('sm', queueMgmt.client, envConfig.logQueueName, 'sm.logs');
+dataStackutils.eventsUtil.setNatsClient(queueMgmt.client);
+var logToQueue = dataStackutils.logToQueue('sm', queueMgmt.client, envConfig.logQueueName, 'sm.logs');
 app.use(logToQueue);
 
 // swaggerRouter configuration

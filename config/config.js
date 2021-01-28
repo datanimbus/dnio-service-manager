@@ -1,6 +1,6 @@
 'use strict';
 const fs = require('fs');
-const odputils = require('@appveen/odp-utils');
+const dataStackutils = require('@appveen/data.stack-utils');
 let debugDB = false;
 if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
 
@@ -11,7 +11,7 @@ function mongoUrl() {
 	return mongoUrl;
 }
 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s') {
-	odputils.kubeutil.check()
+	dataStackutils.kubeutil.check()
 		.then(
 			() => logger.info('Connection to Kubernetes API server successful!'),
 			_e => {

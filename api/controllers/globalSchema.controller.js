@@ -5,7 +5,7 @@ const definition = require('../helpers/globalSchema.definition.js').definition;
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const utils = require('@appveen/utils');
 const _ = require('lodash');
-const odpUtils = require('@appveen/odp-utils');
+const dataStackUtils = require('@appveen/data.stack-utils');
 const globalDefHelper = require('../helpers/util/globalDefinitionHelper');
 const deployUtil = require('../deploy/deploymentUtil');
 let queueMgmt = require('../../util/queueMgmt');
@@ -172,13 +172,13 @@ schema.pre('save', function (next, req) {
 
 schema.pre('save', utils.counter.getIdGenerator('SCHM', 'globalSchema', null, null, 1000));
 
-schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('globalSchema'));
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('globalSchema'));
 
-schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('globalSchema.audit', client, 'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('globalSchema.audit', client, 'auditQueue'));
 
-schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('globalSchema.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('globalSchema.audit', client, 'auditQueue'));
 
 schema.pre('remove', function (next, req) {
 	let self = this;
@@ -234,12 +234,12 @@ schema.post('save', function (doc) {
 	let eventId = 'EVENT_LIBRARY_UPDATE';
 	if (doc.wasNew)
 		eventId = 'EVENT_LIBRARY_CREATE';
-	odpUtils.eventsUtil.publishEvent(eventId, 'library', doc._req, doc);
+	dataStackUtils.eventsUtil.publishEvent(eventId, 'library', doc._req, doc);
 });
 
 schema.post('remove', function (doc) {
 	deleteGSInUserMgmt(doc._id, doc._req);
-	odpUtils.eventsUtil.publishEvent('EVENT_LIBRARY_DELETE', 'library', doc._req, doc);
+	dataStackUtils.eventsUtil.publishEvent('EVENT_LIBRARY_DELETE', 'library', doc._req, doc);
 });
 
 var crudder = new SMCrud(schema, 'globalSchema', options);

@@ -1,5 +1,5 @@
 let mongoose = require('mongoose');
-const kubeutil = require('@appveen/odp-utils').kubeutil;
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 let deploymentUtil = require('../../api/deploy/deploymentUtil');
 let globalDefHelper = require('../../api/helpers/util/globalDefinitionHelper');
 let dm = require('../../api/deploy/deploymentManager');
