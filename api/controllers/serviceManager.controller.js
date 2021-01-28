@@ -269,7 +269,7 @@ function apiUniqueCheck(api, app, id) {
 	let apiRegex = new RegExp('^' + api + '$', 'i');
 	let filter = { 'app': app, 'api': apiRegex };
 	if (id) filter._id = { '$ne': id };
-	logger.debug('apiUniqueCheck filter ' + filter);
+	logger.debug(`apiUniqueCheck filter :: ${JSON.stringify(filter)}`);
 	return crudder.model.findOne(filter).lean(true)
 		.then(_d => {
 			if (_d) {
@@ -1797,9 +1797,9 @@ e.destroyService = (_req, _res) => {
 			}
 		}, (data) => {
 			let serviceMsg = '';
-			if (data.relatedEntities.length == 1) {
+			if (data.relatedEntities && data.relatedEntities.length == 1) {
 				serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-			} else if (data.relatedEntities.length == 2) {
+			} else if (data.relatedEntities && data.relatedEntities.length == 2) {
 				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
 			} else {
 				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
