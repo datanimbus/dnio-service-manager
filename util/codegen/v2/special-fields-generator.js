@@ -2,7 +2,7 @@ const _ = require('lodash');
 
 function genrateCode(config) {
 	let schema = config.definition;
-	global.logger.info('schema :: defoiniton  ::', schema)
+	global.logger.info('schema :: defoiniton  ::', JSON.stringify(schema))
 	if (typeof schema === 'string') {
 		schema = JSON.parse(schema);
 	}
@@ -697,7 +697,7 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = '${def['properties']['supportedTimeZones']}'`);
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
-					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old) {`);
+					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
 					code.push(`\t\t\t${_.camelCase(path)}New= commonUtils.getFormattedDate(${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
 					// _.set(newData, 'time', timeNew);
