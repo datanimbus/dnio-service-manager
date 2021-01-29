@@ -83,11 +83,11 @@ e.updateServicesInGlobalSchema = (serviceObj, req) => {
 };
 
 e.removeServicesInGlobalSchema = function (serviceId, req) {
-	return mongoose.model('globalSchema').find({
-		services: serviceId
-	})
+	logger.info(`[${req.get('TxnId')}] ${serviceId} : Removing services in global schema `);
+	return mongoose.model('globalSchema').find({services: serviceId })
 		.then(docs => {
 			let promiseArr = [];
+			logger.info(`[${req.get('TxnId')}] ${serviceId} : Found ${docs.length} global schema links`);
 			if (docs) {
 				docs.forEach(doc => {
 					doc.services = doc.services.filter(serv => serv != serviceId);
@@ -204,11 +204,10 @@ e.updateExpiry = (serviceObj, _req, oldCollectionName, newCollectionName) => {
 		}
 		else if (res) _resolve();
 	}));
-
 };
 
 e.deleteAudit = (serviceObj, _req) => {
-
+	logger.info(`[${_req.get('TxnId')}] ${serviceObj} : Purging audit data`);
 	var options = {
 		url: envConfig.baseUrlMON + '/delete/' + serviceObj,
 		method: 'DELETE',
@@ -220,21 +219,17 @@ e.deleteAudit = (serviceObj, _req) => {
 		},
 		json: true
 	};
-
-
 	return new Promise((_resolve, _reject) => request.delete(options, function (err, res) {
 		if (err) {
-			logger.error(err.message);
+			logger.error(`[${_req.get('TxnId')}] Purge audit : ${err.message}`);
 			_reject();
 		}
 		else if (!res) {
-			logger.error('Monitoring service is down!');
-			_reject({
-				'message': 'Monitoring service is down!'
-			});
+			logger.error(`[${_req.get('TxnId')}] Purge audit : Monitoring service is down!`);
+			_reject({ 'message': 'Monitoring service is down!' });
 		}
 		else if (res) _resolve();
 	}));
-
 };
+
 module.exports = e;

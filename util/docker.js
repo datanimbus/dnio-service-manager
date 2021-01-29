@@ -53,25 +53,25 @@ e.build = (_schema) => {
 		});
 };
 
-e.removeImage = (_imageName, _version) => {
-	logger.info('Removing image :: ' + _imageName.toLowerCase() + ':' + _version);
+e.removeImage = (_txnId, _imageName, _version) => {
+	logger.info(`[${_txnId}] Removing image :: ${_imageName.toLowerCase()}:${_version}`);
 	return new Promise((_resolve, _reject) => {
 		let command = 'docker image rm ' + _imageName.toLowerCase() + ':' + _version;
 		if (process.env.SM_ENV == 'K8s')
 			command += '; docker image rm ' + dockerReg + _imageName.toLowerCase() + ':' + _version;
-		logger.debug(command);
+		logger.debug(`[${_txnId}] command : ${command}`);
 		exec(command, (_err, _stdout, _stderr) => {
 			if (_err) {
-				logger.warn(`ERROR executing :: ${command}`);
-				logger.warn(_stderr);
+				logger.warn(`[${_txnId}] ERROR executing :: ${command}`);
+				logger.trace(`[${_txnId}] ${_stderr}`);
 				if (_stderr.indexOf('No such image') == -1) {
-					logger.error(_err);
+					logger.error(`[${_txnId}] ${_err.message}`);
 					_reject('Error removing image!');
 					return;
 				}
 			}
-			logger.info(`SUCCESS :: ${command}`);
-			logger.debug(_stdout);
+			logger.info(`[${_txnId}] Removed image :: ${_imageName.toLowerCase()}:${_version}`);
+			logger.trace(`[${_txnId}] ${_stdout}`);
 			_resolve();
 		});
 	});

@@ -99,19 +99,16 @@ e.deleteServiceInUserMgmt = function (_id, _req) {
 		method: 'Delete',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req.get('txnId'),
+			'TxnId': _req.get('TxnId'),
 			'Authorization': _req.get('Authorization'),
 			'User': _req.get('user')
 		},
 		json: true
 	};
 	request.delete(options, function (err, res) {
-		if (err) {
-			logger.error(err.message);
-		} else if (!res) logger.error('User Management Service DOWN');
-		else {
-			logger.info('Service deletion process of ' + _id + '  queued in user management');
-		}
+		if (err) logger.error(`[${_req.get('TxnId')}] ${err.message}`);
+		else if (!res) logger.error(`[${_req.get('TxnId')}] User Management service DOWN`);
+		else logger.info(`[${_req.get('TxnId')}] Service deletion process of ${_id} queued in user management`);
 	});
 };
 
@@ -151,12 +148,9 @@ e.deleteServiceInWorkflow = function (_id, _req) {
 		json: true
 	};
 	request.delete(options, function (err, res) {
-		if (err) {
-			logger.error(err.message);
-		} else if (!res) logger.error('Workflow Service DOWN');
-		else {
-			logger.info('Service deletion process of ' + _id + '  queued in workflow');
-		}
+		if (err) logger.error(`[${_req.get('TxnId')}] ${err.message}`);
+		else if (!res) logger.error(`[${_req.get('TxnId')}] Workflow service DOWN`);
+		else logger.info(`[${_req.get('TxnId')}] Service deletion process of ${_id} queued in workflow`);
 	});
 };
 
