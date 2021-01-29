@@ -126,7 +126,7 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 				processSchema(attribute['definition'], mongoSchema[key]['type'][0], newNestedKey, specialFields);
 			} else if (attribute['type'] === 'Object') {
 				mongoSchema[key] = {};
-				if (attribute['properties'] && (attribute['properties']['geoType'] || attribute['properties']['relatedTo'] || attribute['properties']['fileType'] || attribute['properties']['password'])) {
+				if (attribute['properties'] && (attribute['properties']['geoType'] || attribute['properties']['relatedTo'] || attribute['properties']['fileType'] || attribute['properties']['password'] || attribute['properties']['dateType'])) {
 					mongoSchema[key]['type'] = {};
 					processSchema(attribute['definition'], mongoSchema[key]['type'], newNestedKey, specialFields);
 				}

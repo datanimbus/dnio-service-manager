@@ -78,8 +78,17 @@ function substituteGlobalDefinition(schema, globalSchema) {
 					attribute = newDef;
 					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
+			} else if (attribute['type'] == 'Date') {
+				let sysDef = getSystemGlobalDefinition('Date', systemGlobalSchema);
+				if (sysDef) {
+					sysDef.key = attribute.key;
+					let properties = attribute['properties'];
+					let newDef = JSON.parse(JSON.stringify(sysDef));
+					attribute = newDef;
+					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
+				}
 			}
-			if (attribute['definition'])
+			if (attribute['definition'] && !attribute['properties']['dateType'])
 				attribute['definition'] = substituteGlobalDefinition(attribute['definition'], globalSchema);
 		}
 		return attribute;
