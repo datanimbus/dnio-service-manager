@@ -78,12 +78,8 @@ e.deploymentUpdate = (_schema) => {
 	envVars.push({ name: 'STREANING_PASS', value: process.env.STREANING_PASS });
 	envVars.push({ name: 'STREAMING_RECONN_ATTEMPTS', value: process.env.STREANING_RECONN_ATTEMPTS });
 	envVars.push({ name: 'STREANING_RECONN_TIMEWAIT_MILLI', value: process.env.STREANING_RECONN_TIMEWAIT_MILLI });
-	envVars.push({ name: 'AMQ_PORT', value: process.env.AMQ_PORT });
-	envVars.push({ name: 'AMQ_HOST', value: process.env.AMQ_HOST });
 	envVars.push({ name: 'MODE', value: process.env.MODE });
-	envVars.push({ name: 'ODPENV', value: process.env.ODPENV });
 	envVars.push({ name: 'GOOGLE_API_KEY', value: process.env.GOOGLE_API_KEY });
-	envVars.push({ name: 'COSMOS_DB', value: process.env.COSMOS_DB });
 	envVars.push({ name: 'TLS_REJECT_UNAUTHORIZED', value: process.env.TLS_REJECT_UNAUTHORIZED });
 	envVars.push({ name: 'HOOK_CONNECTION_TIMEOUT', value: process.env.HOOK_CONNECTION_TIMEOUT });
 	envVars.push({ name: 'MONGO_RECONN_TRIES', value: process.env.MONGO_RECONN_TRIES });
