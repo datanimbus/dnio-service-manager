@@ -2,7 +2,7 @@ const _ = require('lodash');
 
 function genrateCode(config) {
 	let schema = config.definition;
-	global.logger.info('schema :: defoiniton  ::', JSON.stringify(schema))
+	// global.logger.info('schema :: defoiniton  ::', JSON.stringify(schema));
 	if (typeof schema === 'string') {
 		schema = JSON.parse(schema);
 	}
@@ -217,6 +217,7 @@ function genrateCode(config) {
 	code.push('module.exports.patchRelationInFilter = patchRelationInFilter;');
 	code.push('module.exports.fixBoolean = fixBoolean;');
 	code.push('module.exports.enrichGeojson = enrichGeojson;');
+	code.push('module.exports.validateDateFields = validateDateFields;');
 
 	return code.join('\n');
 	// fs.writeFileSync(path.join(process.cwd(), `generated`, `special-fields.utils.js`), code.join(`\n`), `utf-8`);
