@@ -115,7 +115,7 @@ else
     
     cd $WORKSPACE/../ds-base
 
-    docker build -t data.stack:base.$TAG -f Dockerfile_base .
+    docker build -t data.stack:base.$TAG .
     cd $WORKSPACE
 
     if [ $CICD ]; then
