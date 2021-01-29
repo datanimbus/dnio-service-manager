@@ -4,7 +4,7 @@ let mongoose = require('mongoose');
 const logger = global.logger;
 function init() {
 	cron.schedule('*/2 * * * *', function () {
-		logger.info('Cron triggered to update entity status');
+		logger.debug('Cron triggered to update entity status');
 		mongoose.model('services').find({status: 'Pending'}, 'status _metadata.lastUpdated')
 			.then(services => {
 				services.forEach((_s) => {

@@ -580,19 +580,20 @@ function checkOutGoingRelation(serviceId) {
 }
 //remove incoming relation of the entity 
 function removeIncomingRelation(serviceId, req) {
+	logger.info(`[${req.get('TxnId')}] ${serviceId} : Removing incoming relationships`);
 	let promiseArr = [];
-	return crudder.model.find({
-		'relatedSchemas.incoming.service': serviceId
-	}).then(docs => {
-		docs.forEach(doc => {
-			if (doc && !_.isEmpty(doc.relatedSchemas.incoming)) {
-				doc.relatedSchemas.incoming = doc.relatedSchemas.incoming.filter(obj => obj.service != serviceId);
-				doc.markModified('relatedSchemas.incoming');
-				promiseArr.push(doc.save(req));
-			}
+	return crudder.model.find({'relatedSchemas.incoming.service': serviceId })
+		.then(docs => {
+			logger.info(`[${req.get('TxnId')}] ${serviceId} : Found ${docs.length} incoming relationships`);
+			docs.forEach(doc => {
+				if (doc && !_.isEmpty(doc.relatedSchemas.incoming)) {
+					doc.relatedSchemas.incoming = doc.relatedSchemas.incoming.filter(obj => obj.service != serviceId);
+					doc.markModified('relatedSchemas.incoming');
+					promiseArr.push(doc.save(req));
+				}
+			});
+			return Promise.all(promiseArr);
 		});
-		return Promise.all(promiseArr);
-	});
 }
 
 function createWebHooks(data, _req) {
@@ -694,6 +695,7 @@ e.verifyHook = (_req, _res) => {
 };
 
 function removeWebHooks(serviceId, _req) {
+	logger.debug(`[${_req.get('TxnId')}] Removing web hooks for ${serviceId}`);
 	var options = {
 		url: envConfig.baseUrlNE + '/webHook/' + serviceId,
 		method: 'DELETE',
@@ -705,12 +707,9 @@ function removeWebHooks(serviceId, _req) {
 		json: true
 	};
 	request.delete(options, function (err, res) {
-		if (err) {
-			logger.error(err.message);
-		} else if (!res) logger.error('Notification Engine DOWN');
-		else {
-			logger.info('WebHook Removed');
-		}
+		if (err) logger.error(`[${_req.get('TxnId')}] Remove web hooks err : ${err.message}`);
+		else if (!res) logger.error(`[${_req.get('TxnId')}] Remove web hooks err : Notification Engine down!`);
+		else logger.info(`[${_req.get('TxnId')}] Remove web hooks :: Done!`);
 	});
 }
 
@@ -1624,43 +1623,31 @@ function destroyServiceFolder(_id) {
 	return fileIO.deleteFolderRecursive('./generatedServices/' + _id);
 }
 
-
 function destroyDeployment(id, count, _req) {
-	logger.info('Destroy Attempt ' + count);
+	logger.info(`[${_req.get('TxnId')}] Destroy attempt no: ${count}`);
 	let doc = null;
-	return deployUtil.updateDocument(crudder.model, {
-		_id: id
-	}, {
-		status: 'Pending'
-	}, _req)
+	return deployUtil.updateDocument(crudder.model, { _id: id }, { status: 'Pending' }, _req)
 		.then(_d => {
 			doc = _d;
 			if (envConfig.isK8sEnv()) {
-				return k8s.deploymentDelete(_d)
-					.then(() => logger.info('Deployment deleted for ' + _d._id))
-					.then(() => k8s.serviceDelete(_d))
-					.then(() => logger.info('Service deleted for ' + _d._id))
-					.catch(_e => logger.error(_e));
+				return k8s.deploymentDelete(_req.get('TxnId'), _d)
+					.then(() => logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${_d._id}`))
+					.then(() => k8s.serviceDelete(_req.get('TxnId'), _d))
+					.then(() => logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${_d._id}`))
+					.catch(_e => logger.error(`[${_req.get('TxnId')}] ${_e.message}`));
 			} else {
-				logger.info('PM2 not supported');
+				logger.info(`[${_req.get('TxnId')}] PM2 not supported`);
 			}
 		})
 		.then(() => destroyServiceFolder(id))
 		.then(() => doc)
 		.catch(err => {
-			deployUtil.updateDocument(crudder.model, {
-				_id: id
-			}, {
-				comment: err.message
-			}, _req)
+			deployUtil.updateDocument(crudder.model, { _id: id }, { comment: err.message }, _req)
 				.then(() => {
-					if (count >= destroyDeploymentRetry)
-						throw err;
+					if (count >= destroyDeploymentRetry) throw err;
 				})
-				.then(() => {
-					return destroyDeployment(id, count + 1, _req);
-				})
-				.catch(e => logger.error(e.message));
+				.then(() => destroyDeployment(id, count + 1, _req))
+				.catch(e => logger.error(`[${_req.get('TxnId')}] ${e.message}`));
 		});
 }
 
@@ -1711,37 +1698,28 @@ function renameCollections(oldColl, newColl, app) {
 	}
 }
 
-function dropCollections(collectionName, app) {
-	let mongoDBVishnu = global.mongoConnection.db(app);
-	if (mongoDBVishnu) {
-		mongoDBVishnu.dropCollection(collectionName, (err, coll) => {
-			if (err) {
-				logger.error(err.message);
-			} else {
-				if (coll) logger.info('Collection ' + collectionName + ' deleted successfully');
-			}
+function dropCollections(collectionName, app, txnId) {
+	logger.debug(`[${txnId}] DropCollection :: DB clean up : ${app}`);
+	let appCenterDB = global.mongoConnection.db(app);
+	logger.error(`[${txnId}] DropCollection :: AppCenter DB Connection ${appCenterDB ? 'Active' : 'Inactive'}`);
+	if (appCenterDB) {
+		logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${collectionName}`);
+		appCenterDB.dropCollection(collectionName, (err, coll) => {
+			if (err) logger.error(`[${txnId}] DropCollection :: ${collectionName} :: ${err.message}`);
+			else if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${collectionName} deleted successfully`);
 		});
 		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks'];
 		sufix.forEach(_s => {
 			let colName = collectionName + _s;
-			mongoDBVishnu.dropCollection(colName, (err, coll) => {
-				if (err) logger.error(err);
-				if (coll) logger.info('Collection ' + colName + ' deleted successfully');
+			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${colName}`);
+			appCenterDB.dropCollection(colName, (err, coll) => {
+				if (err) logger.error(`[${txnId}] DropCollection :: ${colName} :: ${err.message}`);
+				if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${colName} deleted successfully`);
 			});
 		});
-		// mongoDBVishnu.dropCollection(collectionName + '.files', (err, coll) => {
-		// 	if (coll) logger.info('Collection ' + collectionName + '.files deleted successfully');
-		// });
-		// mongoDBVishnu.dropCollection(collectionName + '.chunks', (err, coll) => {
-		// 	if (coll) logger.info('Collection ' + collectionName + '.chunks deleted successfully');
-		// });
-		mongoDBVishnu.collection('counters').remove({
-			_id: collectionName
-		}, function (err) {
-			if (err) logger.error(err.message);
-			else {
-				logger.info('counter ' + collectionName + ' deleted successfully');
-			}
+		appCenterDB.collection('counters').remove({ _id: collectionName }, function (err) {
+			if (err) logger.error(`[${txnId}] DropCollection :: counter :: ${collectionName} :: ${err.message}`);
+			else logger.info(`[${txnId}] DropCollection :: Counter ${collectionName} deleted successfully`);
 		});
 	}
 }
@@ -1750,52 +1728,50 @@ e.destroyService = (_req, _res) => {
 	let id = _req.swagger.params.id.value;
 	let socket = _req.app.get('socket');
 	let originalDoc = {};
-	logger.debug('Deleting the service ... ');
+	logger.info(`[${_req.get('TxnId')}] Deleting the service : ${id}`);
+	logger.debug(`[${_req.get('TxnId')}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
 	return smhelper.getFlows(id, _req)
 		.then(_flows => {
-			logger.debug({ _flows });
+			logger.debug(`[${_req.get('TxnId')}] ${JSON.stringify({ _flows })}`);
 			if (_flows.length > 0) {
 				_res.status(400).json({ message: 'Data service is in use by flow ' + _flows.map(_f => _f.name) });
+				logger.info(`[${_req.get('TxnId')}] Data service in use by flows`);
 				throw new Error('Data service in use by flows');
 			} else {
 				return checkIncomingRelation(id);
 			}
 		})
 		.then((doc) => {
+			logger.debug(`[${_req.get('TxnId')}] Delete data service ${id} has 0 incoming relationships`);
+			logger.debug(`[${_req.get('TxnId')}] Delete data service :: ID :: ${doc._id}`);
+			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Type :: ${doc.type}`);
+			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Status :: ${doc.status}`);
+			logger.debug(`[${_req.get('TxnId')}] Delete data service :: App :: ${doc.app}`);
+			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Version :: ${doc.version}`);
+			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Perm. del. data :: ${doc.permanentDeleteData}`);
 			if (doc && doc.type != 'internal') {
 				originalDoc = JSON.parse(JSON.stringify(doc));
-				logger.debug(originalDoc);
 				crudder.model.findOneAndUpdate({ _id: originalDoc._id }, { status: 'Pending' })
-					.then(() => {
-						_res.status(202).json({
-							message: 'Undeploying data service ...'
-						});
-					})
+					.then(() => logger.info(`[${_req.get('TxnId')}] Undeploying data service ${doc._id}`))
+					.then(() => _res.status(202).json({message: 'Undeploying data service ...'}))
 					.catch(err => {
-						_res.status(500).json({
-							message: err.message
-						});
+						_res.status(500).json({ message: err.message });
 					});
 			} else if (doc && doc.type == 'internal') {
-				_res.status(400).json({
-					message: 'Can not delete this Service'
-				});
+				logger.error(`[${_req.get('TxnId')}] ${doc._id} type is ${doc.type}. Not allowed to delete`);
+				_res.status(400).json({ message: 'Can not delete this Service' });
 				throw new Error('Can not delete this Service');
 			} else {
-				_res.status(404).json({
-					message: 'Service not found'
-				});
+				logger.error(`[${_req.get('TxnId')}] Service not found`);
+				_res.status(404).json({message: 'Service not found'});
 				throw new Error('Service not found');
 			}
 		}, (data) => {
+			logger.debug(`[${_req.get('TxnId')}] Delete data service ${id} has ${data.relatedEntities.length} relationships`);
 			let serviceMsg = '';
-			if (data.relatedEntities.length == 1) {
-				serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-			} else if (data.relatedEntities.length == 2) {
-				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
-			} else {
-				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
-			}
+			if (data.relatedEntities.length == 1) serviceMsg = 'Data Service: ' + data.relatedEntities[0];
+			else if (data.relatedEntities.length == 2) serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
+			else serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
 			_res.status(400).json({
 				message: 'Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.'
 			});
@@ -1806,71 +1782,49 @@ e.destroyService = (_req, _res) => {
 				return destroyDeployment(id, 0, _req);
 		})
 		.then(() => {
-			deployUtil.sendToSocket(socket, 'serviceStatus', {
-				_id: id,
-				app: originalDoc.app,
-				message: 'Entity has been stopped.'
-			});
+			deployUtil.sendToSocket(socket, 'serviceStatus', {_id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
+			logger.debug(`[${_req.get('TxnId')}] Socket updated :: serviceStatus :: Entity has been stopped.`);
 			deployUtil.deleteServiceInUserMgmt(id, _req);
 			deployUtil.deleteServiceInWorkflow(id, _req);
 			return removeIncomingRelation(id, _req);
 		})
 		.then(() => {
 			if (process.env.SM_ENV == 'K8s' && originalDoc.status != 'Draft') {
-				return k8s.deploymentDelete(originalDoc)
-					.then(() => logger.info('Deployment deleted for ' + originalDoc._id))
-					.then(() => k8s.serviceDelete(originalDoc))
-					.then(() => logger.info('Service deleted for ' + originalDoc._id))
-					.then(() => docker.removeImage(originalDoc._id, originalDoc.version))
-					.catch(_e => logger.error(_e));
-			} else if (process.env.SM_ENV == 'Docker' && originalDoc.status != 'Draft') {
-				logger.info('Cleaning the docker images and containers...');
-				return docker.stopService(originalDoc._id)
-					.then(() => logger.debug('Stopped the service'))
-					.then(() => docker.removeService(originalDoc._id))
-					.then(() => logger.debug('Removed the service'))
-					.then(() => docker.removeImage(originalDoc._id, originalDoc.version))
-					.catch(_e => logger.error(_e));
+				return k8s.deploymentDelete(_req.get('TxnId'), originalDoc)
+					.then(() => logger.info(`[${_req.get('TxnId')}] Deployment deleted for ${originalDoc._id}`))
+					.then(() => k8s.serviceDelete(_req.get('TxnId'), originalDoc))
+					.then(() => logger.info(`[${_req.get('TxnId')}] Service deleted for ${originalDoc._id})`))
+					.then(() => docker.removeImage(_req.get('TxnId'), originalDoc._id, originalDoc.version))
+					.catch(_e => logger.error(`[${_req.get('TxnId')}] ${_e.message}`));
 			}
 		})
 		.then(() => smHooks.removeServicesInGlobalSchema(id, _req))
 		.then(() => {
 			if (originalDoc && originalDoc.permanentDeleteData) {
-				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
+				logger.info(`[${_req.get('TxnId')}] Deleting service ${id} : Dropping collection ${originalDoc.collectionName} under db ${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
+				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, _req.get('TxnId'));
 			}
 		})
 		.then(() => {
-			crudder.model.findOne({
-				_id: id,
-				'_metadata.deleted': false
-			})
+			crudder.model.findOne({ _id: id, '_metadata.deleted': false })
 				.then((doc) => {
 					if (doc) {
-						deployUtil.sendToSocket(socket, 'deleteService', {
-							_id: id,
-							app: doc.app,
-							api: doc.api,
-							message: 'Entity has been deleted'
-						});
+						deployUtil.sendToSocket(socket, 'deleteService', { _id: id, app: doc.app, api: doc.api, message: 'Entity has been deleted' });
+						logger.debug(`[${_req.get('TxnId')}] Socket updated :: serviceStatus :: Entity has been deleted.`);
 						removeWebHooks(id, _req);
 						if (!originalDoc.permanentDeleteData) {
+							logger.info(`[${_req.get('TxnId')}] Soft deleting data service`);
 							doc._metadata.deleted = true;
 							return doc.save(_req);
 						} else {
 							return doc.remove(_req)
 								.then(() => {
-									if (doc.draftVersion) {
-										return draftCrudder.model.findOne({ _id: doc._id });
-									}
+									if (doc.draftVersion) return draftCrudder.model.findOne({ _id: doc._id });
 								})
 								.then(draftDoc => {
-									if (draftDoc) {
-										draftDoc.remove(_req);
-									}
+									if (draftDoc) draftDoc.remove(_req);
 								})
-								.catch(err => {
-									logger.error(err);
-								});
+								.catch(err => logger.error(`[${_req.get('TxnId')}] Error deleting draft : ${err.message}`));
 						}
 					}
 				});
@@ -1880,15 +1834,10 @@ e.destroyService = (_req, _res) => {
 			smHooks.deleteAudit(originalDoc.app + '.' + originalDoc.collectionName, _req);
 		})
 		.catch(err => {
-			logger.error(err);
-			if (!_res.headersSent)
-				_res.status(500).send(err.message);
+			logger.error(`[${_req.get('TxnId')}] Delete data service : err.message`);
+			if (!_res.headersSent) _res.status(500).send(err.message);
 			if (err.message !== '____CUSTOM_ENTITY_STOP_MSG_____') {
-				deployUtil.updateDocument(crudder.model, {
-					_id: id
-				}, {
-					status: 'Undeployed'
-				}, _req)
+				deployUtil.updateDocument(crudder.model, { _id: id }, { status: 'Undeployed' }, _req)
 					.catch(e => logger.error(e.message));
 			}
 		});
@@ -1967,7 +1916,7 @@ e.deleteApp = function (_req, _res) {
 					});
 					deployUtil.deleteServiceInUserMgmt(doc._id, _req);
 					deployUtil.deleteServiceInWorkflow(doc._id, _req);
-					dropCollections(doc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${doc.app}`);
+					dropCollections(doc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${doc.app}`, _req.get('TxnId'));
 					deployUtil.sendToSocket(socket, 'deleteService', {
 						_id: doc._id,
 						app: doc.app,
@@ -2330,11 +2279,11 @@ e.repairService = (_req, _res) => {
 function updateDeployment(req, res, ds) {
 	let srvcDoc = JSON.parse(JSON.stringify(ds));
 	let socket = req.app.get('socket');
-	return k8s.deploymentDelete(ds)
+	return k8s.deploymentDelete(req.get('TxnId'), ds)
 		.then(_d => {
 			logger.info('Deployment deleted');
 			logger.debug(_d);
-			return k8s.serviceDelete(srvcDoc);
+			return k8s.serviceDelete(req.get('TxnId'), srvcDoc);
 		})
 		.then(_d => {
 			logger.info('Service deleted');

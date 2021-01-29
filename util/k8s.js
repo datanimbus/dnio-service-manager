@@ -126,23 +126,27 @@ e.deploymentUpdate = (_schema) => {
 		});
 };
 
-e.deploymentDelete = (_schema) => {
+e.deploymentDelete = (_txnId, _schema) => {
 	// (_namespace, _name)
+	logger.info(`[${_txnId}] Kubernetes delete deployment ${_schema._id}`);
+	logger.trace(`[${_txnId}] ${JSON.stringify(_schema)}`);
 	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	logger.debug(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: ns :: ${ns}`);
 	return kubeutil.deployment.deleteDeployment(
 		ns,
 		_schema.api.split('/')[1].toLowerCase())
 		.then(_ => {
-			logger.debug(JSON.stringify(_));
+			logger.debug(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: statusCode :: ${_.statusCode}`);
+			logger.trace(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: response :: ${JSON.stringify(_)}`);
 			if (_.statusCode != 200 && _.statusCode != 202 && _.statusCode != 404) {
 				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + _.statusCode;
-				logger.error(errorMsg);
+				logger.error(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: errorMsg`);
 				return new Error(errorMsg);
 			} return _;
 		})
 		.catch(_ => {
-			logger.error('Error deleting deployment');
-			logger.debug(JSON.stringify(_));
+			logger.error(`[${_txnId}] Kubernetes delete deployment ${_schema._id} :: Error deleting deployment`);
+			logger.trace(`[${_txnId}] Kubernetes delete deployment ${_schema._id} :: ${JSON.stringify(_)}`);
 		});
 };
 
@@ -170,24 +174,27 @@ e.serviceStart = (_schema) => {
 		});
 };
 
-e.serviceDelete = (_schema) => {
+e.serviceDelete = (_txnId, _schema) => {
 	// (_namespace, _name)
-	logger.debug(_schema);
+	logger.info(`[${_txnId}] Kubernetes delete service ${_schema._id}`);
+	logger.trace(`[${_txnId}] ${JSON.stringify(_schema)}`);
 	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
+	logger.debug(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: ns :: ${ns}`);
 	return kubeutil.service.deleteService(
 		ns,
 		_schema.api.split('/')[1].toLowerCase())
 		.then(_ => {
-			logger.debug(JSON.stringify(_));
+			logger.debug(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: statusCode :: ${_.statusCode}`);
+			logger.trace(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: response :: ${JSON.stringify(_)}`);
 			if (_.statusCode != 200 && _.statusCode != 202 && _.statusCode != 404) {
 				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + _.statusCode;
-				logger.error(errorMsg);
+				logger.error(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: errorMsg`);
 				return Error(errorMsg);
 			} return _;
 		})
 		.catch(_ => {
-			logger.error('Error deleting service');
-			logger.debug(JSON.stringify(_));
+			logger.error(`[${_txnId}] Kubernetes delete service ${_schema._id} :: Error deleting service`);
+			logger.trace(`[${_txnId}] Kubernetes delete service ${_schema._id} :: ${JSON.stringify(_)}`);
 		});
 };
 
