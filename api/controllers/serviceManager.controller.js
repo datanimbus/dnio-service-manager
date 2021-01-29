@@ -1993,14 +1993,14 @@ e.changeStatus = function (req, res) {
 	let status = req.swagger.params.status.value;
 	let socket = req.app.get('socket');
 	let relatedService = [];
-	logger.debug(`[${req.get('TxnId')}] Status change :: ${id} :: ${status}`)
+	logger.debug(`[${req.get('TxnId')}] Status change :: ${id} :: ${status}`);
 	crudder.model.findOne({ _id: id })
 		.then(data => {
 			if (data && data.relatedSchemas && data.relatedSchemas.incoming) {
 				data.relatedSchemas.incoming.forEach(doc => relatedService.push(doc));
 			}
 			if (data && data.status == 'Maintenance') {
-				logger.debug(`[${req.get('TxnId')}] Status change :: Service ${id} is in maintenance mode.`)
+				logger.debug(`[${req.get('TxnId')}] Status change :: Service ${id} is in maintenance mode.`);
 				res.json({
 					status: 'Maintenance',
 					message: 'In Maintenance ',
@@ -2018,7 +2018,7 @@ e.changeStatus = function (req, res) {
 							outgoingAPIs[_d._id] = _d;
 							outgoingAPIs[_d._id].url = `/api/c/${_d.app}${_d.api}`;
 						});
-						logger.trace(`[${req.get('TxnId')}] Status change :: Service ${id} :: Outgoing APIs :: ${JSON.stringify(outgoingAPIs)}`)
+						logger.trace(`[${req.get('TxnId')}] Status change :: Service ${id} :: Outgoing APIs :: ${JSON.stringify(outgoingAPIs)}`);
 						return crudder.model.findOneAndUpdate({ _id: id }, { status: status, '_metadata.lastUpdated': new Date() }, { runValidators: true });
 					}))
 					.then(doc => {
