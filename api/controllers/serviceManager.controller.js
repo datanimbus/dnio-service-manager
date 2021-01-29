@@ -1993,12 +1993,14 @@ e.changeStatus = function (req, res) {
 	let status = req.swagger.params.status.value;
 	let socket = req.app.get('socket');
 	let relatedService = [];
+	logger.debug(`[${req.get('TxnId')}] Status change :: ${id} :: ${status}`)
 	crudder.model.findOne({ _id: id })
 		.then(data => {
 			if (data && data.relatedSchemas && data.relatedSchemas.incoming) {
 				data.relatedSchemas.incoming.forEach(doc => relatedService.push(doc));
 			}
 			if (data && data.status == 'Maintenance') {
+				logger.debug(`[${req.get('TxnId')}] Status change :: Service ${id} is in maintenance mode.`)
 				res.json({
 					status: 'Maintenance',
 					message: 'In Maintenance ',
@@ -2016,43 +2018,21 @@ e.changeStatus = function (req, res) {
 							outgoingAPIs[_d._id] = _d;
 							outgoingAPIs[_d._id].url = `/api/c/${_d.app}${_d.api}`;
 						});
-						return crudder.model.findOneAndUpdate({
-							_id: id
-						}, {
-							status: status, '_metadata.lastUpdated': new Date()
-						}, {
-							runValidators: true
-						});
-
+						logger.trace(`[${req.get('TxnId')}] Status change :: Service ${id} :: Outgoing APIs :: ${JSON.stringify(outgoingAPIs)}`)
+						return crudder.model.findOneAndUpdate({ _id: id }, { status: status, '_metadata.lastUpdated': new Date() }, { runValidators: true });
 					}))
 					.then(doc => {
-						if (doc) {
-							if (doc.status !== 'Active') {
-								logger.info('Service status of ' + doc._id + ' changed to ' + status);
-								deployUtil.sendToSocket(socket, 'serviceStatus', {
-									message: 'Deployed',
-									_id: id,
-									app: doc.app,
-									port: doc.port,
-									api: doc.api
-								});
-							}
+						if (doc && doc.status !== 'Active') {
+							logger.info(`[${req.get('TxnId')}] Service status of ${id} changed to ${status}`);
+							deployUtil.sendToSocket(socket, 'serviceStatus', { message: 'Deployed', _id: id, app: doc.app, port: doc.port, api: doc.api });
 						}
-						res.json({
-							message: 'Status changed',
-							outgoingAPIs: outgoingAPIs
-						});
+						res.json({ message: 'Status changed', outgoingAPIs: outgoingAPIs });
 					})
 					.catch(err => {
-						logger.error(err.message);
-						res.status(500).json({
-							message: err.message
-						});
+						logger.error(`[${req.get('TxnId')}] Status change :: Service ${id} :: ${err.message}`);
+						res.status(500).json({ message: err.message });
 					});
-
-
 			}
-
 		});
 };
 
