@@ -161,7 +161,7 @@ schema.pre('save', function (next, req) {
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
-	let user = req.get('User');
+	let user = req.headers.user;
 	self._metadata.lastUpdatedBy = user;
 	next();
 });
@@ -171,7 +171,7 @@ draftSchema.pre('save', function (next, req) {
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
-	let user = req.get('User');
+	let user = req.headers.user;
 	self._metadata.lastUpdatedBy = user;
 	next();
 });
