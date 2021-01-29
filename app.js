@@ -36,7 +36,7 @@ if (envConfig.isK8sEnv()) {
 function customLogger(coll, op, doc, proj) {
 	process.stdout.write(`Mongoose: ${coll}.${op}(${JSON.stringify(doc)}`);
 	if (proj) {
-		process.stdout.write(',' + JSON.stringify(proj) + ')\n');
+		process.stdout.write(',' + proj + ')\n');
 	} else {
 		process.stdout.write(')\n');
 	}

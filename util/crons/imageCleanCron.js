@@ -9,7 +9,7 @@ let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY
 if (dockerReg.length > 0 && !dockerReg.endsWith('/')) dockerReg += '/';
 function init() {
 	cron.schedule('18 3 * * *', function () {
-		logger.info('Cron triggered to clean images');
+		logger.debug('Cron triggered to clean images');
 		exec(command, (_err, _stdout, _stderr) => {
 			logger.debug('Executing:: ' + command);
 			if (_err) {
