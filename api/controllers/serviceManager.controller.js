@@ -1635,19 +1635,11 @@ function destroyDeployment(id, count, _req) {
 	}, _req)
 		.then(_d => {
 			doc = _d;
-			if (process.env.SM_ENV == 'K8s') {
+			if (envConfig.isK8sEnv()) {
 				return k8s.deploymentDelete(_d)
 					.then(() => logger.info('Deployment deleted for ' + _d._id))
 					.then(() => k8s.serviceDelete(_d))
 					.then(() => logger.info('Service deleted for ' + _d._id))
-					.catch(_e => logger.error(_e));
-			} else if (process.env.SM_ENV == 'Docker') {
-				logger.info('Cleaning the docker containers...');
-				return docker.stopService(_d._id)
-					.then(() => logger.debug('Stopped the service'))
-					.then(() => docker.removeService(_d._id))
-					.then(() => logger.debug('Removed the service'))
-					.then(() => logger.info('Docker service stopped :: ' + _d._id))
 					.catch(_e => logger.error(_e));
 			} else {
 				logger.info('PM2 not supported');
@@ -1797,9 +1789,9 @@ e.destroyService = (_req, _res) => {
 			}
 		}, (data) => {
 			let serviceMsg = '';
-			if (data.relatedEntities && data.relatedEntities.length == 1) {
+			if (data.relatedEntities.length == 1) {
 				serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-			} else if (data.relatedEntities && data.relatedEntities.length == 2) {
+			} else if (data.relatedEntities.length == 2) {
 				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
 			} else {
 				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';

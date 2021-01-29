@@ -7,7 +7,7 @@ const app = require('express')();
 const cuti = require('@appveen/utils');
 const log4js = cuti.logger.getLogger;
 let version = require('./package.json').version;
-const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s' ? `[${process.env.DATA_STACK_NAMESPACE}] [${process.env.HOSTNAME}] [SM ${version}]` : `[SM ${version}]`;
+const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT ? `[${process.env.DATA_STACK_NAMESPACE}] [${process.env.HOSTNAME}] [SM ${version}]` : `[SM ${version}]`;
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
 const mongoose = require('mongoose');

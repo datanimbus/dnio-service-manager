@@ -9,7 +9,7 @@ function mongoUrl() {
 	let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 	return mongoUrl;
 }
-if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s') {
+if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
 	dataStackutils.kubeutil.check()
 		.then(
 			() => logger.info('Connection to Kubernetes API server successful!'),
@@ -19,7 +19,7 @@ if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT &
 			});
 }
 function isK8sEnv() {
-	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s';
+	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT;
 }
 const dataStackNS = process.env.DATA_STACK_NAMESPACE;
 if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
