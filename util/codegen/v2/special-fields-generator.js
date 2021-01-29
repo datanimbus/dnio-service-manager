@@ -238,7 +238,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t\t_.set(newData, '${path}._href', doc._href);`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t\terrors['${path}'] = e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -256,7 +256,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t\titem._href = doc._href;');
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -294,7 +294,7 @@ function genrateCode(config) {
 					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\t// errors['${path}'] = e.message;`);
+					code.push(`\t\t\t// errors['${path}'] = e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -312,7 +312,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\t// errors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\t// errors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -436,7 +436,7 @@ function genrateCode(config) {
 					code.push('\t\t\t\t\t}');
 					code.push('\t\t\t\t\tflag = true;');
 					code.push('\t\t\t\t} catch (e) {');
-					code.push(`\t\t\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t\t\t\terrors['${path}'] = e;`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 				} else if (def.type == 'Object') {
@@ -456,7 +456,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t\tflag = true;');
 						code.push('\t\t\t\t} catch (e) {');
-						code.push(`\t\t\t\t\terrors['${path}'] = e.message;`);
+						code.push(`\t\t\t\t\terrors['${path}'] = e;`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 					} else if (def.definition[0].type == 'Object') {
@@ -482,7 +482,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t\terrors['${path}'] = e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -501,7 +501,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -538,7 +538,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t_.set(newData, '${path}.value', doc);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t\terrors['${path}'] = e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -556,7 +556,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -594,7 +594,7 @@ function genrateCode(config) {
 					code.push('\t\t\t}');
 					code.push('\t\t}');
 					code.push('\t} catch (e) {');
-					code.push(`\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\terrors['${path}'] = e;`);
 					code.push('\t}');
 					code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
 				} else if (def.type == 'Object') {
@@ -611,7 +611,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\treturn false;');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t\treturn false;');
 						code.push('\t\t\t}');
 						code.push('\t\t});');
@@ -646,7 +646,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc.geoObj);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\t// errors['${path}'] = e.message;`);
+					code.push(`\t\t\t// errors['${path}'] = e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -664,7 +664,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t\t_.assign(item, doc.geoObj);');
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t} catch (e) {');
-						code.push(`\t\t\t\t\t// errors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\t\t// errors['${path}.' + i] = e;`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 						code.push('\t\t});');
@@ -695,16 +695,16 @@ function genrateCode(config) {
 			if (key != '_id' && def.properties) {
 				if (def.type == 'Object' && def['properties']['dateType']) {
 					code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def['properties']['defaultTimeZone']}'`);
-					code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = '${def['properties']['supportedTimeZones']}'`);
+					code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = ${def['properties']['supportedTimeZones'] || []}`);
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\t${_.camelCase(path)}New= commonUtils.getFormattedDate(${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
+					code.push(`\t\t\t${_.camelCase(path)}New = commonUtils.getFormattedDate(${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
 					// _.set(newData, 'time', timeNew);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e.message;`);
+					code.push(`\t\t\terrors['${path}'] = e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -712,7 +712,7 @@ function genrateCode(config) {
 				} else if (def.type == 'Array') {
 					if (def.definition[0]['properties'] && def.definition[0]['properties']['dateType']) {
 						code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def.definition[0]['properties']['defaultTimeZone']}'`);
-						code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = '${def.definition[0]['properties']['supportedTimeZones']}'`);
+						code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = ${def.definition[0]['properties']['supportedTimeZones'] || []}`);
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0 && !_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
@@ -720,7 +720,7 @@ function genrateCode(config) {
 						code.push('\t\t\ttry {');
 						code.push(`\t\t\t\treturn commonUtils.getFormattedDate(item, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push(`\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
