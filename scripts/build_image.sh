@@ -81,7 +81,7 @@ if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
     cd $WORKSPACE/../ds-base
     
-    docker build --no-cache -t data.stack:base.$TAG -f Dockerfile_base .
+    docker build --no-cache -t data.stack:base.$TAG .
     cd $WORKSPACE
 
     echo "****************************************************"
