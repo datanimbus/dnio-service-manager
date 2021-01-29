@@ -20,8 +20,7 @@ const logger = global.logger;
  * @param {*} config The Service Document
  */
 function generateFiles(config) {
-	logger.debug('config >> ');
-	logger.debug(config);
+	logger.trace(`config :: ${JSON.stringify(config)}`);
 	config.idDetails = config['definition'].find(attr => attr.key == '_id');
 	if (config.idDetails.counter && isNaN(config.idDetails.counter)) throw new Error('Counter is not valid');
 	if (config.idDetails.counter != null) config.idDetails.counter = parseInt(config.idDetails.counter);
