@@ -43,7 +43,7 @@ MONGO_LOGS_URL="${process.env.MONGO_LOGS_URL}"
 ODP_APP="${config.app}"
 SERVICE_ID="${config._id}"
 SERVICE_NAME="${config.name}"
-ENV SERVICE_VERSION ${config.version}
+SERVICE_VERSION="${config.version}"
 SERVICE_PORT="${config.port}"
 SERVICE_ENDPOINT="${config.api}"
 SERVICE_COLLECTION="${config.collectionName}"
