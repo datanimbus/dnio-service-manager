@@ -171,14 +171,30 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 		});
 };
 
-e.getOutgoingRelationAndUpdate = function (newData, req) {
-	if (!newData.definition) return newData.save(req);
+e.getOutgoingRelationAndUpdate  = function (newData, req) {
+	let txnId = req.get('TxnId');
+	let id = newData._id;
+	logger.info(`[${txnId}] Outgoing relationship update :: ${id}`);
+	if (!newData.definition) {
+		logger.info(`[${txnId}] Outgoing relationship update :: ${id} :: No definition found. Saving.`);
+		return newData.save(req);
+	}
 	let newSchema = newData.definition;
 	let newRelations = getSchemaRelations(newSchema);
+	logger.trace(`[${txnId}] Outgoing relationship update :: ${id} :: New relationships :: ${JSON.stringify(newRelations)}`);
+	
 	let newUsers = getUsers(newSchema);
+	logger.trace(`[${txnId}] Outgoing relationship update :: ${id} :: New users :: ${JSON.stringify(newUsers)}`);
+	
 	let newOutgoingServicesList = _.uniq(newRelations.map(obj => obj.service));
+	logger.trace(`[${txnId}] Outgoing relationship update :: ${id} :: New outgoing services :: ${JSON.stringify(newOutgoingServicesList)}`);
+
 	if (!newData.relatedSchemas) newData.relatedSchemas = {};
+	logger.trace(`[${txnId}] Outgoing relationship update :: ${id} :: Related schemas :: ${JSON.stringify(newData.relatedSchemas)}`);
+	
 	if (!newData.relatedSchemas.internal) newData.relatedSchemas.internal = {};
+	logger.trace(`[${txnId}] Outgoing relationship update :: ${id} :: Related schemas internal :: ${JSON.stringify(newData.relatedSchemas.internal)}`);
+	
 	let outgoingServicesObj = newRelations.map(obj => {
 		let newObj = JSON.parse(JSON.stringify(obj));
 		newObj.path = JSON.stringify(newObj.path);
@@ -195,20 +211,25 @@ e.getOutgoingRelationAndUpdate = function (newData, req) {
 	newData.relatedSchemas.internal.users = userObj;
 	return mongoose.model('services').find({ _id: { $in: newOutgoingServicesList } })
 		.then((docs) => {
-			logger.debug('docs.length', docs.length);
-			logger.debug('newOutgoingServicesList.length', newOutgoingServicesList.length);
+			logger.debug(`[${txnId}] Outgoing relationship update :: ${id} :: Old outgoing sevices :: ${docs.length}`);
+			logger.debug(`[${txnId}] Outgoing relationship update :: ${id} :: New outgoing sevices :: ${newOutgoingServicesList.length}`);
 			if (docs.length === newOutgoingServicesList.length) {
+				logger.debug(`[${txnId}] Outgoing relationship update :: ${id} :: Outgoing relationships marked for update`);
 				newData.markModified('relatedSchemas.outgoing'); //to save the latest changes of relatedSchemas.outgoing
 				return newData.save(req);
 			} else {
 				let docsIdList = docs.map(obj => obj._id);
 				let unMatchedId = _.difference(newOutgoingServicesList, docsIdList);
-				throw new Error('The following Service ID not found ' + unMatchedId);
+				logger.error(`[${txnId}] Outgoing relationship update :: ${id} :: Service id not found :: ${unMatchedId.join(', ')}`);
+				throw new Error(`The following Service ID not found : ${unMatchedId}`);
 			}
 		});
 };
 
 e.checkRelationsAndUpdate = function (oldData, newData, req) {
+	let txnId = req.get('TxnId');
+	let id = newData._id;
+	logger.info(`[${txnId}] Checking relationship update :: ${id}`);
 	let genServiceObj = null;
 	let newSchema = newData.definition;
 	let oldSchema = oldData.definition;
@@ -238,31 +259,30 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 	newData.relatedSchemas.internal.users = userObj;
 	return mongoose.model('services').find({ _id: { $in: newOutgoingServicesList } })
 		.then((docs) => {
-			logger.debug('docs.length', docs.length);
-			logger.debug('newOutgoingServicesList.length', newOutgoingServicesList.length);
+			logger.debug(`[${txnId}] Checking relationship update :: ${id} :: Old outgoing sevices :: ${docs.length}`);
+			logger.debug(`[${txnId}] Checking relationship update :: ${id} :: New outgoing sevices :: ${newOutgoingServicesList.length}`);
 			if (docs.length === newOutgoingServicesList.length) {
 				delete newData.__v;
 				newData.markModified('relatedSchemas.outgoing'); //to save the latest changes of relatedSchemas.outgoing
+				logger.debug(`[${txnId}] Checking relationship update :: ${id} :: Outgoing relationships marked for update`);
 				return newData.save(req);
 			} else {
 				let docsIdList = docs.map(obj => obj._id);
 				let unMatchedId = _.difference(newOutgoingServicesList, docsIdList);
-				throw new Error('The following Service ID not found ' + unMatchedId);
+				logger.error(`[${txnId}] Checking relationship update :: ${id} :: Service id not found :: ${unMatchedId.join(', ')}`);
+				throw new Error(`The following Service ID not found : ${unMatchedId}`);
 			}
 		})
 		.then((_genServiceObj) => {
 			genServiceObj = JSON.parse(JSON.stringify(_genServiceObj));
 			if (oldOutgoingServicesList.length == 0) return Promise.resolve([]);
-			return mongoose.model('services').find({
-				_id: {
-					$in: oldOutgoingServicesList
-				}
-			});
+			return mongoose.model('services').find({ _id: { $in: oldOutgoingServicesList } });
 		})
 		.then(docs => {
 			let promiseArr = docs.map(doc => {
 				if (doc.relatedSchemas.incoming) {
 					doc.relatedSchemas.incoming = doc.relatedSchemas.incoming.filter(obj => obj.service != newData._id);
+					logger.debug(`[${txnId}] Checking relationship update :: ${id} :: Incoming relationships marked for update`);
 					doc.markModified('relatedSchemas.incoming');
 					return doc.save(req);
 				}
@@ -271,11 +291,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 		})
 		.then(() => {
 			if (newOutgoingServicesList.length == 0) return Promise.resolve([]);
-			return mongoose.model('services').find({
-				_id: {
-					$in: newOutgoingServicesList
-				}
-			});
+			return mongoose.model('services').find({ _id: { $in: newOutgoingServicesList } });
 		})
 		.then(docs => {
 			let promiseArr = docs.map(doc => {
@@ -291,6 +307,7 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 					});
 				});
 				doc.markModified('relatedSchemas.incoming');
+				logger.debug(`[${txnId}] Checking relationship update :: ${id} :: Incoming relationships marked for update`);
 				return doc.save(req);
 			});
 			return Promise.all(promiseArr);

@@ -194,6 +194,8 @@ e.updateDocument = (model, query, updateObj, req) => {
 
 e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) => {
 	let id = _schemaDetails._id;
+	let txnId = req.get('TxnId') || req.headers.txnId;
+	logger.info(`[${txnId}] Deploy service :: ${id}`);
 	let systemFields = {
 		'File': [],
 		'Geojson': []
@@ -203,19 +205,19 @@ e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =
 	_schemaDetails.fileFields = systemFields.File;
 	return globalDefHelper.expandSchemaWithGlobalDef(_schemaDetails.app, _schemaDetails.definition)
 		.then(def => {
-			logger.info('updated Definition is', JSON.stringify(def));
-			logger.info('schemadetails obj is', JSON.stringify(_schemaDetails));
+			logger.trace(`[${txnId}] Deploy service :: ${id} :: Updated definition :: ${JSON.stringify(def)}`);
+			logger.trace(`[${txnId}] Deploy service :: ${id} :: Schema details obj :: ${JSON.stringify(_schemaDetails)}`);
 			_schemaDetails.definition = def;
 			_schemaDetails.definition = globalDefHelper.expandSchemaWithSystemGlobalDef(_schemaDetails.definition);
 			return e.updateDocument(mongoose.model('services'), { _id: id }, { status: 'Pending' }, req);
 		})
 		.then((_d) => {
-			logger.debug('Service moved to pending status');
-			logger.debug(_d);
-			return dm.deployService(_schemaDetails, _isUpdate, _isDeleteAndCreate);
+			logger.debug(`[${txnId}] Deploy service :: ${id} :: Service moved to pending status`);
+			logger.trace(`[${txnId}] Deploy service :: ${id} :: ${JSON.stringify(_d)}`);
+			return dm.deployService(txnId, _schemaDetails, _isUpdate, _isDeleteAndCreate);
 		})
 		.catch(e => {
-			logger.error('Deployment failed due to error ', e);
+			logger.error(`[${txnId}] Deploy service :: ${id} :: Deployment failed :: ${e.message}`);
 			// cleanup should happen where the code is generated
 			// TODO: Jerry/Shobhit
 			var startPromise = new Promise.resolve();
@@ -239,7 +241,8 @@ e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =
 						comment: e.message
 					}, req);
 				})
-				.catch(err => logger.error('Error in catch block deployService :: ', err));
+				.catch(err => logger.error(`[${txnId}] Deploy service :: ${id} :: ${err.message}`));
+			logger.error(`[${txnId}] Deploy service :: ${id} :: ${e.message}`);
 		});
 };
 

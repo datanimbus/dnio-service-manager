@@ -6,34 +6,44 @@ let logger = global.logger;
 const BATCH = 5;
 
 function redeploy(services, successIds, i) {
-	logger.info('Running batch ' + (i + 1));
+	let reqObject = {
+		headers: {
+			'txnId': `SM-Redeploy-${i+1}`
+		}
+	};
+	let txnId = `SM-Redeploy-${i+1}`; 
+	logger.info(`[${txnId}] Redeploying services :: Running batch ${(i + 1)}`);
 	let promises = services.map(_srvc => {
-		logger.debug('Redeploying ' + _srvc._id);
+		logger.debug(`[${txnId}] Redeploying service ${_srvc._id}`);
 		let srvcDoc = _srvc;
-		if(!srvcDoc.definition) return Promise.resolve();
+		if(!srvcDoc.definition) {
+			logger.info(`[${txnId}] Redeploying service :: ${srvcDoc._id} :: No definition found. Ignoring`);
+			return Promise.resolve();
+		}
 		return k8s.deploymentDelete(srvcDoc.toObject())
 			.then(_d => {
-				logger.info('Deployment deleted');
-				logger.debug(_d);
+				logger.info(`[${txnId}] Deployment deleted :: ${srvcDoc._id}`);
+				logger.trace(`[${txnId}] Deployment delete response - ${JSON.stringify(_d)}`);
 				return k8s.serviceDelete(srvcDoc.toObject());
 			})
 			.then(_d => {
-				logger.info('Service deleted');
-				logger.debug(_d);
+				logger.info(`[${txnId}] Service deleted :: ${srvcDoc._id}`);
+				logger.trace(`[${txnId}] Service delete response - ${JSON.stringify(_d)}`);
 				srvcDoc = srvcDoc.toObject();
 				// srvcDoc.definition = JSON.parse(srvcDoc.definition);
 				return k8s.serviceStart(srvcDoc);
 			})
 			.then(_d => {
-				logger.info('Service started');
-				logger.debug(_d);
+				logger.info(`[${txnId}] Service started :: ${srvcDoc._id}`);
+				logger.trace(`[${txnId}] Service start response - ${JSON.stringify(_d)}`);
 				if (srvcDoc.status === 'Active')
-					return deployUtil.deployService(srvcDoc, null, null, false, false);
+					return deployUtil.deployService(srvcDoc, null, reqObject, false, false);
 			})
 			.then(_d => {
+				logger.info(`[${txnId}] Deployment started :: ${srvcDoc._id}`);
+				logger.trace(`[${txnId}] Deployment start response - ${JSON.stringify(_d)}`);
 				successIds.push(srvcDoc._id);
-				logger.debug({successIds});
-				logger.debug(_d);
+				logger.trace(`[${txnId}] Succeess Ids - ${successIds.join(', ')}`);
 			})
 			.catch(err => {
 				logger.error(err);

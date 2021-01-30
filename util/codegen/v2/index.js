@@ -19,8 +19,10 @@ const logger = global.logger;
  * 
  * @param {*} config The Service Document
  */
-function generateFiles(config) {
-	logger.trace(`config :: ${JSON.stringify(config)}`);
+function generateFiles(_txnId, config) {
+	let id = config._id;
+	logger.info(`[${_txnId}] GenerateFiles :: ${id}`);
+	logger.trace(`[${_txnId}] GenerateFiles :: ${id} :: Config :: ${JSON.stringify(config)}`);
 	config.idDetails = config['definition'].find(attr => attr.key == '_id');
 	if (config.idDetails.counter && isNaN(config.idDetails.counter)) throw new Error('Counter is not valid');
 	if (config.idDetails.counter != null) config.idDetails.counter = parseInt(config.idDetails.counter);
@@ -30,18 +32,16 @@ function generateFiles(config) {
 	config.projectName = config._id;
 	config.path = './generatedServices/' + config.projectName;
 	config['definition'] = config['definition'].filter(attr => attr.key != '_id');
-	return generateFolderStructure(config)
-		.then(() => generateDefinition(config))
+	return generateFolderStructure(_txnId, config)
+		.then(() => generateDefinition(_txnId, config))
 		.then((definition) => fs.writeFileSync(path.join(config.path, 'api/helpers/service.definition.js'), definition, 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, '.env'), dotEnvFile(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'Dockerfile'), dockerFile(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/swagger/swagger.yaml'), jsyaml.safeDump(generateYaml(config)), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/utils/special-fields.utils.js'), specialFieldsGenrator.genrateCode(config), 'utf-8'))
-		.then(() => {
-			logger.info('Your project structure is ready');
-		})
+		.then(() => logger.info(`[${_txnId}] GenerateFiles :: ${id} :: Your project structure is ready`))
 		.catch(err => {
-			logger.error(err);
+			logger.error(`[${_txnId}] GenerateFiles :: ${id} :: ${err.message}`);
 			del(config.path);
 			throw err;
 		});
@@ -52,15 +52,29 @@ function generateFiles(config) {
  * 
  * @param {*} config The Service Document
  */
-function generateFolderStructure(config) {
+function generateFolderStructure(_txnId, config) {
+	let id = config._id;
+	logger.info(`[${_txnId}] GenerateFolderStructure :: ${id}`);
+
 	mkdirp.sync(config.path);
+	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${config.path}`);
+	
 	mkdirp.sync(path.join(config.path, 'api/controllers'));
+	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/controllers')}`);
+	
 	mkdirp.sync(path.join(config.path, 'api/models'));
+	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/models')}`);
+	
 	mkdirp.sync(path.join(config.path, 'api/helpers'));
+	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/helpers')}`);
+	
 	mkdirp.sync(path.join(config.path, 'api/utils'));
+	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/utils')}`);
+	
 	mkdirp.sync(path.join(config.path, 'api/swagger'));
+	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/swagger')}`);
 	if (!envConfig.isK8sEnv()) {
-		logger.info('Local ENV :: Copying Structure');
+		logger.info(`[${_txnId}] GenerateFolderStructure :: ${id} :: Local ENV :: Copying Structure`);
 		copydir.sync(path.join(process.cwd(), '../ds-base/api'), path.join(config.path, 'api'));
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/.dockerignore'), path.join(config.path, '.dockerignore'));
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/.gitignore'), path.join(config.path, '.gitignore'));

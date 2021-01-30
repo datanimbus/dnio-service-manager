@@ -13,7 +13,6 @@ const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
 const envConfig = require('../../config/config.js');
 const relationManager = require('../helpers/relationManager.js');
 const deployUtil = require('../deploy/deploymentUtil');
-const docker = require('../../util/docker.js');
 const k8s = require('../../util/k8s.js');
 const fileIO = require('../../util/codegen/lib/fileIO.js');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
@@ -695,31 +694,34 @@ e.verifyHook = (_req, _res) => {
 };
 
 function removeWebHooks(serviceId, _req) {
-	logger.debug(`[${_req.get('TxnId')}] Removing web hooks for ${serviceId}`);
+	let txnId = _req.get('TxnId');
+	logger.debug(`[${txnId}] Removing web hooks :: ${serviceId}`);
 	var options = {
 		url: envConfig.baseUrlNE + '/webHook/' + serviceId,
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req.get('txnId'),
+			'TxnId': txnId,
 			'Authorization': _req.get('Authorization')
 		},
 		json: true
 	};
 	request.delete(options, function (err, res) {
-		if (err) logger.error(`[${_req.get('TxnId')}] Remove web hooks err : ${err.message}`);
-		else if (!res) logger.error(`[${_req.get('TxnId')}] Remove web hooks err : Notification Engine down!`);
-		else logger.info(`[${_req.get('TxnId')}] Remove web hooks :: Done!`);
+		if (err) logger.error(`[${txnId}] Remove web hooks :: ${serviceId} :: ${err.message}`);
+		else if (!res) logger.error(`[${txnId}] Remove web hooks :: ${serviceId} :: Notification Engine down!`);
+		else logger.info(`[${txnId}] Remove web hooks :: ${serviceId} :: Done!`);
 	});
 }
 
 function updateWebHook(id, data, _req) {
+	let txnId = _req.get('TxnId');
+	logger.debug(`[${txnId}] Updating web hooks :: ${id}`);
 	var options = {
 		url: envConfig.baseUrlNE + '/webHook/' + id,
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req.get('txnId'),
+			'TxnId': txnId,
 			'Authorization': _req.get('Authorization')
 		},
 		json: true,
@@ -729,16 +731,16 @@ function updateWebHook(id, data, _req) {
 			workflowHooks: data.workflowHooks
 		}
 	};
-	logger.debug(options);
+	logger.trace(`[${txnId}] Updating web hooks :: ${id} :: ${JSON.stringify(options)}`);
 	new Promise((resolve, reject) => request.put(options, function (err, res) {
 		if (err) {
-			logger.error(err.message);
+			logger.error(`[${txnId}] Updating web hooks :: ${id} :: ${err.message}`);
 			reject();
 		} else if (!res) {
-			logger.error('Notification Engine DOWN');
+			logger.error(`[${txnId}] Updating web hooks :: ${id} :: Notification Engine down!`);
 			reject();
 		} else {
-			logger.info('WebHook Updated');
+			logger.info(`[${txnId}] Updating web hooks :: ${id} :: Done`);
 			resolve();
 		}
 	}));
@@ -1181,7 +1183,8 @@ function rollBackDeploy(id, req) {
 }
 
 e.deployAPIHandler = (_req, _res) => {
-	logger.debug('Inside deployAPIHandler');
+	let txnId = _req.get('TxnId');
+	logger.debug(`[${txnId}] Inside deployAPIHandler`);
 	let user = _req.get('User');
 	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')): false;
 	let socket = _req.app.get('socket');
@@ -1196,22 +1199,32 @@ e.deployAPIHandler = (_req, _res) => {
 	let ID = _req.swagger.params.id.value;
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
-			logger.debug('Data from DB.');
-			logger.debug(_d);
-			let oldData = JSON.parse(JSON.stringify(_d));
-			if (!_d) _res.status(404).json({ message: 'Not found' });
+			if (!_d) {
+				logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: No data found in DB`);
+				_res.status(404).json({ message: 'Not found' });
+			}
 			else {
-				logger.debug('Old data found!');
+				logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Old data found in DB`);
+				logger.trace(`[${txnId}] Deploy API handler :: ${ID} :: Data from DB :: ${JSON.stringify(_d)}`);
+				let oldData = JSON.parse(JSON.stringify(_d));
 				if (_d.status != 'Draft' && !_d.draftVersion) {
+					logger.error(`[${txnId}] Deploy API handler :: ${ID} :: No draft data found`);
 					throw new Error('Draft not available for this data service');
 				}
 				if (_d.status === 'Draft') {
 					let svcObject = _d.toObject();
 					if (envConfig.verifyDeploymentUser && !isSuperAdmin && svcObject && svcObject._metadata && svcObject._metadata.lastUpdatedBy == user) {
+						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: User cannot deploy own changes.`);
 						return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 					}
-					if (!svcObject.definition) throw new Error('Data service definition not found.');
-					if (!svcObject.versionValidity) throw new Error('Data settings are not configured for the data service.');
+					if (!svcObject.definition) {
+						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: definition not found`);
+						throw new Error('Data service definition not found.');
+					}
+					if (!svcObject.versionValidity) {
+						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: Data settings not configured`);
+						throw new Error('Data settings are not configured for the data service.');
+					}
 					// svcObject.definition = JSON.parse(svcObject.definition);
 					let promise = Promise.resolve();
 					let role = svcObject.role;
@@ -1238,6 +1251,7 @@ e.deployAPIHandler = (_req, _res) => {
 						})
 						.then(() => deployUtil.deployService(svcObject, socket, _req, false, false))
 						.then(() => {
+							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: Deployment process started`);
 							dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
 							_res.status(202).json({ message: 'Deployment process started' });
 						});
@@ -1245,6 +1259,7 @@ e.deployAPIHandler = (_req, _res) => {
 					return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 						.then(_newData => {
 							if (envConfig.verifyDeploymentUser && !isSuperAdmin && _newData && _newData._metadata && _newData._metadata.lastUpdatedBy == user) {
+								logger.error(`[${txnId}] Deploy API handler :: ${ID} :: User cannot deploy own changes.`);
 								return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 							}
 							if (_newData.webHooks || _newData.workflowHooks) isWebHookUpdateRequired = true;
@@ -1257,13 +1272,13 @@ e.deployAPIHandler = (_req, _res) => {
 								isReDeploymentRequired = true;
 							}
 							if (_newData.app && _newData.app !== oldData.app) {
-								return _res.status(400).json({
-									message: 'App change not permitted'
-								});
+								logger.error(`[${txnId}] Deploy API handler :: ${ID} :: Old(${oldData.app}) app and New(${_newData.app}) app. App change not permitted`);
+								return _res.status(400).json({ message: 'App change not permitted' });
 							}
 							if (oldData.name != _newData.name) isReDeploymentRequired = true;
 							if (oldData.disableInsights != _newData.disableInsights) isReDeploymentRequired = true;
 							if(oldData.permanentDeleteData != _newData.permanentDeleteData) isReDeploymentRequired = true;
+							
 							removeSoftDeletedRecords = !oldData.permanentDeleteData && _newData.permanentDeleteData;
 							logger.debug('oldWizard ' + JSON.stringify(oldData.wizard));
 							logger.debug('newWizard ' + JSON.stringify(_newData.wizard));
@@ -1287,53 +1302,41 @@ e.deployAPIHandler = (_req, _res) => {
 							let isCounterChangeRequired = false;
 							let padding = newIdElement ? newIdElement.padding : null;
 							if (!definitionComparison) {
-								logger.debug('Definition has changed!');
+								logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Definition changed`);
 								if (padding > 15) {
-									return _res.status(400).json({
-										'message': '_id length cannot be greater than 15'
-									});
+									logger.error(`[${txnId}] Deploy API handler :: ${ID} :: _id length cannot be greater than 15.`);
+									return _res.status(400).json({ 'message': '_id length cannot be greater than 15' });
 								}
 								if (oldIdElement['padding'] > newIdElement['padding']) {
-									_res.status(400).json({
-										message: 'Decreasing _id\'s length in not allowed'
-									});
-									return;
+									logger.error(`[${txnId}] Deploy API handler :: ${ID} :: _id length cannot be decreased.`);
+									logger.error(`[${txnId}] Deploy API handler :: ${ID} :: old (${oldIdElement['padding']} new ${newIdElement['padding']})`);
+									return _res.status(400).json({ message: 'Decreasing _id\'s length in not allowed' });
 								}
-								if (newIdElement['counter'] && oldIdElement['counter'] != newIdElement['counter']) {
-									isCounterChangeRequired = true;
-								}
+								if (newIdElement['counter'] && oldIdElement['counter'] != newIdElement['counter']) isCounterChangeRequired = true;
 								isReDeploymentRequired = true;
 							}
 							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) _newData.version = _d.version + 1;
-
-							logger.debug('Webhook save required ' + isWebHookUpdateRequired);
-							logger.debug('Redeployment required ' + isReDeploymentRequired);
-							logger.debug('DeleteAndCreate required ' + isDeleteAndCreateRequired);
-							logger.debug('AuditIndexDelete required ' + isAuditIndexDeleteRequired);
+							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Redeployment required? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
+							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Webhook save required? ${isWebHookUpdateRequired ? 'YES' : 'NO'}`);
+							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Clean redeploy? ${isDeleteAndCreateRequired ? 'YES' : 'NO'}`);
+							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Audit index delete required? ${isAuditIndexDeleteRequired ? 'YES' : 'NO'}`);
 
 							let srvcObj = JSON.parse(JSON.stringify(_newData.toObject()));
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
 							if (!definitionComparison) _d.definition = newDefinition;
-							let promise = Promise.resolve();
 
-							if (oldData.name != _newData.name) {
-								promise = nameUniqueCheck(_newData.name, _newData.app, ID);
-							}
+							let promise = Promise.resolve();
+							if (oldData.name != _newData.name) promise = nameUniqueCheck(_newData.name, _newData.app, ID);
 							return promise
 								.then(() => {
-									if (isApiEndpointChanged) {
-										return apiUniqueCheck(_newData.api, _newData.app, ID);
-									} else {
-										return Promise.resolve();
-									}
+									if (isApiEndpointChanged) return apiUniqueCheck(_newData.api, _newData.app, ID);
+									return Promise.resolve();
 								})
 								.then(() => {
 									if (newDefinition) return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], _newData.app);
-									else {
-										return Promise.resolve();
-									}
+									return Promise.resolve();
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
 								.then(() => {
@@ -1374,68 +1377,51 @@ e.deployAPIHandler = (_req, _res) => {
 								.then(() => logger.info('Service details for ' + _d._id + ' under app ' + _d.app + ' has been saved!'))
 								.then(() => {
 									if (isCounterChangeRequired) {
+										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Counter change required? ${isCounterChangeRequired ? 'YES' : 'NO'}`);
+										logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: DB :: ${`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`}`);
 										return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`).collection('counters')
 											.update({ _id: oldData.collectionName }, { next: parseInt(newIdElement['counter'], 10) - 1 });
 									}
 								})
 								.then(_e => {
 									if (_e) logger.info('counter for ' + oldData._id + ' updated successfully');
-									let newHooks = {
-										'webHooks': _newData.webHooks,
-										'workflowHooks': _newData.workflowHooks
-									};
+									let newHooks = { 'webHooks': _newData.webHooks, 'workflowHooks': _newData.workflowHooks };
 									if (isWebHookUpdateRequired) return updateWebHook(ID, newHooks, _req);
 								})
-								// .then(() => {
-								// 	if (isAuditIndexDeleteRequired) {
-								// 		return global.mongoDBVishnu.collection(oldData.collectionName + '.audit').dropIndex('expiry_1')
-								// 			.catch(err => {
-								// 				logger.error(err.message);
-								// 			});
-								// 	}
-								// 	return Promise.resolve();
-								// })
 								.then(() => {
 									if (isApiEndpointChanged && srvcObj.relatedSchemas && srvcObj.relatedSchemas.incoming) {
 										return expandRelationHelper.updateHrefInDS(ID, srvcObj.app, srvcObj.api, srvcObj.relatedSchemas.incoming, _req);
 									}
 								})
 								.then(() => {
-									logger.debug({
-										isReDeploymentRequired,
-										preHookUpdated,
-										isWizardUpdateRequired,
-										removeSoftDeletedRecords
-									});
+									logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Redeployment required? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
+									logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Pre-hook updated? ${preHookUpdated ? 'YES' : 'NO'}`);
+									logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Wizard updated? ${isWizardUpdateRequired ? 'YES' : 'NO'}`);
+									logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Purge soft deleted records? ${removeSoftDeletedRecords ? 'YES' : 'NO'}`);
 									if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) {
-										logger.debug(JSON.stringify(_d));
-										logger.info('Redeploying service ' + _d._id + ' under app ' + _d.app);
+										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Redeploying under app ${_d.app}`);
+										logger.trace(`[${txnId}] Deploy API handler :: ${JSON.stringify(_d)}`);
 										var data = JSON.parse(JSON.stringify(_d));
 										// data.definition = JSON.parse(_d.definition);
 										let mongoDBVishnu = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
-										if (envConfig.isCosmosDB()) {
-											return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
-										} else {
-											logger.info(`Reindexing the collection :: ${data.collectionName}`);
-											// removing soft deleted record with check
-											let promise = Promise.resolve();
-											if(removeSoftDeletedRecords) {
-												promise = mongoDBVishnu.dropCollection(data.collectionName + '.deleted');
-											}
-											return promise.then(() => mongoDBVishnu.collection(data.collectionName).dropIndexes())
-												.catch(err => {
-													logger.error(err);
-													return Promise.resolve(err);
-												})
-												.then(_d => {
-													logger.debug(`Result of reindexing: ${_d}`);
-													return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
-												})
-												.then(_d => {
-													logger.debug('Deploy service returned');
-													logger.debug(_d);
-												});
+										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Reindexing the collection :: ${data.collectionName}`);
+										// removing soft deleted record with check
+										let promise = Promise.resolve();
+										if(removeSoftDeletedRecords) {
+											promise = mongoDBVishnu.dropCollection(data.collectionName + '.deleted');
 										}
+										return promise.then(() => mongoDBVishnu.collection(data.collectionName).dropIndexes())
+											.catch(err => {
+												logger.error(`[${txnId}] Deploy API handler :: ${ID} :: Reindexing: ${err.message}`);
+												return Promise.resolve(err);
+											})
+											.then(_d => {
+												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Result of reindexing: ${JSON.stringify(_d)}`);
+												return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
+											})
+											.then(_d => {
+												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Response from deployService :: ${JSON.stringify(_d)}`);
+											});
 									}
 								})
 								.then(() => {
@@ -1445,9 +1431,7 @@ e.deployAPIHandler = (_req, _res) => {
 								.catch(err => {
 									logger.debug('Inside catch');
 									if (!_res.headersSent)
-										_res.status(400).json({
-											message: err.message
-										});
+										_res.status(400).json({ message: err.message });
 									logger.error(err);
 									return rollBackDeploy(ID, _req);
 								});
@@ -1728,46 +1712,47 @@ e.destroyService = (_req, _res) => {
 	let id = _req.swagger.params.id.value;
 	let socket = _req.app.get('socket');
 	let originalDoc = {};
-	logger.info(`[${_req.get('TxnId')}] Deleting the service : ${id}`);
-	logger.debug(`[${_req.get('TxnId')}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
+	let txnId = _req.get('TxnId');
+	logger.info(`[${txnId}] Deleting the service : ${id}`);
+	logger.debug(`[${txnId}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
 	return smhelper.getFlows(id, _req)
 		.then(_flows => {
-			logger.debug(`[${_req.get('TxnId')}] ${JSON.stringify({ _flows })}`);
+			logger.debug(`[${txnId}] ${JSON.stringify({ _flows })}`);
 			if (_flows.length > 0) {
 				_res.status(400).json({ message: 'Data service is in use by flow ' + _flows.map(_f => _f.name) });
-				logger.info(`[${_req.get('TxnId')}] Data service in use by flows`);
+				logger.info(`[${txnId}] Data service in use by flows`);
 				throw new Error('Data service in use by flows');
 			} else {
 				return checkIncomingRelation(id);
 			}
 		})
 		.then((doc) => {
-			logger.debug(`[${_req.get('TxnId')}] Delete data service ${id} has 0 incoming relationships`);
-			logger.debug(`[${_req.get('TxnId')}] Delete data service :: ID :: ${doc._id}`);
-			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Type :: ${doc.type}`);
-			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Status :: ${doc.status}`);
-			logger.debug(`[${_req.get('TxnId')}] Delete data service :: App :: ${doc.app}`);
-			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Version :: ${doc.version}`);
-			logger.debug(`[${_req.get('TxnId')}] Delete data service :: Perm. del. data :: ${doc.permanentDeleteData}`);
+			logger.debug(`[${txnId}] Delete data service ${id} has 0 incoming relationships`);
+			logger.debug(`[${txnId}] Delete data service :: ID :: ${doc._id}`);
+			logger.debug(`[${txnId}] Delete data service :: Type :: ${doc.type}`);
+			logger.debug(`[${txnId}] Delete data service :: Status :: ${doc.status}`);
+			logger.debug(`[${txnId}] Delete data service :: App :: ${doc.app}`);
+			logger.debug(`[${txnId}] Delete data service :: Version :: ${doc.version}`);
+			logger.debug(`[${txnId}] Delete data service :: Perm. del. data :: ${doc.permanentDeleteData}`);
 			if (doc && doc.type != 'internal') {
 				originalDoc = JSON.parse(JSON.stringify(doc));
 				crudder.model.findOneAndUpdate({ _id: originalDoc._id }, { status: 'Pending' })
-					.then(() => logger.info(`[${_req.get('TxnId')}] Undeploying data service ${doc._id}`))
+					.then(() => logger.info(`[${txnId}] Undeploying data service ${doc._id}`))
 					.then(() => _res.status(202).json({message: 'Undeploying data service ...'}))
 					.catch(err => {
 						_res.status(500).json({ message: err.message });
 					});
 			} else if (doc && doc.type == 'internal') {
-				logger.error(`[${_req.get('TxnId')}] ${doc._id} type is ${doc.type}. Not allowed to delete`);
+				logger.error(`[${txnId}] ${doc._id} type is ${doc.type}. Not allowed to delete`);
 				_res.status(400).json({ message: 'Can not delete this Service' });
 				throw new Error('Can not delete this Service');
 			} else {
-				logger.error(`[${_req.get('TxnId')}] Service not found`);
+				logger.error(`[${txnId}] Service not found`);
 				_res.status(404).json({message: 'Service not found'});
 				throw new Error('Service not found');
 			}
 		}, (data) => {
-			logger.debug(`[${_req.get('TxnId')}] Delete data service ${id} has ${data.relatedEntities.length} relationships`);
+			logger.debug(`[${txnId}] Delete data service ${id} has ${data.relatedEntities.length} relationships`);
 			let serviceMsg = '';
 			if (data.relatedEntities.length == 1) serviceMsg = 'Data Service: ' + data.relatedEntities[0];
 			else if (data.relatedEntities.length == 2) serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
@@ -1783,26 +1768,25 @@ e.destroyService = (_req, _res) => {
 		})
 		.then(() => {
 			deployUtil.sendToSocket(socket, 'serviceStatus', {_id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
-			logger.debug(`[${_req.get('TxnId')}] Socket updated :: serviceStatus :: Entity has been stopped.`);
+			logger.debug(`[${txnId}] Socket updated :: serviceStatus :: Entity has been stopped.`);
 			deployUtil.deleteServiceInUserMgmt(id, _req);
 			deployUtil.deleteServiceInWorkflow(id, _req);
 			return removeIncomingRelation(id, _req);
 		})
 		.then(() => {
 			if (process.env.SM_ENV == 'K8s' && originalDoc.status != 'Draft') {
-				return k8s.deploymentDelete(_req.get('TxnId'), originalDoc)
-					.then(() => logger.info(`[${_req.get('TxnId')}] Deployment deleted for ${originalDoc._id}`))
-					.then(() => k8s.serviceDelete(_req.get('TxnId'), originalDoc))
-					.then(() => logger.info(`[${_req.get('TxnId')}] Service deleted for ${originalDoc._id})`))
-					.then(() => docker.removeImage(_req.get('TxnId'), originalDoc._id, originalDoc.version))
-					.catch(_e => logger.error(`[${_req.get('TxnId')}] ${_e.message}`));
+				return k8s.deploymentDelete(txnId, originalDoc)
+					.then(() => logger.info(`[${txnId}] Deployment deleted for ${originalDoc._id}`))
+					.then(() => k8s.serviceDelete(txnId, originalDoc))
+					.then(() => logger.info(`[${txnId}] Service deleted for ${originalDoc._id})`))
+					.catch(_e => logger.error(`[${txnId}] ${_e.message}`));
 			}
 		})
 		.then(() => smHooks.removeServicesInGlobalSchema(id, _req))
 		.then(() => {
 			if (originalDoc && originalDoc.permanentDeleteData) {
-				logger.info(`[${_req.get('TxnId')}] Deleting service ${id} : Dropping collection ${originalDoc.collectionName} under db ${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
-				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, _req.get('TxnId'));
+				logger.info(`[${txnId}] Deleting service ${id} : Dropping collection ${originalDoc.collectionName} under db ${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
+				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, txnId);
 			}
 		})
 		.then(() => {
@@ -1810,10 +1794,10 @@ e.destroyService = (_req, _res) => {
 				.then((doc) => {
 					if (doc) {
 						deployUtil.sendToSocket(socket, 'deleteService', { _id: id, app: doc.app, api: doc.api, message: 'Entity has been deleted' });
-						logger.debug(`[${_req.get('TxnId')}] Socket updated :: serviceStatus :: Entity has been deleted.`);
+						logger.debug(`[${txnId}] Socket updated :: serviceStatus :: Entity has been deleted.`);
 						removeWebHooks(id, _req);
 						if (!originalDoc.permanentDeleteData) {
-							logger.info(`[${_req.get('TxnId')}] Soft deleting data service`);
+							logger.info(`[${txnId}] Soft deleting data service`);
 							doc._metadata.deleted = true;
 							return doc.save(_req);
 						} else {
@@ -1824,7 +1808,7 @@ e.destroyService = (_req, _res) => {
 								.then(draftDoc => {
 									if (draftDoc) draftDoc.remove(_req);
 								})
-								.catch(err => logger.error(`[${_req.get('TxnId')}] Error deleting draft : ${err.message}`));
+								.catch(err => logger.error(`[${txnId}] Error deleting draft : ${err.message}`));
 						}
 					}
 				});
@@ -1834,7 +1818,7 @@ e.destroyService = (_req, _res) => {
 			smHooks.deleteAudit(originalDoc.app + '.' + originalDoc.collectionName, _req);
 		})
 		.catch(err => {
-			logger.error(`[${_req.get('TxnId')}] Delete data service : err.message`);
+			logger.error(`[${txnId}] Delete data service : err.message`);
 			if (!_res.headersSent) _res.status(500).send(err.message);
 			if (err.message !== '____CUSTOM_ENTITY_STOP_MSG_____') {
 				deployUtil.updateDocument(crudder.model, { _id: id }, { status: 'Undeployed' }, _req)
