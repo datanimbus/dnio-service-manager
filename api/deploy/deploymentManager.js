@@ -41,7 +41,16 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 				envObj['SERVICE_PORT'] = `${_schema.port}`;
 				_schema.api = (_schema.api).substring(1);
 				logger.debug('zipping folder for id ', id);
-				zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
+				try {
+					if(fs.existsSync('./generatedServices/' + id)) {
+						logger.info('Directory ::', JSON.stringify(fs.readdirSync('./generatedServices/' + id)))
+					} else {
+						logger.error('Directory doesn\'t exist.');
+					}
+					zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
+				} catch (e) {
+					logger.error('Error in creating zip folder :: ', e);
+				}
 				logger.debug('folder zipped for id : ', id);
 				var formData = {
 					deployment: JSON.stringify({
