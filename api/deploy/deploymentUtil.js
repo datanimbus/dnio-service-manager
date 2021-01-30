@@ -215,7 +215,7 @@ e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =
 			return dm.deployService(_schemaDetails, _isUpdate, _isDeleteAndCreate);
 		})
 		.catch(e => {
-			logger.error('Deployment failed');
+			logger.error('Deployment failed due to error ', e);
 			// cleanup should happen where the code is generated
 			// TODO: Jerry/Shobhit
 			var startPromise = new Promise.resolve();
@@ -239,8 +239,7 @@ e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =
 						comment: e.message
 					}, req);
 				})
-				.catch(err => logger.error(err.message));
-			logger.error(e);
+				.catch(err => logger.error('Error in catch block deployService :: ', err));
 		});
 };
 
