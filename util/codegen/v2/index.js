@@ -68,6 +68,7 @@ function generateFolderStructure(config) {
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/config.js'), path.join(config.path, 'config.js'));
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/http-client.js'), path.join(config.path, 'http-client.js'));
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/init.js'), path.join(config.path, 'init.js'));
+		fs.copyFileSync(path.join(process.cwd(), '../ds-base/package.json'), path.join(config.path, 'package.json'));
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/queue.js'), path.join(config.path, 'queue.js'));
 		fs.copyFileSync(path.join(process.cwd(), '../ds-base/db-factory.js'), path.join(config.path, 'db-factory.js'));
 	}
