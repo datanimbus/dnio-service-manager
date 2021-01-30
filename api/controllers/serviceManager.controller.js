@@ -2009,7 +2009,7 @@ e.changeStatus = function (req, res) {
 				});
 			}
 			else {
-				let outRelationIds = data.relatedSchemas.outgoing.map(_d => _d.service);
+				let outRelationIds = data && data.relatedSchemas && data.relatedSchemas.outgoing ? data.relatedSchemas.outgoing.map(_d => _d.service): [];
 				let outgoingAPIs;
 				return crudder.model.find({ _id: { $in: outRelationIds } }, { app: 1, api: 1, _id: 1, port: 1, relatedSchemas: 1 }).lean(true)
 					.then((inSrvc => {
