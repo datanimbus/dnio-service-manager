@@ -162,6 +162,32 @@ module.exports = [
 				}
 			]
 		}
+	}, {
+		'name': 'Date',
+		'definition': {
+			'type': 'Object',
+			'definition': [
+				{
+					'type': 'String',
+					'key': 'rawData'
+				},
+				{
+					'type': 'Date',
+					'key': 'tzData'
+				},
+				{
+					'type': 'String',
+					'key': 'tzInfo'
+				},
+				{
+					'type': 'Date',
+					'key': 'utc'
+				},
+				{
+					'type': 'Number',
+					'key': 'unix'
+				}
+			]
+		}
 	}
-
 ];

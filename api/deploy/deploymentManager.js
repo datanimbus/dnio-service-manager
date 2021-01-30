@@ -42,9 +42,22 @@ e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 				envObj['SERVICE_ID'] = `${_schema._id}`;
 				envObj['SERVICE_PORT'] = `${_schema.port}`;
 				_schema.api = (_schema.api).substring(1);
+
+
 				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Generating zip file`);
-				zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
+				if(!fs.existsSync('./generatedServices/' + id)) {
+					logger.error(`[${_txnId}] DM deploy :: ${id} :: directory doesn't exist.`);
+					return reject("Missing directory")
+				}
+				logger.info(`[${_txnId}] DM deploy :: ${id} :: Directory :: ${JSON.stringify(fs.readdirSync('./generatedServices/' + id))}`)
+				try {
+					zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
+				} catch (e) {
+					logger.error(`[${_txnId}] DM deploy :: ${id} :: Error in zip :: ${e.message}`);
+					return reject(e)
+				}
 				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Zip file :: ./generatedServices/${id}_${_schema.version}.zip`);
+
 				var formData = {
 					deployment: JSON.stringify({
 						image: id,
