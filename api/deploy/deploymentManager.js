@@ -41,6 +41,7 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 				envObj['SERVICE_PORT'] = `${_schema.port}`;
 				_schema.api = (_schema.api).substring(1);
 				zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
+				logger.debug('folder zipped for id : ', id);
 				var formData = {
 					deployment: JSON.stringify({
 						image: id,
@@ -80,7 +81,7 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 					oldDeployment: JSON.stringify(_oldData),
 					file: fs.createReadStream('./generatedServices/' + id + '_' + _schema.version + '.zip'),
 				};
-
+				logger.debug('Calling DM for deployment with formData:: ', JSON.stringify(formData));
 				request.post({ url: deploymentUrl, formData: formData }, function (err, httpResponse, body) {
 					if (err) {
 						logger.error('upload failed:', err);
@@ -97,7 +98,10 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 					resolve('Process queued in DM');
 				});
 			})
-			.catch(e => reject(e));
+			.catch(e => {
+				logger.error('Error in deployService :: ', e);
+				reject(e)
+			});
 	});
 };
 
