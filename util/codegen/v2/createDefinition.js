@@ -290,7 +290,9 @@ let stringify = function (obj) {
 	return json;
 };
 
-function generateDefinition(config) {
+function generateDefinition(_txnId, config) {
+	let id = config._id;
+	logger.info(`[${_txnId}] GenerateDefinition :: ${id}`);
 	let data = config.definition;
 	var definition = {};
 	let specialFields = {
@@ -304,7 +306,8 @@ function generateDefinition(config) {
 	try {
 		processSchema(data, definition, null, specialFields);
 	} catch (e) {
-		logger.error(e);
+		logger.error(`[${_txnId}] GenerateDefinition :: ${id} :: Schema invalid`);
+		logger.error(`[${_txnId}] GenerateDefinition :: ${id} :: ${e.message}`);
 		throw new Error('Schema invalid');
 	}
 	config.createOnlyFields = specialFields.createOnlyFields;

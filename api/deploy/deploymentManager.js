@@ -11,14 +11,16 @@ const deploymentUrlUpdate = config.baseUrlDM + '/updateDeployment';
 const deploymentApiChange = config.baseUrlDM + '/apiChange';
 const fs = require('fs');
 const request = require('request');
+
 var e = {};
-e.deployService = (_schema, _isUpdate, _oldData) => {
+e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 	const id = _schema._id;
+	logger.info(`[${_txnId}] DM deploy :: ${id}`);
 	var deploymentUrl;
 	return new Promise((resolve, reject) => {
 		// codeGen.startProcessing(_schema)
-		codeGen.generateFiles(_schema)
-			.then(_ => logger.info(_))
+		codeGen.generateFiles(_txnId, _schema)
+			// .then(_ => logger.info(_))
 			.then(() => {
 				if (_oldData) {
 					deploymentUrl = deploymentApiChange;
@@ -40,7 +42,9 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 				envObj['SERVICE_ID'] = `${_schema._id}`;
 				envObj['SERVICE_PORT'] = `${_schema.port}`;
 				_schema.api = (_schema.api).substring(1);
+				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Generating zip file`);
 				zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
+				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Zip file :: ./generatedServices/${id}_${_schema.version}.zip`);
 				var formData = {
 					deployment: JSON.stringify({
 						image: id,
@@ -80,24 +84,29 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 					oldDeployment: JSON.stringify(_oldData),
 					file: fs.createReadStream('./generatedServices/' + id + '_' + _schema.version + '.zip'),
 				};
-
+				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Uploading to DM...`);
 				request.post({ url: deploymentUrl, formData: formData }, function (err, httpResponse, body) {
 					if (err) {
-						logger.error('upload failed:', err);
+						logger.error(`[${_txnId}] DM deploy :: ${id} :: Upload failed :: ${err.message}`);
 						return reject(err);
 					}
 					if (httpResponse.statusCode >= 400) {
 						let errorMsg = body && body.message ? body.message : 'DM returned statusCode ' + httpResponse.statusCode;
-						logger.error(errorMsg);
+						logger.error(`[${_txnId}] DM deploy :: ${id} :: DM error :: ${errorMsg}`);
 						return reject(new Error(errorMsg));
 					}
-					logger.info('Upload successful!  Server responded with:', body);
+					logger.info(`[${_txnId}] DM deploy :: ${id} :: Process queued in DM`);
+					logger.debug(`[${_txnId}] DM deploy :: ${id} :: Upload to DM successful!`);
+					logger.trace(`[${_txnId}] DM deploy :: ${id} :: DM response - ${JSON.stringify(body)}`);
 					fileIO.deleteFolderRecursive('./generatedServices/' + id);
 					fileIO.removeFile('./generatedServices/' + id + '_1.zip');
 					resolve('Process queued in DM');
 				});
 			})
-			.catch(e => reject(e));
+			.catch(e => {
+				logger.error(`[${_txnId}] DM deploy :: ${id} :: ${e.message}`);
+				reject(e);
+			});
 	});
 };
 
