@@ -40,6 +40,7 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 				envObj['SERVICE_ID'] = `${_schema._id}`;
 				envObj['SERVICE_PORT'] = `${_schema.port}`;
 				_schema.api = (_schema.api).substring(1);
+				logger.debug('zipping folder for id ', id);
 				zipFolder('./generatedServices/' + id, './generatedServices/' + id + '_' + _schema.version + '.zip');
 				logger.debug('folder zipped for id : ', id);
 				var formData = {
@@ -100,7 +101,7 @@ e.deployService = (_schema, _isUpdate, _oldData) => {
 			})
 			.catch(e => {
 				logger.error('Error in deployService :: ', e);
-				reject(e)
+				reject(e);
 			});
 	});
 };
