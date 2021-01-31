@@ -20,7 +20,7 @@ function redeploy(services, successIds, i) {
 			logger.info(`[${txnId}] Redeploying service :: ${srvcDoc._id} :: No definition found. Ignoring`);
 			return Promise.resolve();
 		}
-		return k8s.deploymentDelete(srvcDoc.toObject())
+		return k8s.deploymentDelete(txnId, srvcDoc.toObject())
 			.then(_d => {
 				logger.info(`[${txnId}] Deployment deleted :: ${srvcDoc._id}`);
 				logger.trace(`[${txnId}] Deployment delete response - ${JSON.stringify(_d)}`);
