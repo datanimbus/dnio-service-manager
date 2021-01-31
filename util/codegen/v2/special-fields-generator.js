@@ -192,6 +192,7 @@ function genrateCode(config) {
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
 	code.push('async function validateDateFields(req, newData, oldData) {');
+	code.push('\tlet txnId = req.headers[global.txnIdHeader];');
 	code.push('\tconst errors = {};');
 	parseSchemaForDateFields(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
@@ -700,7 +701,7 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\t${_.camelCase(path)}New = commonUtils.getFormattedDate(${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
+					code.push(`\t\t\t${_.camelCase(path)}New = commonUtils.getFormattedDate(txnId, ${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
 					// _.set(newData, 'time', timeNew);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
 					code.push('\t\t} catch (e) {');
@@ -718,7 +719,7 @@ function genrateCode(config) {
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0 && !_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 						code.push(`\t\t${_.camelCase(path)}New = ${_.camelCase(path)}New.map((item, i) => {`);
 						code.push('\t\t\ttry {');
-						code.push(`\t\t\t\treturn commonUtils.getFormattedDate(item, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
+						code.push(`\t\t\t\treturn commonUtils.getFormattedDate(txnId, item, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
 						code.push('\t\t\t} catch (e) {');
 						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
