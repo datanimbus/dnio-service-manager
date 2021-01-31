@@ -119,7 +119,11 @@ else
     cd $WORKSPACE
 
     if [ $CICD ]; then
-        kubectl set image deployment/sm sm=data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
+        if [ $DOCKER_REG ]; then
+            kubectl set image deployment/sm sm=$DOCKER_REG/data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
+        else 
+            kubectl set image deployment/sm sm=data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
+        fi
     fi
 fi
 if [ $DOCKER_REG ]; then
