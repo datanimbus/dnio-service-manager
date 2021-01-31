@@ -2273,7 +2273,7 @@ function expandedExport(req, res, expand) {
         _id: uuids,
         status: "Pending",
         totalRecords: totalRecords,
-        user: req.headers.user,
+        user: req.headers ? req.headers.user : 'AUTO',
         type:"export",
         fileName: downloadFile,
         isRead: false,
@@ -3236,7 +3236,7 @@ function customCreate(req, res){
     e.exportDetails = (req,res) =>{
         let filter = {};
         if(req.swagger.params.filter.value) filter = JSON.parse(req.swagger.params.filter.value);
-        let user = req.headers.user;
+        let user = req.headers ? req.headers.user : 'AUTO';
         filter['user'] = user
         req.swagger.params.filter.value =  JSON.stringify(filter);   
         exportCrudder.index(req,res);
@@ -3245,7 +3245,7 @@ function customCreate(req, res){
     e.exportDetailsCount = (req,res) => {
         let filter = {};
         if(req.swagger.params.filter.value) filter = JSON.parse(req.swagger.params.filter.value);
-        let user = req.headers.user;
+        let user = req.headers ? req.headers.user : 'AUTO';
         filter['user'] = user
         req.swagger.params.filter.value =  JSON.stringify(filter);   
         exportCrudder.count(req,res);
@@ -3257,7 +3257,7 @@ function customCreate(req, res){
 
     e.exportUpdateReadStatus = (req, res) => {
         let fileId = req.swagger.params.fileId.value;
-        let user = req.headers.user
+        let user = req.headers ? req.headers.user : 'AUTO'
         let isRead = req.body.isRead;
         exportCrudder.model.findById(fileId).then(fileData => {
             if(!fileData) return res.status(404).json({ message: "File not found."})
