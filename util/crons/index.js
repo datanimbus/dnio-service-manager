@@ -1,7 +1,7 @@
-let imageCleanCron = require('./imageCleanCron');
+// let imageCleanCron = require('./imageCleanCron');
 let entityStatusCron = require('./entityStatusCron');
 function init(){
-	imageCleanCron();
+	// imageCleanCron();
 	entityStatusCron();
 }
 module.exports = init;
