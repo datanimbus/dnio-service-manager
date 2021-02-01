@@ -82,6 +82,7 @@ module.exports = {
 	isCosmosDB: isCosmosDB,
 	logQueueName: 'systemService',
 	dataStackNS: dataStackNS,
+	defaultTimezone: process.env.TZ_DEFAULT || 'Zulu',
 	fsMount: process.env.DS_FS_MOUNT_PATH || '/tmp/ds',
 	streamingConfig: {
 		url: process.env.STREAMING_HOST || 'nats://127.0.0.1:4222',
