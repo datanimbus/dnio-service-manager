@@ -78,7 +78,7 @@ function substituteGlobalDefinition(schema, globalSchema) {
 					attribute = newDef;
 					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
-			} else if (attribute['type'] == 'Date') {
+			} else if (attribute['type'] == 'Date' && attribute['properties']['_typeChanged'] == 'Date') {
 				let sysDef = getSystemGlobalDefinition('Date', systemGlobalSchema);
 				if (sysDef) {
 					sysDef.key = attribute.key;
