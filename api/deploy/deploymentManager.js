@@ -77,7 +77,7 @@ e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 						options: {
 							livenessProbe: {
 								httpGet: {
-									path: '/' + _schema.app + '/' + _schema.api + '/health/live',
+									path: '/' + _schema.app + '/' + _schema.api + '/utils/health/live',
 									port: _schema.port,
 									scheme: 'HTTP'
 								},
@@ -86,7 +86,7 @@ e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 							},
 							readinessProbe: {
 								httpGet: {
-									path: '/' + _schema.app + '/' + _schema.api + '/health/ready',
+									path: '/' + _schema.app + '/' + _schema.api + '/utils/health/ready',
 									port: _schema.port,
 									scheme: 'HTTP'
 								},
