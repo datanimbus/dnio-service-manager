@@ -34,6 +34,8 @@ const logger = global.logger;
 // };
 
 e.postRolesUserMgmt = function (data, _req) {
+	let txnId = _req.get('TxnId') || _req.headers.txnId;
+	let id = data._id;
 	var options = {
 		url: envConfig.baseUrlUSR + '/role',
 		method: 'POST',
@@ -49,14 +51,20 @@ e.postRolesUserMgmt = function (data, _req) {
 	return new Promise((resolve, reject) => {
 		request.post(options, function (err, res) {
 			if (err) {
-				logger.error(err.message);
-			} else if (!res) logger.error('User Management Service DOWN');
+				logger.error(`[${txnId}] Creating roles in UserMgmt :: ${id} :: ${err.message}`);
+				reject(err);
+			} else if (!res) {
+				logger.error(`[${txnId}] Creating roles in UserMgmt :: ${id} :: User Management down.`);
+				reject(new Error('User Management Service DOWN'));
+			}
 			else {
 				if (res.statusCode >= 200 && res.statusCode < 400) {
+					logger.info(`[${txnId}] Creating roles in UserMgmt :: ${id} :: Role Added`);
 					resolve();
-					logger.info('Role Added');
 				} else {
-					reject(new Error(res.body && res.body.message ? 'Roles creation failed:: ' + res.body.message : 'Roles creation failed'));
+					let message = res.body && res.body.message ? 'Roles creation failed:: ' + res.body.message : 'Roles creation failed';
+					logger.error(`[${txnId}] Creating roles in UserMgmt :: ${id} :: ${message}`);
+					reject(new Error(message));
 				}
 			}
 		});
@@ -64,6 +72,8 @@ e.postRolesUserMgmt = function (data, _req) {
 };
 
 e.updateRolesUserMgmt = function (serviceId, data, _req) {
+	let txnId = _req.get('TxnId') || _req.headers.txnId;
+	let id = serviceId;
 	var options = {
 		url: envConfig.baseUrlUSR + '/role/' + serviceId,
 		method: 'PUT',
@@ -79,14 +89,20 @@ e.updateRolesUserMgmt = function (serviceId, data, _req) {
 	return new Promise((resolve, reject) => {
 		request.put(options, function (err, res) {
 			if (err) {
-				logger.error(err.message);
-			} else if (!res) logger.error('User Management Service DOWN');
+				logger.error(`[${txnId}] Updating roles in UserMgmt :: ${id} :: ${err.message}`);
+				reject(err);
+			} else if (!res) {
+				logger.error(`[${txnId}] Updating roles in UserMgmt :: ${id} :: User Management down.`);
+				reject(new Error('User Management Service DOWN'));
+			}
 			else {
 				if (res.statusCode >= 200 && res.statusCode < 400) {
+					logger.info(`[${txnId}] Updating roles in UserMgmt :: ${id} :: Role Added`);
 					resolve();
-					logger.info('Role Updated');
 				} else {
-					reject(new Error(res.body && res.body.message ? 'Roles upate failed:: ' + res.body.message : 'Roles creation failed'));
+					let message = res.body && res.body.message ? 'Roles updation failed :: ' + res.body.message : 'Roles updation failed';
+					logger.error(`[${txnId}] Updating roles in UserMgmt :: ${id} :: ${message}`);
+					reject(new Error(message));
 				}
 			}
 		});
@@ -94,6 +110,7 @@ e.updateRolesUserMgmt = function (serviceId, data, _req) {
 };
 
 e.deleteServiceInUserMgmt = function (_id, _req) {
+	let txnId = _req.get('TxnId');
 	var options = {
 		url: envConfig.baseUrlUSR + '/service/' + _id,
 		method: 'Delete',
@@ -106,13 +123,14 @@ e.deleteServiceInUserMgmt = function (_id, _req) {
 		json: true
 	};
 	request.delete(options, function (err, res) {
-		if (err) logger.error(`[${_req.get('TxnId')}] ${err.message}`);
-		else if (!res) logger.error(`[${_req.get('TxnId')}] User Management service DOWN`);
-		else logger.info(`[${_req.get('TxnId')}] Service deletion process of ${_id} queued in user management`);
+		if (err) logger.error(`[${txnId}] Delete service in UserMgmt :: ${_id} :: ${err.message}`);
+		else if (!res) logger.error(`[${txnId}] Delete service in UserMgmt :: ${_id} :: User Management service DOWN`);
+		else logger.info(`[${txnId}] Delete service in UserMgmt :: ${_id} :: Service deletion process queued.`);
 	});
 };
 
 e.createServiceInUserMgmt = function (_id, _req, body) {
+	let txnId = _req.get('TxnId');
 	var options = {
 		url: envConfig.baseUrlUSR + '/service/' + _id,
 		method: 'POST',
@@ -126,16 +144,14 @@ e.createServiceInUserMgmt = function (_id, _req, body) {
 		body: body
 	};
 	request.post(options, function (err, res) {
-		if (err) {
-			logger.error(err.message);
-		} else if (!res) logger.error('User Management Service DOWN');
-		else {
-			logger.info('Service creation process of ' + _id + '  queued in user management');
-		}
+		if (err) logger.error(`[${txnId}] Create service in UserMgmt :: ${_id} :: ${err.message}`);
+		else if (!res) logger.error(`[${txnId}] Create service in UserMgmt :: ${_id} :: User Management service DOWN`);
+		else logger.info(`[${txnId}] Create service in UserMgmt :: ${_id} :: Service creation process queued.`);
 	});
 };
 
 e.deleteServiceInWorkflow = function (_id, _req) {
+	let txnId = _req.get('TxnId');
 	var options = {
 		url: envConfig.baseUrlWF + '/service/' + _id,
 		method: 'Delete',
@@ -148,9 +164,9 @@ e.deleteServiceInWorkflow = function (_id, _req) {
 		json: true
 	};
 	request.delete(options, function (err, res) {
-		if (err) logger.error(`[${_req.get('TxnId')}] ${err.message}`);
-		else if (!res) logger.error(`[${_req.get('TxnId')}] Workflow service DOWN`);
-		else logger.info(`[${_req.get('TxnId')}] Service deletion process of ${_id} queued in workflow`);
+		if (err) logger.error(`[${txnId}] Delete service in Workflow :: ${_id} :: ${err.message}`);
+		else if (!res) logger.error(`[${txnId}] Delete service in Workflow :: ${_id} :: Workflow service DOWN`);
+		else logger.info(`[${txnId}] Delete service in Workflow :: ${_id} :: Service deletion process queued.`);
 	});
 };
 

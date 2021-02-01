@@ -160,7 +160,7 @@ schema.pre('save', function (next, req) {
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
-	let user = req.headers.user;
+	let user = req.headers ? req.headers.user : 'AUTO';
 	self._metadata.lastUpdatedBy = user;
 	next();
 });
@@ -170,7 +170,7 @@ draftSchema.pre('save', function (next, req) {
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
-	let user = req.headers.user;
+	let user = req.headers ? req.headers.user : 'AUTO';
 	self._metadata.lastUpdatedBy = user;
 	next();
 });
@@ -596,6 +596,8 @@ function removeIncomingRelation(serviceId, req) {
 }
 
 function createWebHooks(data, _req) {
+	let txnId = _req.get('TxnId');
+	let id = data._id;
 	var options = {
 		url: envConfig.baseUrlNE + '/webHook',
 		method: 'POST',
@@ -609,10 +611,10 @@ function createWebHooks(data, _req) {
 	};
 	request.post(options, function (err, res) {
 		if (err) {
-			logger.error(err.message);
-		} else if (!res) logger.error('Notification Engine DOWN');
+			logger.error(`[${txnId}] Create webhook :: ${id} :: ${err.message}`);
+		} else if (!res) logger.error(`[${txnId}] Create webhook :: ${id} :: Notification Engine down`);
 		else {
-			logger.info('WebHook Added');
+			logger.info(`[${txnId}] Create webhook :: ${id} :: WebHook added`);
 		}
 	});
 }
