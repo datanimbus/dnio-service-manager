@@ -696,7 +696,7 @@ function genrateCode(config) {
 			if (key != '_id' && def.properties) {
 				if (def.type == 'Object' && def['properties']['dateType']) {
 					code.push(`\tlet ${_.camelCase(path)}defaultTimezone = ` + (def['properties']['defaultTimezone'] ? `'${def['properties']['defaultTimezone']}'` : undefined) + ';');
-					code.push(`\tlet ${_.camelCase(path)}supportedTimezones = ${def['properties']['supportedTimezones'] ? JSON.stringify(def['properties']['supportedTimezones']) : '[]'};`)
+					code.push(`\tlet ${_.camelCase(path)}supportedTimezones = ${def['properties']['supportedTimezones'] ? JSON.stringify(def['properties']['supportedTimezones']) : '[]'};`);
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
@@ -714,7 +714,7 @@ function genrateCode(config) {
 					if (def.definition[0]['properties'] && def.definition[0]['properties']['dateType']) {
 
 						code.push(`\tlet ${_.camelCase(path)}defaultTimezone = ` + (def.definition[0]['properties']['defaultTimezone'] ? `'${def.definition[0]['properties']['defaultTimezone']}'` : undefined) + ';');
-						code.push(`\tlet ${_.camelCase(path)}supportedTimezones = ${def.definition[0]['properties']['supportedTimezones'] ? JSON.stringify(def.definition[0]['properties']['supportedTimezones']) : '[]'};`)
+						code.push(`\tlet ${_.camelCase(path)}supportedTimezones = ${def.definition[0]['properties']['supportedTimezones'] ? JSON.stringify(def.definition[0]['properties']['supportedTimezones']) : '[]'};`);
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0 && !_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
