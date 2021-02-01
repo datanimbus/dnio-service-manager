@@ -712,7 +712,6 @@ function genrateCode(config) {
 					parseSchemaForDateFields(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0]['properties'] && def.definition[0]['properties']['dateType']) {
-
 						code.push(`\tlet ${_.camelCase(path)}DefaultTimezone = ` + (def.definition[0]['properties']['defaultTimezone'] ? `'${def.definition[0]['properties']['defaultTimezone']}'` : undefined) + ';');
 						code.push(`\tlet ${_.camelCase(path)}SupportedTimezones = ${def.definition[0]['properties']['supportedTimezones'] ? JSON.stringify(def.definition[0]['properties']['supportedTimezones']) : '[]'};`);
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
