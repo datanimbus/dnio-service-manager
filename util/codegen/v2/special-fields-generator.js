@@ -695,13 +695,13 @@ function genrateCode(config) {
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
 				if (def.type == 'Object' && def['properties']['dateType']) {
-					code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def['properties']['defaultTimeZone']}'`);
-					code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = ${def['properties']['supportedTimeZones'] || []}`);
+					code.push(`\tlet ${_.camelCase(path)}defaultTimezone = ` + (def['properties']['defaultTimezone'] ? `'${def['properties']['defaultTimezone']}'` : undefined) + ';');
+					code.push(`\tlet ${_.camelCase(path)}supportedTimezones = ${def['properties']['supportedTimezones'] ? JSON.stringify(def['properties']['supportedTimezones']) : '[]'};`)
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\t${_.camelCase(path)}New = commonUtils.getFormattedDate(txnId, ${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
+					code.push(`\t\t\t${_.camelCase(path)}New = commonUtils.getFormattedDate(txnId, ${_.camelCase(path)}New, ${_.camelCase(path)}defaultTimezone, ${_.camelCase(path)}supportedTimezones);`);
 					// _.set(newData, 'time', timeNew);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
 					code.push('\t\t} catch (e) {');
@@ -712,14 +712,15 @@ function genrateCode(config) {
 					parseSchemaForDateFields(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0]['properties'] && def.definition[0]['properties']['dateType']) {
-						code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def.definition[0]['properties']['defaultTimeZone']}'`);
-						code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = ${def.definition[0]['properties']['supportedTimeZones'] || []}`);
+
+						code.push(`\tlet ${_.camelCase(path)}defaultTimezone = ` + (def.definition[0]['properties']['defaultTimezone'] ? `'${def.definition[0]['properties']['defaultTimezone']}'` : undefined) + ';');
+						code.push(`\tlet ${_.camelCase(path)}supportedTimezones = ${def.definition[0]['properties']['supportedTimezones'] ? JSON.stringify(def.definition[0]['properties']['supportedTimezones']) : '[]'};`)
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0 && !_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 						code.push(`\t\t${_.camelCase(path)}New = ${_.camelCase(path)}New.map((item, i) => {`);
 						code.push('\t\t\ttry {');
-						code.push(`\t\t\t\treturn commonUtils.getFormattedDate(txnId, item, ${_.camelCase(path)}DefaultTimeZone, ${_.camelCase(path)}SupportedTimeZones);`);
+						code.push(`\t\t\t\treturn commonUtils.getFormattedDate(txnId, item, ${_.camelCase(path)}defaultTimezone, ${_.camelCase(path)}supportedTimezones);`);
 						code.push('\t\t\t} catch (e) {');
 						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
 						code.push('\t\t\t}');
