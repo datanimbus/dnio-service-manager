@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const envConfig = require('./../../../config/config');
 
 function genrateCode(config) {
 	let schema = config.definition;
@@ -695,7 +696,7 @@ function genrateCode(config) {
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
 				if (def.type == 'Object' && def['properties']['dateType']) {
-					code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def['properties']['defaultTimeZone']}'`);
+					code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def['properties']['defaultTimeZone'] || envConfig.defaultTimezone}'`);
 					code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = ${def['properties']['supportedTimeZones'] || []}`);
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
@@ -712,7 +713,7 @@ function genrateCode(config) {
 					parseSchemaForDateFields(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0]['properties'] && def.definition[0]['properties']['dateType']) {
-						code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def.definition[0]['properties']['defaultTimeZone']}'`);
+						code.push(`\tlet ${_.camelCase(path)}DefaultTimeZone = '${def.definition[0]['properties']['defaultTimeZone'] || envConfig.defaultTimezone}'`);
 						code.push(`\tlet ${_.camelCase(path)}SupportedTimeZones = ${def.definition[0]['properties']['supportedTimeZones'] || []}`);
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
