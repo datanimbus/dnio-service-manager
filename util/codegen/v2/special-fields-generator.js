@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const envConfig = require('./../../../config/config');
 
 function genrateCode(config) {
 	let schema = config.definition;
