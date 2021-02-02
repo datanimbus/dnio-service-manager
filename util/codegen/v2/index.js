@@ -35,6 +35,7 @@ function generateFiles(_txnId, config) {
 	return generateFolderStructure(_txnId, config)
 		.then(() => generateDefinition(_txnId, config))
 		.then((definition) => fs.writeFileSync(path.join(config.path, 'api/helpers/service.definition.js'), definition, 'utf-8'))
+		.then(() => fs.writeFileSync(path.join(config.path, 'service.json'), JSON.stringify(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, '.env'), dotEnvFile(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'Dockerfile'), dockerFile(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/swagger/swagger.yaml'), jsyaml.safeDump(generateYaml(config)), 'utf-8'))
