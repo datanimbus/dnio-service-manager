@@ -233,7 +233,7 @@ e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =
 			return dm.deployService(txnId, _schemaDetails, _isUpdate, _isDeleteAndCreate);
 		})
 		.catch(e => {
-			logger.error(`[${txnId}] Deploy service :: ${id} :: Deployment failed :: ${e.message}`);
+			logger.error(`[${txnId}] Deploy service :: ${id} :: Deployment failed :: ${e}`);
 			// cleanup should happen where the code is generated
 			// TODO: Jerry/Shobhit
 			var startPromise = new Promise.resolve();

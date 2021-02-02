@@ -9,5 +9,5 @@ apps:
     MONGO_RECONN_TRIES: 1000
     MONGO_RECONN_TIME_MILLI: 21600
     MODE: dev
-    LOG_LEVEL: debug
+    LOG_LEVEL: trace
     VERIFY_DEPLOYMENT_USER: false
