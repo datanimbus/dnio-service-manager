@@ -167,7 +167,17 @@ function canUpdateAPI(relations) {
 		});
 }
 
+function generateHeadersForProperties(_txnId, _headers){
+	logger.trace(`[${_txnId}] Generating headers for properties :: Before :: ${JSON.stringify(_headers)}`)
+	_headers.forEach(_header => {
+		_header["header"] = `DataStack-DS-${_header.key}`
+	})
+	logger.trace(`[${_txnId}] Generating headers for properties :: After :: ${JSON.stringify(_headers)}`)
+	return _headers
+}
+
 module.exports.schemaValidate = schemaValidate;
 module.exports.schemaValidateDefault = schemaValidateDefault;
 module.exports.getFlows = getFlows;
 module.exports.canUpdateAPI = canUpdateAPI;
+module.exports.generateHeadersForProperties = generateHeadersForProperties;
