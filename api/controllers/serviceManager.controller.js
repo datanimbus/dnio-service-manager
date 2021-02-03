@@ -798,7 +798,7 @@ e.createDoc = (_req, _res) => {
 			})
 			.then(_d => {
 				serviceObj = _d;
-				serviceObj.headers = smhelper.generateHeadersForProperties(txnId, serviceObj.headers);
+				serviceObj.headers = smhelper.generateHeadersForProperties(txnId, serviceObj.headers || []);
 				// To check => if definition is string of array
 				let permObj = {
 					_id: serviceObj._id,
@@ -952,7 +952,7 @@ e.updateDoc = (_req, _res) => {
 	// let role = _req.body.role;
 	// delete _req.body.role;
 	let promise = Promise.resolve();
-	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers);
+	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers || []);
 	if (_req.body.definition) {
 		promise = globalDefHelper.expandSchemaWithGlobalDef(_req.body.app, _req.body.definition);
 	}
