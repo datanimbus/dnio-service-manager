@@ -58,22 +58,25 @@ function generateFolderStructure(_txnId, config) {
 	logger.info(`[${_txnId}] GenerateFolderStructure :: ${id}`);
 
 	mkdirp.sync(config.path);
-	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${config.path}`);
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${config.path}`);
 	
 	mkdirp.sync(path.join(config.path, 'api/controllers'));
-	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/controllers')}`);
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/controllers')}`);
 	
 	mkdirp.sync(path.join(config.path, 'api/models'));
-	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/models')}`);
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/models')}`);
 	
 	mkdirp.sync(path.join(config.path, 'api/helpers'));
-	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/helpers')}`);
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/helpers')}`);
 	
 	mkdirp.sync(path.join(config.path, 'api/utils'));
-	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/utils')}`);
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/utils')}`);
+
+	mkdirp.sync(path.join(config.path, 'output'));
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'output')}`);
 	
 	mkdirp.sync(path.join(config.path, 'api/swagger'));
-	logger.debug(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/swagger')}`);
+	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/swagger')}`);
 	if (!envConfig.isK8sEnv()) {
 		logger.info(`[${_txnId}] GenerateFolderStructure :: ${id} :: Local ENV :: Copying Structure`);
 		copydir.sync(path.join(process.cwd(), '../ds-base/api'), path.join(config.path, 'api'));
