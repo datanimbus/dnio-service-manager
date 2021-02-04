@@ -57,6 +57,9 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 			if (attribute['type'] == 'Number' && attribute['properties'] && (attribute['properties']['precision'] || attribute['properties']['precision'] === 0)) {
 				specialFields['precisionFields'].push({ field: nestedKey, precision: attribute['properties']['precision'] });
 			}
+			if (attribute['properties'] && attribute['properties']['dateType']) {
+				specialFields['dateFields'].push({ field: nestedKey, dateType: attribute['properties']['dateType'], defaultTimezone:  attribute['properties']['defaultTimezone'] });
+			}
 			if (attribute['properties'] && (attribute['properties']['password'])) {
 				specialFields['secureFields'].push(nestedKey);
 			}
@@ -246,6 +249,9 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 				if (attribute['type'] == 'Number' && attribute['properties'] && (attribute['properties']['precision'] || attribute['properties']['precision'] === 0)) {
 					specialFields['precisionFields'].push({ field: newNestedKey, precision: attribute['properties']['precision'] });
 				}
+				if (attribute['properties']  && attribute['properties']['dateType']) {
+					specialFields['dateFields'].push({ field: newNestedKey, dateType: attribute['properties']['dateType'], defaultTimezone:  attribute['properties']['defaultTimezone']});
+				}
 				if (attribute['properties'] && attribute['properties']['createOnly']) {
 					specialFields['createOnlyFields'].push(newNestedKey);
 				}
@@ -301,6 +307,7 @@ function generateDefinition(_txnId, config) {
 		secureFields: [],
 		uniqueFields: [],
 		relationUniqueFields: [],
+		dateFields: [],
 		// relationRequiredFields: []
 	};
 	try {
@@ -314,6 +321,7 @@ function generateDefinition(_txnId, config) {
 	config.precisionFields = specialFields.precisionFields;
 	config.secureFields = specialFields.secureFields;
 	config.uniqueFields = specialFields.uniqueFields;
+	config.dateFields = specialFields.dateFields;
 	config.relationUniqueFields = specialFields.relationUniqueFields;
 	// config.relationRequiredFields = specialFields.relationRequiredFields;
 	definition['_id'] = {
