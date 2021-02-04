@@ -207,7 +207,7 @@ function genrateCode(config) {
 	code.push('module.exports.secureFields = secureFields;');
 	code.push('module.exports.uniqueFields = uniqueFields;');
 	code.push('module.exports.relationUniqueFields = relationUniqueFields;');
-	code.push('module.exports.dateFields = dateFields;')
+	code.push('module.exports.dateFields = dateFields;');
 	// code.push('module.exports.relationRequiredFields = relationRequiredFields;');
 	/**------------------------ METHODS ----------------------- */
 	code.push('module.exports.mongooseUniquePlugin = mongooseUniquePlugin;');
