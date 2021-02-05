@@ -52,6 +52,10 @@ ID_PREFIX="${config.idDetails.prefix || ''}"
 ID_SUFFIX="${config.idDetails.suffix || ''}"
 ID_COUNTER="${config.idDetails.counter}"
 PERMANENT_DELETE=${config.permanentDeleteData}
+HOSTNAME="localhost"
+DATA_STACK_APP_NS="appveen-${config.app}"
+DATA_STACK_NAMESPACE="appveen"
+DATA_STACK_APP="${config.app}"
 `;
 }
 
