@@ -113,18 +113,18 @@ const showParameters = [
 
 const callbackParameters = [
 	{
-		name: "id",
-		in: "path",
-		type: "string",
-		description: "ID of the posthook",
+		name: 'id',
+		in: 'path',
+		type: 'string',
+		description: 'ID of the posthook',
 		required: true
 	},{
-		name: "data",
-		in: "body",
+		name: 'data',
+		in: 'body',
 		schema: {
 			$ref: '#/definitions/callbackData'
 		},
-		description: "data"
+		description: 'data'
 	}
 ];
 
