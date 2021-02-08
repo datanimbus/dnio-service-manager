@@ -54,9 +54,9 @@ let deleteGSInUserMgmt = function (_id, _req) {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req.get('txnId'),
-			'Authorization': _req.get('Authorization'),
-			'User': _req.get('user')
+			'TxnId': _req.headers['txnid'],
+			'Authorization': _req.headers['authorization'],
+			'User': _req.headers['user']
 		},
 		json: true
 	};
@@ -216,7 +216,7 @@ function deployService(serv, socket, _req) {
 }
 
 schema.post('save', function (doc) {
-	let socket = doc._req.app.get('socket');
+	let socket = doc._req.socket;
 	if (doc._oldData && doc.definition && doc._oldData.definition != doc.definition) {
 		mongoose.model('services').find({ '_id': { '$in': doc.services } })
 			.then(services => {
@@ -244,6 +244,7 @@ schema.post('remove', function (doc) {
 
 var crudder = new SMCrud(schema, 'globalSchema', options);
 e.createDoc = (_req, _res) => {
+	let txnId = _req.get('txnId')
 	smHooks.validateApp(_req)
 		.then(() => {
 			// if (_req.body.definition) _req.body.definition = JSON.stringify(_req.body.definition);
@@ -254,6 +255,7 @@ e.createDoc = (_req, _res) => {
 			return createGSInUserMgmt(_d._id, _req, { _id: _d._id, app: _d.app });
 		})
 		.catch(err => {
+			logger.error(`[${txnId}] : Error in createDoc of globalSchema :: `, err);
 			if (!_res.headersSent) {
 				_res.status(400).json({
 					message: err.message
