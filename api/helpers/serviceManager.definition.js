@@ -84,6 +84,10 @@ var definition = {
 				'type': 'String',
 				'enum': ['count', 'time']
 			}
+		},
+		'default': {
+			'validityValue': -1,
+			'validityType': "count"
 		}
 	},
 	'permanentDeleteData': {
