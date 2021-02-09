@@ -397,19 +397,19 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.definitions['enrichData'] = {
-		'properties': {
-			'sheetData': {
-				'type': ['array'],
-				'items': {
-					'type': 'object'
-				}
-			},
-			'headerMapping': {
-				'type': ['object']
-			}
-		}
-	};
+	// swagger.definitions['enrichData'] = {
+	// 	'properties': {
+	// 		'sheetData': {
+	// 			'type': ['array'],
+	// 			'items': {
+	// 				'type': 'object'
+	// 			}
+	// 		},
+	// 		'headerMapping': {
+	// 			'type': ['object']
+	// 		}
+	// 	}
+	// };
 	swagger.definitions['bulkCreateData'] = {
 		'properties': {
 			'fileId': {
@@ -564,45 +564,46 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths['/lock'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'put': {
-			description: `lock '${config.name}'`,
-			operationId: `${methodName.lock}`,
-			parameters: [{
-				name: 'data',
-				in: 'body',
-				description: `Payload to validate '${config.name}'`,
-				schema: {
-					properties: {
-						'id': {
-							'type': 'string',
-						},
-						'wfId': {
-							'type': ['string', 'null'],
-						}
-					}
-				}
-			},
-			{
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}],
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
+	// Was Used by WF Module
+	// swagger.paths['/utils/lock'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'put': {
+	// 		description: `lock '${config.name}'`,
+	// 		operationId: `${methodName.lock}`,
+	// 		parameters: [{
+	// 			name: 'data',
+	// 			in: 'body',
+	// 			description: `Payload to validate '${config.name}'`,
+	// 			schema: {
+	// 				properties: {
+	// 					'id': {
+	// 						'type': 'string',
+	// 					},
+	// 					'wfId': {
+	// 						'type': ['string', 'null'],
+	// 					}
+	// 				}
+	// 			}
+	// 		},
+	// 		{
+	// 			name: 'authorization',
+	// 			in: 'header',
+	// 			type: 'string',
+	// 			description: 'The JWT token for req.validation'
+	// 		}],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'List of the entites'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
 	swagger.paths['/utils/bulkShow'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
@@ -640,7 +641,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths['/hook'] = {
+	swagger.paths['/utils/hook'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'post': {
 			description: 'triggers the hook with data',
@@ -826,7 +827,7 @@ function generateYaml(config) {
 		}
 	};
 	if (mathDefinition) {
-		swagger.paths['/{id}/math'] = {
+		swagger.paths['/utils/{id}/math'] = {
 			'x-swagger-router-controller': `${methodName.controller}`,
 			'put': {
 				description: `Does math operation on a '${config.name}'`,
@@ -869,91 +870,91 @@ function generateYaml(config) {
 		};
 	}
 
-	swagger.paths['/file/upload'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: 'Uploads the file',
-			operationId: `${methodName.fileUpload}`,
-			parameters: [
-				{
-					name: 'authorization',
-					in: 'header',
-					type: 'string',
-					description: 'The JWT token for req.validation'
-				}
-			],
-			responses: {
-				'200': {
-					description: 'meta data of file'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
+	// swagger.paths['/utils/file/upload'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'post': {
+	// 		description: 'Uploads the file',
+	// 		operationId: `${methodName.fileUpload}`,
+	// 		parameters: [
+	// 			{
+	// 				name: 'authorization',
+	// 				in: 'header',
+	// 				type: 'string',
+	// 				description: 'The JWT token for req.validation'
+	// 			}
+	// 		],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'meta data of file'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
 
-	swagger.paths['/file/{id}/view'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'View the file',
-			parameters: [{
-				name: 'id',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: 'Id of file',
-			}, {
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}],
-			operationId: `${methodName.fileView}`,
-			responses: {
-				'200': {
-					description: 'file data'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
+	// swagger.paths['/utils/file/{id}/view'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'get': {
+	// 		description: 'View the file',
+	// 		parameters: [{
+	// 			name: 'id',
+	// 			in: 'path',
+	// 			type: 'string',
+	// 			required: true,
+	// 			description: 'Id of file',
+	// 		}, {
+	// 			name: 'authorization',
+	// 			in: 'header',
+	// 			type: 'string',
+	// 			description: 'The JWT token for req.validation'
+	// 		}],
+	// 		operationId: `${methodName.fileView}`,
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'file data'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
 
-	swagger.paths['/file/download/{id}'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Download the file',
-			parameters: [{
-				name: 'id',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: 'Id of file',
-			}],
-			operationId: `${methodName.fileDownload}`,
-			responses: {
-				'200': {
-					description: 'file download'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
+	// swagger.paths['/utils/file/download/{id}'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'get': {
+	// 		description: 'Download the file',
+	// 		parameters: [{
+	// 			name: 'id',
+	// 			in: 'path',
+	// 			type: 'string',
+	// 			required: true,
+	// 			description: 'Id of file',
+	// 		}],
+	// 		operationId: `${methodName.fileDownload}`,
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'file download'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
 
-	swagger.paths['/export/download/{id}'] = {
+	swagger.paths['/utils/export/download/{id}'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
 			description: 'Download the file',
@@ -983,190 +984,194 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths['/fileMapper/{fileId}'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: `Retrieve a list of '${config.name}'`,
-			operationId: 'fileMapperList',
-			parameters: JSON.parse(JSON.stringify(getParameters.concat({
-				name: 'fileId',
-				in: 'path',
-				required: true,
-				type: 'string',
-				description: 'fileId against which we db will be querried'
-			}))),
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/fileMapper/{fileId}/create'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: 'Create the data in the file',
-			operationId: 'v1_bulkCreate',
-			parameters: [{
-				name: 'data',
-				in: 'body',
-				description: 'Payload to bulkCreate',
-				schema: {
-					$ref: '#/definitions/bulkCreateData'
-				}
-			}, {
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}, {
-				name: 'fileId',
-				in: 'path',
-				required: true,
-				type: 'string',
-				description: 'fileId against which we db will be querried'
-			}],
-			responses: {
-				'200': {
-					description: 'Stats of bulkCreate'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/fileMapper/{fileId}/mapping'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'put': {
-			description: 'Uploads the file containing data',
-			operationId: 'v1_mapping',
-			parameters: [
-				{
-					name: 'data',
-					in: 'body',
-					description: 'Payload to validate data',
-					schema: {
-						type: 'object'
-					}
-				},
-				{
-					name: 'authorization',
-					in: 'header',
-					type: 'string',
-					description: 'The JWT token for req.validation'
-				}, {
-					name: 'fileId',
-					in: 'path',
-					required: true,
-					type: 'string',
-					description: 'fileId against which we db will be querried'
-				}],
-			responses: {
-				'200': {
-					description: 'Data validated against mapping'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/fileMapper/enrich'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'put': {
-			description: 'Enrich the sheet data',
-			operationId: 'v1_enrichData',
-			parameters: [{
-				name: 'data',
-				in: 'body',
-				description: 'Payload to validate data',
-				schema: {
-					$ref: '#/definitions/enrichData'
-				}
-			}, {
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}],
-			responses: {
-				'200': {
-					description: 'Data enriched against mapping'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/fileMapper/{fileId}/enrichDataForWF'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Enrich the sheet data for Record ID',
-			operationId: 'v1_enrichDataForWF',
-			parameters: [{
-				name: 'page',
-				in: 'query',
-				type: 'integer',
-				description: 'Page number of the request'
-			}, {
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}, {
-				name: 'count',
-				in: 'query',
-				type: 'integer',
-				description: 'Number of records per page'
-			}, {
-				name: 'fileId',
-				in: 'path',
-				required: true,
-				type: 'string',
-				description: 'fileId against which we db will be querried'
-			}, {
-				name: 'operation',
-				in: 'query',
-				type: 'string',
-				description: 'request method',
-				default: 'false'
-			}, {
-				name: 'filter',
-				in: 'query',
-				type: 'string',
-				description: 'filter'
-			}],
-			responses: {
-				'200': {
-					description: 'Data enriched against mapping'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/fileMapper/{fileId}/count'] = {
+	// swagger.paths['/utils/fileMapper/{fileId}'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'get': {
+	// 		description: `Retrieve a list of '${config.name}'`,
+	// 		operationId: 'fileMapperList',
+	// 		parameters: JSON.parse(JSON.stringify(getParameters.concat({
+	// 			name: 'fileId',
+	// 			in: 'path',
+	// 			required: true,
+	// 			type: 'string',
+	// 			description: 'fileId against which we db will be querried'
+	// 		}))),
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'List of the entites'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
+	// swagger.paths['/utils/fileMapper/{fileId}/create'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'post': {
+	// 		description: 'Create the data in the file',
+	// 		operationId: 'v1_bulkCreate',
+	// 		parameters: [{
+	// 			name: 'data',
+	// 			in: 'body',
+	// 			description: 'Payload to bulkCreate',
+	// 			schema: {
+	// 				$ref: '#/definitions/bulkCreateData'
+	// 			}
+	// 		}, {
+	// 			name: 'authorization',
+	// 			in: 'header',
+	// 			type: 'string',
+	// 			description: 'The JWT token for req.validation'
+	// 		}, {
+	// 			name: 'fileId',
+	// 			in: 'path',
+	// 			required: true,
+	// 			type: 'string',
+	// 			description: 'fileId against which we db will be querried'
+	// 		}],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'Stats of bulkCreate'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
+	// swagger.paths['/utils/fileMapper/{fileId}/mapping'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'put': {
+	// 		description: 'Uploads the file containing data',
+	// 		operationId: 'v1_mapping',
+	// 		parameters: [
+	// 			{
+	// 				name: 'data',
+	// 				in: 'body',
+	// 				description: 'Payload to validate data',
+	// 				schema: {
+	// 					type: 'object'
+	// 				}
+	// 			},
+	// 			{
+	// 				name: 'authorization',
+	// 				in: 'header',
+	// 				type: 'string',
+	// 				description: 'The JWT token for req.validation'
+	// 			}, {
+	// 				name: 'fileId',
+	// 				in: 'path',
+	// 				required: true,
+	// 				type: 'string',
+	// 				description: 'fileId against which we db will be querried'
+	// 			}],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'Data validated against mapping'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
+
+
+
+	// Was used by WF module
+	// swagger.paths['/utils/fileMapper/enrich'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'put': {
+	// 		description: 'Enrich the sheet data',
+	// 		operationId: 'v1_enrichData',
+	// 		parameters: [{
+	// 			name: 'data',
+	// 			in: 'body',
+	// 			description: 'Payload to validate data',
+	// 			schema: {
+	// 				$ref: '#/definitions/enrichData'
+	// 			}
+	// 		}, {
+	// 			name: 'authorization',
+	// 			in: 'header',
+	// 			type: 'string',
+	// 			description: 'The JWT token for req.validation'
+	// 		}],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'Data enriched against mapping'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
+	// swagger.paths['/utils/fileMapper/{fileId}/enrichDataForWF'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'get': {
+	// 		description: 'Enrich the sheet data for Record ID',
+	// 		operationId: 'v1_enrichDataForWF',
+	// 		parameters: [{
+	// 			name: 'page',
+	// 			in: 'query',
+	// 			type: 'integer',
+	// 			description: 'Page number of the request'
+	// 		}, {
+	// 			name: 'authorization',
+	// 			in: 'header',
+	// 			type: 'string',
+	// 			description: 'The JWT token for req.validation'
+	// 		}, {
+	// 			name: 'count',
+	// 			in: 'query',
+	// 			type: 'integer',
+	// 			description: 'Number of records per page'
+	// 		}, {
+	// 			name: 'fileId',
+	// 			in: 'path',
+	// 			required: true,
+	// 			type: 'string',
+	// 			description: 'fileId against which we db will be querried'
+	// 		}, {
+	// 			name: 'operation',
+	// 			in: 'query',
+	// 			type: 'string',
+	// 			description: 'request method',
+	// 			default: 'false'
+	// 		}, {
+	// 			name: 'filter',
+	// 			in: 'query',
+	// 			type: 'string',
+	// 			description: 'filter'
+	// 		}],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'Data enriched against mapping'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
+	swagger.paths['/utils/fileMapper/{fileId}/count'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
 			description: `returns count of '${config.name}'`,
@@ -1279,7 +1284,7 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths[basePath + '/utils/fileTransfers/{fileId}/readStatus'] = {
+	swagger.paths['/utils/fileTransfers/{fileId}/readStatus'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'put': {
 			description: 'Updates File Read Status',
@@ -1354,63 +1359,63 @@ function generateYaml(config) {
 			}
 		}
 	};
-	swagger.paths['/utils/hrefUpdate'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'put': {
-			description: 'Update url of outgoing relations',
-			operationId: 'v1_updateHref',
-			parameters: [{
-				name: 'data',
-				in: 'body',
-				description: 'Payload to update href',
-				schema: {
-					'type': 'object'
-				}
-			}],
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/health/live'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Healthcheck API for service',
-			operationId: `${methodName.healthCheck}`,
-			responses: {
-				'200': {
-					description: 'Success'
-				},
-				'400': {
-					description: 'Error'
-				}
-			}
-		}
-	};
+	// swagger.paths['/utils/hrefUpdate'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'put': {
+	// 		description: 'Update url of outgoing relations',
+	// 		operationId: 'v1_updateHref',
+	// 		parameters: [{
+	// 			name: 'data',
+	// 			in: 'body',
+	// 			description: 'Payload to update href',
+	// 			schema: {
+	// 				'type': 'object'
+	// 			}
+	// 		}],
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'List of the entites'
+	// 			},
+	// 			'400': {
+	// 				description: 'Bad parameters'
+	// 			},
+	// 			'500': {
+	// 				description: 'Internal server error'
+	// 			}
+	// 		}
+	// 	}
+	// };
+	// swagger.paths['/utils/health/live'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'get': {
+	// 		description: 'Healthcheck API for service',
+	// 		operationId: `${methodName.healthCheck}`,
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'Success'
+	// 			},
+	// 			'400': {
+	// 				description: 'Error'
+	// 			}
+	// 		}
+	// 	}
+	// };
 
-	swagger.paths['/health/ready'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Healthcheck API for service',
-			operationId: `${methodName.readinessCheck}`,
-			responses: {
-				'200': {
-					description: 'Success'
-				},
-				'400': {
-					description: 'Error'
-				}
-			}
-		}
-	};
+	// swagger.paths['/utils/health/ready'] = {
+	// 	'x-swagger-router-controller': `${methodName.controller}`,
+	// 	'get': {
+	// 		description: 'Healthcheck API for service',
+	// 		operationId: `${methodName.readinessCheck}`,
+	// 		responses: {
+	// 			'200': {
+	// 				description: 'Success'
+	// 			},
+	// 			'400': {
+	// 				description: 'Error'
+	// 			}
+	// 		}
+	// 	}
+	// };
 	return swagger;
 }
 
