@@ -244,7 +244,7 @@ schema.post('remove', function (doc) {
 
 var crudder = new SMCrud(schema, 'globalSchema', options);
 e.createDoc = (_req, _res) => {
-	let txnId = _req.get('txnId')
+	let txnId = _req.get('txnId');
 	smHooks.validateApp(_req)
 		.then(() => {
 			// if (_req.body.definition) _req.body.definition = JSON.stringify(_req.body.definition);
