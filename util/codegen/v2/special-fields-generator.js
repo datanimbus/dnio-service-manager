@@ -193,7 +193,7 @@ function genrateCode(config) {
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
 	code.push('async function validateDateFields(req, newData, oldData) {');
-	code.push('\tlet txnId = req.headers[global.txnIdHeader];');
+	code.push('\tlet txnId = req.headers[\'txnid\'];');
 	code.push('\tconst errors = {};');
 	parseSchemaForDateFields(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
