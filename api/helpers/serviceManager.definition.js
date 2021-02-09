@@ -87,7 +87,7 @@ var definition = {
 		},
 		'default': {
 			'validityValue': -1,
-			'validityType': "count"
+			'validityType': 'count'
 		}
 	},
 	'permanentDeleteData': {
