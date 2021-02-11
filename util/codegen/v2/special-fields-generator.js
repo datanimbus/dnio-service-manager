@@ -623,7 +623,7 @@ function genrateCode(config) {
 					} else if (def.definition[0].type == 'Object') {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
-						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.forEach((newData, i) => {`);
+						code.push(`\t\t${_.camelCase(path)}.forEach((newData, i) => {`);
 						parseSchemaForBoolean(def.definition[0].definition, '');
 						code.push('\t\t});');
 						code.push('\t}');
