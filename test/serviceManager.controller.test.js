@@ -37,8 +37,8 @@ describe("Testing serviceManager main", function () {
         });
 
         beforeEach(() => {
-            var validateApp = sinon.stub(smHooks, 'validateApp');
-            validateApp.returns(Promise.resolve());
+            var validateAppAndGetAppData = sinon.stub(smHooks, 'validateAppAndGetAppData');
+            validateAppAndGetAppData.returns(Promise.resolve());
 
             var postRolesUserMgmt = sinon.stub(deployUtil, 'postRolesUserMgmt');
             postRolesUserMgmt.returns(Promise.resolve());
@@ -130,8 +130,8 @@ describe("Testing serviceManager main", function () {
         var GlobalService = null;
 
         beforeEach(() => {
-            var validateApp = sinon.stub(smHooks, 'validateApp');
-            validateApp.returns(Promise.resolve());
+            var validateAppAndGetAppData = sinon.stub(smHooks, 'validateAppAndGetAppData');
+            validateAppAndGetAppData.returns(Promise.resolve());
             smcControllerRewire.__set__("apiUniqueCheck", (a, b) => Promise.resolve());
             smcControllerRewire.__set__("nameUniqueCheck", (a, b) => Promise.resolve());
             smcControllerRewire.__set__("validateCounterChange", () => Promise.resolve());
@@ -543,8 +543,8 @@ describe("Testing serviceManager main", function () {
         var GlobalService = null;
 
         beforeEach(() => {
-            var validateApp = sinon.stub(smHooks, 'validateApp');
-            validateApp.returns(Promise.resolve());
+            var validateAppAndGetAppData = sinon.stub(smHooks, 'validateAppAndGetAppData');
+            validateAppAndGetAppData.returns(Promise.resolve());
 
             var updateExpiry = sinon.stub(smHooks, 'updateExpiry');
             updateExpiry.returns(Promise.resolve());

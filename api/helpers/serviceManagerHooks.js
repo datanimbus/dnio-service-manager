@@ -98,17 +98,18 @@ e.removeServicesInGlobalSchema = function (serviceId, req) {
 		});
 };
 
-e.validateApp = function (_req) {
+e.validateAppAndGetAppData = function (_req) {
 	var options = {
-		url: envConfig.baseUrlUSR + '/app/' + _req.body.app + '?select=_id,type',
+		url: envConfig.baseUrlUSR + '/app/' + _req.body.app + '?select=_id,type,disableInsights',
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
 			'TxnId': _req.get('TxnId'),
 			'Authorization': _req.headers.authorization
-		}
+		},
+		json: true
 	};
-	return new Promise((_resolve, _reject) => request.get(options, function (err, res) {
+	return new Promise((_resolve, _reject) => request.get(options, function (err, res, body) {
 		if (err) {
 			logger.error(err.message);
 			_reject();
@@ -124,7 +125,7 @@ e.validateApp = function (_req) {
 			});
 		} else {
 			logger.info('App ' + _req.body.app + ' exists!');
-			_resolve();
+			_resolve(body);
 		}
 	}));
 };
