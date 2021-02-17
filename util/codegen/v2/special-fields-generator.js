@@ -22,6 +22,7 @@ function genrateCode(config) {
 	code.push(`const secureFields = '${config.secureFields}'.split(',');`);
 	code.push(`const uniqueFields = ${JSON.stringify(config.uniqueFields)};`);
 	code.push(`const relationUniqueFields = '${config.relationUniqueFields}'.split(',');`);
+	code.push(`const dateFields = ${JSON.stringify((config.dateFields || []))}`);
 	// code.push(`const relationRequiredFields = '${config.relationRequiredFields}'.split(',');`);
 
 	/**------------------------ CREATE ONLY ----------------------- */
@@ -192,7 +193,7 @@ function genrateCode(config) {
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
 	code.push('async function validateDateFields(req, newData, oldData) {');
-	code.push('\tlet txnId = req.headers[global.txnIdHeader];');
+	code.push('\tlet txnId = req.headers[\'txnid\'];');
 	code.push('\tconst errors = {};');
 	parseSchemaForDateFields(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
@@ -206,6 +207,7 @@ function genrateCode(config) {
 	code.push('module.exports.secureFields = secureFields;');
 	code.push('module.exports.uniqueFields = uniqueFields;');
 	code.push('module.exports.relationUniqueFields = relationUniqueFields;');
+	code.push('module.exports.dateFields = dateFields;');
 	// code.push('module.exports.relationRequiredFields = relationRequiredFields;');
 	/**------------------------ METHODS ----------------------- */
 	code.push('module.exports.mongooseUniquePlugin = mongooseUniquePlugin;');
@@ -621,7 +623,7 @@ function genrateCode(config) {
 					} else if (def.definition[0].type == 'Object') {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
-						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.forEach((newData, i) => {`);
+						code.push(`\t\t${_.camelCase(path)}.forEach((newData, i) => {`);
 						parseSchemaForBoolean(def.definition[0].definition, '');
 						code.push('\t\t});');
 						code.push('\t}');

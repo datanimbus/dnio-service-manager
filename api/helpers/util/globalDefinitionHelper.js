@@ -7,7 +7,7 @@ var e = {};
 function getGlobalDefinition(id, globalDefArr) {
 	let obj = globalDefArr.find(obj => obj._id === id && obj.definition);
 	if (!obj) return null;
-	return obj.definition;
+	return obj.definition[0];
 }
 
 function getSystemGlobalDefinition(type, globalDefArr) {

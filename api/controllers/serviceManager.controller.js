@@ -778,8 +778,13 @@ e.createDoc = (_req, _res) => {
 		let serviceObj = null;
 		return getNextPort()
 			.then(port => _req.body.port = port)
-			.then(() => smHooks.validateApp(_req))
-			.then(() => apiUniqueCheck(_req.body.api, _req.body.app))
+			.then(() => smHooks.validateAppAndGetAppData(_req))
+			.then((appData) => {
+				if(!('disableInsights' in _req.body)) {
+					_req.body.disableInsights = appData.disableInsights; 
+				}
+				return apiUniqueCheck(_req.body.api, _req.body.app)
+			})
 			.then(() => nameUniqueCheck(_req.body.name, _req.body.app))
 			.then(() => {
 				if (_req.body.definition) {
@@ -1011,7 +1016,7 @@ e.updateDoc = (_req, _res) => {
 			}
 
 			let srvcObj = null;
-			return smHooks.validateApp(_req)
+			return smHooks.validateAppAndGetAppData(_req)
 				.then(() => {
 					if (oldData.name != _req.body.name) {
 						return nameUniqueCheck(_req.body.name, _req.body.app, ID);
@@ -2757,7 +2762,7 @@ function enableCalendar(req, res) {
 			return updateDeployment(req, res, ds);
 		} else {
 			logger.debug('Creating calendar DS');
-			let promises = [getNextPort(), smHooks.validateApp(req), apiUniqueCheck(calendarDSDetails.api, app), nameUniqueCheck(calendarDSDetails.name, app)];
+			let promises = [getNextPort(), smHooks.validateAppAndGetAppData(req), apiUniqueCheck(calendarDSDetails.api, app), nameUniqueCheck(calendarDSDetails.name, app)];
 			return Promise.all(promises).then(data => {
 				calendarDSDetails.port = data[0];
 				return createDSWithDefinition(req, getCalendarDSDefinition(calendarDSDetails))
