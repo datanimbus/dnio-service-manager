@@ -17,24 +17,29 @@ function addAuthHeader(paths, jwt) {
 }
 
 function show(req, res) {
+	let txnId = req.get('TxnId');
 	let id = req.swagger.params.id.value;
+	logger.debug(`[${txnId}] Fetching Swagger API documentation for service :: ${id}`);
 	mongoose.model('services').findOne({ '_id': id, '_metadata.deleted': false })
 		.then(_d => {
 			if (!_d) {
-				res.status(400).json({ message: 'Service not found' });
+				logger.error(`[${txnId}] Service not found :: ${id}`);
+				res.status(404).json({ message: 'Service not found' });
 				return;
 			}
 			_d = _d.toObject();
 			let swagger = generateYaml(_d);
 			swagger.host = req.query.host;
+			logger.debug(`[${txnId}] Swagger host :: ${swagger.host}`);
 			swagger.basePath = req.query.basePath ? req.query.basePath : swagger.basePath;
+			logger.debug(`[${txnId}] Swagger basePath :: ${swagger.basePath}`);
 			apiNotAllowed.forEach(_k => delete swagger.paths[_d.api + '' + _k]);
 			definitionNotAllowed.forEach(_k => delete swagger.definitions[_k]);
 			addAuthHeader(swagger.paths, req.query.token);
 			res.status(200).json(swagger);
 		})
 		.catch(err => {
-			logger.error(err.message);
+			logger.error(`[${txnId}] Error generating swagger doc :: ${err.message}`);
 			res.status(500).json({ message: err.message });
 		});
 }

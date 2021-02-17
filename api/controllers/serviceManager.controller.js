@@ -778,8 +778,13 @@ e.createDoc = (_req, _res) => {
 		let serviceObj = null;
 		return getNextPort()
 			.then(port => _req.body.port = port)
-			.then(() => smHooks.validateApp(_req))
-			.then(() => apiUniqueCheck(_req.body.api, _req.body.app))
+			.then(() => smHooks.validateAppAndGetAppData(_req))
+			.then((appData) => {
+				if(!('disableInsights' in _req.body)) {
+					_req.body.disableInsights = appData.disableInsights; 
+				}
+				return apiUniqueCheck(_req.body.api, _req.body.app);
+			})
 			.then(() => nameUniqueCheck(_req.body.name, _req.body.app))
 			.then(() => {
 				if (_req.body.definition) {
@@ -1011,7 +1016,7 @@ e.updateDoc = (_req, _res) => {
 			}
 
 			let srvcObj = null;
-			return smHooks.validateApp(_req)
+			return smHooks.validateAppAndGetAppData(_req)
 				.then(() => {
 					if (oldData.name != _req.body.name) {
 						return nameUniqueCheck(_req.body.name, _req.body.app, ID);
@@ -1223,7 +1228,7 @@ e.deployAPIHandler = (_req, _res) => {
 						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: User cannot deploy own changes.`);
 						return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 					}
-					if (!svcObject.definition) {
+					if (!svcObject.definition || svcObject.definition.length == 1) {
 						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: definition not found`);
 						throw new Error('Data service definition not found.');
 					}
@@ -1455,37 +1460,30 @@ e.deployAPIHandler = (_req, _res) => {
 			}
 		})
 		.catch(err => {
-			logger.debug('Inside catch');
-			if (!_res.headersSent)
-				_res.status(400).json({
-					message: err.message
-				});
-			logger.error(err);
+			logger.trace(`[${txnId}] Inside catch`);
+			if (!_res.headersSent) _res.status(400).json({ message: err.message });
+			logger.error(`[${txnId}] Error deploying data service :: ${err.message}`);
 		});
 };
 
 e.startAPIHandler = (_req, _res) => {
+	let txnId = _req.get('TxnId');
 	var id = _req.swagger.params.id.value;
 	let socket = _req.app.get('socket');
-	crudder.model.findOne({
-		_id: id,
-		'_metadata.deleted': false,
-		'type': { '$nin': ['internal'] }
-	})
+	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
 		.then(doc => {
+			if(doc && doc.definition.length == 1 ) throw new Error('Data service definition not found.');
 			if (doc) {
 				checkOutGoingRelation(id)
 					.then(() => {
-						_res.status(202).json({
-							message: 'Entity has been saved successfully'
-						});
+						_res.status(202).json({ message: 'Entity has been saved successfully' });
 						// doc.save(_req);
 						doc = doc.toObject();
 						// doc.definition = JSON.parse(doc.definition);
 						const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 						if (process.env.SM_ENV == 'K8s') {
 							let instances = doc.instances ? doc.instances : 1;
-							logger.info('Scaling to ' + instances);
+							logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
 							return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
 								.then(_d => {
 									logger.debug(_d);
@@ -1523,10 +1521,8 @@ e.startAPIHandler = (_req, _res) => {
 			}
 		})
 		.catch(e => {
-			logger.error(e.message);
-			if (!_res.headersSent) _res.status(500).json({
-				message: e.message
-			});
+			logger.error(`[${txnId}] Data service start error ${id} :: ${e.message}`);
+			if (!_res.headersSent) _res.status(500).json({ message: e.message });
 		});
 };
 
@@ -2123,6 +2119,7 @@ e.startAllServices = (_req, _res) => {
 		.then(docs => {
 			if (docs) {
 				let promises = docs.map(doc => {
+					if(doc.definition.length == 1) return;
 					doc = doc.toObject();
 					// doc.definition = JSON.parse(doc.definition);
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
@@ -2757,7 +2754,7 @@ function enableCalendar(req, res) {
 			return updateDeployment(req, res, ds);
 		} else {
 			logger.debug('Creating calendar DS');
-			let promises = [getNextPort(), smHooks.validateApp(req), apiUniqueCheck(calendarDSDetails.api, app), nameUniqueCheck(calendarDSDetails.name, app)];
+			let promises = [getNextPort(), smHooks.validateAppAndGetAppData(req), apiUniqueCheck(calendarDSDetails.api, app), nameUniqueCheck(calendarDSDetails.name, app)];
 			return Promise.all(promises).then(data => {
 				calendarDSDetails.port = data[0];
 				return createDSWithDefinition(req, getCalendarDSDefinition(calendarDSDetails))
