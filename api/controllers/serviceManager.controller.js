@@ -783,7 +783,7 @@ e.createDoc = (_req, _res) => {
 				if(!('disableInsights' in _req.body)) {
 					_req.body.disableInsights = appData.disableInsights; 
 				}
-				return apiUniqueCheck(_req.body.api, _req.body.app)
+				return apiUniqueCheck(_req.body.api, _req.body.app);
 			})
 			.then(() => nameUniqueCheck(_req.body.name, _req.body.app))
 			.then(() => {
