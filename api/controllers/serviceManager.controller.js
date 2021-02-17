@@ -2119,7 +2119,7 @@ e.startAllServices = (_req, _res) => {
 		.then(docs => {
 			if (docs) {
 				let promises = docs.map(doc => {
-					if(doc.definition.length == 1) return
+					if(doc.definition.length == 1) return;
 					doc = doc.toObject();
 					// doc.definition = JSON.parse(doc.definition);
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
