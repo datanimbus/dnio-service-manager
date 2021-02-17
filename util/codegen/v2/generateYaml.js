@@ -372,7 +372,7 @@ function generateYaml(config) {
 	var swagger = {
 		swagger: '2.0',
 		info: {
-			version: '0.0.1',
+			version: `${config.version}`,
 			title: config.name + ' API'
 		},
 		host: 'localhost:' + config.port,
