@@ -166,6 +166,7 @@ function genrateCode(config) {
 	code.push('function fixBoolean(req, newData, oldData) {');
 	code.push('\tconst errors = {};');
 	code.push('\tconst trueBooleanValues = global.trueBooleanValues;');
+	code.push('\tconst falseBooleanValues = global.falseBooleanValues;');
 	parseSchemaForBoolean(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('}');
@@ -595,8 +596,10 @@ function genrateCode(config) {
 					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toLowerCase();`);
 					code.push(`\t\t\tif (_.indexOf(trueBooleanValues, ${_.camelCase(path)}) > -1) {`);
 					code.push(`\t\t\t\t_.set(newData, '${path}', true);`);
-					code.push('\t\t\t} else {');
+					code.push('\t\t\t} else if (_.indexOf(falseBooleanValues, ${_.camelCase(path)}) > -1) {');
 					code.push(`\t\t\t\t_.set(newData, '${path}', false);`);
+					code.push('\t\t\t} else {');
+					code.push(`\t\t\t\tthrow new Error('Invalid Boolean Value');`);
 					code.push('\t\t\t}');
 					code.push('\t\t}');
 					code.push('\t} catch (e) {');
@@ -611,10 +614,15 @@ function genrateCode(config) {
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\t${_.camelCase(path)} = ${_.camelCase(path)}.map((item, i) => {`);
 						code.push('\t\t\ttry {');
+						code.push(`\t\t\t\tif (typeof item == 'number' || typeof item == 'boolean') {`);
+						code.push('\t\t\t\t\titem = item.toString();');
+						code.push('\t\t\t\t}');
 						code.push('\t\t\t\tif (typeof item == \'string\' && _.indexOf(trueBooleanValues, item.toLowerCase()) > -1) {');
 						code.push('\t\t\t\t\treturn true;');
-						code.push('\t\t\t\t} else {');
+						code.push('\t\t\t\t} else if (typeof item == \'string\' && _.indexOf(falseBooleanValues, item.toLowerCase()) > -1){');
 						code.push('\t\t\t\t\treturn false;');
+						code.push('\t\t\t\t} else {');
+						code.push(`\t\t\t\t\tthrow new Error('Invalid Boolean Value');`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
 						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
