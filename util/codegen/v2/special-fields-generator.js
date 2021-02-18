@@ -588,6 +588,9 @@ function genrateCode(config) {
 				if (def.type == 'Boolean') {
 					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}')`);
 					code.push('\ttry {');
+					code.push(`\t\tif (typeof ${_.camelCase(path)} == 'number' || typeof ${_.camelCase(path)} == 'boolean') {`);
+					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toString();`);
+					code.push(`\t\t}`);
 					code.push(`\t\tif (typeof ${_.camelCase(path)} == 'string') {`);
 					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toLowerCase();`);
 					code.push(`\t\t\tif (_.indexOf(trueBooleanValues, ${_.camelCase(path)}) > -1) {`);
