@@ -344,7 +344,8 @@ schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2
 
 schema.pre('save', function (next) {
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
-	if (this.api.length > 40) {
+	// One extra character for / in api
+	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
 	if (this.api.match(apiregx)) {
@@ -357,7 +358,8 @@ schema.pre('save', function (next) {
 
 draftSchema.pre('save', function (next) {
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
-	if (this.api.length > 40) {
+	// One extra character for / in api
+	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
 	if (this.api.match(apiregx)) {
