@@ -596,7 +596,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toLowerCase();`);
 					code.push(`\t\t\tif (_.indexOf(trueBooleanValues, ${_.camelCase(path)}) > -1) {`);
 					code.push(`\t\t\t\t_.set(newData, '${path}', true);`);
-					code.push('\t\t\t} else if (_.indexOf(falseBooleanValues, ${_.camelCase(path)}) > -1) {');
+					code.push(`\t\t\t} else if (_.indexOf(falseBooleanValues, ${_.camelCase(path)}) > -1) {`);
 					code.push(`\t\t\t\t_.set(newData, '${path}', false);`);
 					code.push('\t\t\t} else {');
 					code.push('\t\t\t\tthrow new Error(\'Invalid Boolean Value\');');
