@@ -101,7 +101,7 @@ function genrateCode(config) {
 	code.push('\t}');
 	code.push('\ttry {');
 	code.push('\t\tif (typeof filter !== \'object\') {');
-	code.push('\t\t\treturn;');
+	code.push('\t\t\treturn filter;');
 	code.push('\t\t}');
 	code.push('\t\tlet flag = 0;');
 	code.push('\t\tconst tempFilter = {};');
