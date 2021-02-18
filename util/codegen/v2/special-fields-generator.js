@@ -590,7 +590,7 @@ function genrateCode(config) {
 					code.push('\ttry {');
 					code.push(`\t\tif (typeof ${_.camelCase(path)} == 'number' || typeof ${_.camelCase(path)} == 'boolean') {`);
 					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toString();`);
-					code.push(`\t\t}`);
+					code.push('\t\t}');
 					code.push(`\t\tif (typeof ${_.camelCase(path)} == 'string') {`);
 					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toLowerCase();`);
 					code.push(`\t\t\tif (_.indexOf(trueBooleanValues, ${_.camelCase(path)}) > -1) {`);
@@ -704,6 +704,16 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path)}SupportedTimezones = ${def['properties']['supportedTimezones'] ? JSON.stringify(def['properties']['supportedTimezones']) : '[]'};`);
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
+					code.push(`\tif (typeof ${_.camelCase(path)}New === 'string') {`);
+					code.push(`\t\t${_.camelCase(path)}New = {`);
+					code.push(`\t\t\trawData: ${_.camelCase(path)}New`);
+					code.push('\t\t};');
+					code.push('\t}');
+					code.push(`\tif (typeof ${_.camelCase(path)}Old === 'string') {`);
+					code.push(`\t\t${_.camelCase(path)}Old = {`);
+					code.push(`\t\t\trawData: ${_.camelCase(path)}Old`);
+					code.push('\t\t};');
+					code.push('\t}');
 					code.push(`\tif (!_.isEqual(${_.camelCase(path)}New, ${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
 					code.push(`\t\t\t${_.camelCase(path)}New = commonUtils.getFormattedDate(txnId, ${_.camelCase(path)}New, ${_.camelCase(path)}DefaultTimezone, ${_.camelCase(path)}SupportedTimezones);`);
