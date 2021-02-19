@@ -1094,12 +1094,13 @@ e.updateDoc = (_req, _res) => {
 					_res.status(200).json(srvcObj);
 				})
 				.catch(err => {
-					if (!_res.headersSent) _res.status(500).json({ message: err.message });
+					logger.error(`[${txnId}] :: Error in validateAppAndGetAppData :: update doc :: `, err)
+					if (!_res.headersSent) _res.status(400).json({ message: err.message });
 					logger.error(err);
 				});
 		})
 		.catch(err => {
-			logger.debug('Inside catch');
+			logger.error(`[${txnId}] :: Error in update doc :: `, err)
 			if (!_res.headersSent)
 				_res.status(400).json({
 					message: err.message
