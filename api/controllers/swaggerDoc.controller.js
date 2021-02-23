@@ -3,7 +3,7 @@
 const { generateYaml } = require('../../util/codegen/v2/generateYaml');
 const logger = global.logger;
 const mongoose = require('mongoose');
-const apiNotAllowed = ['/file/upload', '/file/{id}/view', '/file/{id}/remove', '/fileMapper/mapping', '/fileMapper/create', '/hook', '/lock', '/utils/experienceHook', '/fileMapper/enrich', '/health/live', '/health/ready', '/fileMapper/{fileId}/create', '/fileMapper/{fileId}/mapping', '/fileMapper/{fileId}/count', '/fileMapper/{fileId}', '/fileMapper/{fileId}/enrichDataForWF', '/utils/fileTransfers/{id}', '/utils/fileTransfers/count', '/utils/fileTransfers', '/utils/hrefUpdate', '/securedFields', '/utils/fileTransfers/{id}/readStatus'];
+const apiNotAllowed = ['/file/upload', '/file/{id}/view', '/file/{id}/remove', '/fileMapper/mapping', '/fileMapper/create', '/hook', '/lock', '/utils/experienceHook', '/fileMapper/enrich', '/health/live', '/health/ready', '/fileMapper/{fileId}/create', '/fileMapper/{fileId}/mapping', '/fileMapper/{fileId}/count', '/fileMapper/{fileId}', '/fileMapper/{fileId}/enrichDataForWF', '/utils/fileTransfers/{id}', '/utils/fileTransfers/count', '/utils/fileTransfers', '/utils/hrefUpdate', '/utils/securedFields', '/utils/fileTransfers/{id}/readStatus'];
 const definitionNotAllowed = ['mapping', 'bulkCreateData'];
 function addAuthHeader(paths, jwt) {
 	Object.keys(paths).forEach(path => {
@@ -33,7 +33,7 @@ function show(req, res) {
 			logger.debug(`[${txnId}] Swagger host :: ${swagger.host}`);
 			swagger.basePath = req.query.basePath ? req.query.basePath : swagger.basePath;
 			logger.debug(`[${txnId}] Swagger basePath :: ${swagger.basePath}`);
-			apiNotAllowed.forEach(_k => delete swagger.paths[_d.api + '' + _k]);
+			apiNotAllowed.forEach(_k => delete swagger.paths[_k]);
 			definitionNotAllowed.forEach(_k => delete swagger.definitions[_k]);
 			addAuthHeader(swagger.paths, req.query.token);
 			res.status(200).json(swagger);
