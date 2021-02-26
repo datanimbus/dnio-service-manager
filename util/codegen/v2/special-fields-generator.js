@@ -242,7 +242,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t\t_.set(newData, '${path}._href', doc._href);`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e;`);
+					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -260,7 +260,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t\titem._href = doc._href;');
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -298,7 +298,7 @@ function genrateCode(config) {
 					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\t// errors['${path}'] = e;`);
+					code.push(`\t\t\t// errors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -316,7 +316,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\t// errors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\t// errors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -440,7 +440,7 @@ function genrateCode(config) {
 					code.push('\t\t\t\t\t}');
 					code.push('\t\t\t\t\tflag = true;');
 					code.push('\t\t\t\t} catch (e) {');
-					code.push(`\t\t\t\t\terrors['${path}'] = e;`);
+					code.push(`\t\t\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 				} else if (def.type == 'Object') {
@@ -460,7 +460,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t\tflag = true;');
 						code.push('\t\t\t\t} catch (e) {');
-						code.push(`\t\t\t\t\terrors['${path}'] = e;`);
+						code.push(`\t\t\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 					} else if (def.definition[0].type == 'Object') {
@@ -486,7 +486,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e;`);
+					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -505,7 +505,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -542,7 +542,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t_.set(newData, '${path}.value', doc);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e;`);
+					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -560,7 +560,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
@@ -603,7 +603,7 @@ function genrateCode(config) {
 					code.push('\t\t\t}');
 					code.push('\t\t}');
 					code.push('\t} catch (e) {');
-					code.push(`\t\terrors['${path}'] = e;`);
+					code.push(`\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t}');
 					code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
 				} else if (def.type == 'Object') {
@@ -625,7 +625,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\tthrow new Error(\'Invalid Boolean Value\');');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t\treturn false;');
 						code.push('\t\t\t}');
 						code.push('\t\t});');
@@ -660,7 +660,7 @@ function genrateCode(config) {
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc.geoObj);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\t// errors['${path}'] = e;`);
+					code.push(`\t\t\t// errors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -678,7 +678,7 @@ function genrateCode(config) {
 						code.push('\t\t\t\t\t\t_.assign(item, doc.geoObj);');
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t} catch (e) {');
-						code.push(`\t\t\t\t\t// errors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\t\t// errors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 						code.push('\t\t});');
@@ -728,7 +728,7 @@ function genrateCode(config) {
 					// _.set(newData, 'time', timeNew);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e;`);
+					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
@@ -744,7 +744,7 @@ function genrateCode(config) {
 						code.push('\t\t\ttry {');
 						code.push(`\t\t\t\treturn commonUtils.getFormattedDate(txnId, item, ${_.camelCase(path)}DefaultTimezone, ${_.camelCase(path)}SupportedTimezones);`);
 						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e;`);
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push(`\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
