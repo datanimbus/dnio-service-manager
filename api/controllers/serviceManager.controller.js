@@ -2354,7 +2354,7 @@ function changeStatusToMaintenance(req, ids, srvcId, status, message) {
 }
 
 function scaleDeployments(req, socket, ids, srvcId, instance) {
-	if (srvcId) ids.push(srvcId);
+	if (!ids.includes(srvcId)) ids.push(srvcId);
 	let promises = ids.map(id => {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
 			.then(doc => {
@@ -2374,7 +2374,7 @@ function scaleDeployments(req, socket, ids, srvcId, instance) {
 }
 
 function scaleDeploymentsFromStart(req, socket, ids, srvcId, instance) {
-	if (srvcId) ids.push(srvcId);
+	if (!ids.includes(srvcId)) ids.push(srvcId);
 	let promises = ids.map(id => {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
 			.then(doc => {
