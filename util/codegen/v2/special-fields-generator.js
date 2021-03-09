@@ -650,7 +650,7 @@ function genrateCode(config) {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def) {
-				if (def.type == 'Geojson') {
+				if (def.type == 'Geojson' || def.properties.geoType) {
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (${_.camelCase(path)}New && !_.isEqual(${_.camelCase(path)}New,${_.camelCase(path)}Old)) {`);
@@ -666,7 +666,7 @@ function genrateCode(config) {
 				} else if (def.type == 'Object') {
 					parseSchemaForGeojson(def.definition, path);
 				} else if (def.type == 'Array') {
-					if (def.definition[0].type == 'Geojson') {
+					if (def.definition[0].type == 'Geojson' || def.definition[0].properties.geoType) {
 						code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}') || [];`);
 						code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)}New && Array.isArray(${_.camelCase(path)}New) && ${_.camelCase(path)}New.length > 0) {`);
