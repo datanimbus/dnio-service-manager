@@ -655,7 +655,7 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (${_.camelCase(path)}New && !_.isEqual(${_.camelCase(path)}New,${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\tconst doc = await commonUtils.getGeoDetails(req, ${_.camelCase(path)}New.userInput);`);
+					code.push(`\t\t\tconst doc = await commonUtils.getGeoDetails(req, '${_.camelCase(path)}', ${_.camelCase(path)}New.userInput);`);
 					code.push('\t\t\tif (doc) {');
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc.geoObj);`);
 					code.push('\t\t\t}');
@@ -673,7 +673,7 @@ function genrateCode(config) {
 						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (item, i) => {`);
 						code.push(`\t\t\tif (!_.find(${_.camelCase(path)}Old, item)) {`);
 						code.push('\t\t\t\ttry {');
-						code.push('\t\t\t\t\tconst doc = await commonUtils.getGeoDetails(req, item.userInput);');
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.getGeoDetails(req, '${_.camelCase(path)}', item.userInput);`);
 						code.push('\t\t\t\t\tif (doc) {');
 						code.push('\t\t\t\t\t\t_.assign(item, doc.geoObj);');
 						code.push('\t\t\t\t\t}');
