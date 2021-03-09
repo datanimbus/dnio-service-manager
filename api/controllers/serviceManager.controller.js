@@ -1697,7 +1697,7 @@ function dropCollections(collectionName, app, txnId) {
 			if (err) logger.error(`[${txnId}] DropCollection :: ${collectionName} :: ${err.message}`);
 			else if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${collectionName} deleted successfully`);
 		});
-		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks'];
+		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks', '.workflow'];
 		sufix.forEach(_s => {
 			let colName = collectionName + _s;
 			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${colName}`);
@@ -1775,7 +1775,7 @@ e.destroyService = (_req, _res) => {
 			deployUtil.sendToSocket(socket, 'serviceStatus', {_id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
 			logger.debug(`[${txnId}] Socket updated :: serviceStatus :: Entity has been stopped.`);
 			deployUtil.deleteServiceInUserMgmt(id, _req);
-			deployUtil.deleteServiceInWorkflow(id, _req);
+			// deployUtil.deleteServiceInWorkflow(id, _req);
 			return removeIncomingRelation(id, _req);
 		})
 		.then(() => {
@@ -2062,11 +2062,11 @@ e.StatusChangeFromMaintenance = function (req, res) {
 					.then(() => {
 						return scaleDeploymentsToOriginal(req, socket, relatedService, null, 0);
 					})
-					.then(() => {
-						if (_sd._id) {
-							return mongoose.connection.db.collection('workflow').remove({ serviceId: _sd._id });
-						}
-					})
+					// .then(() => {
+					// 	if (_sd._id) {
+					// 		return mongoose.connection.db.collection('workflow').remove({ serviceId: _sd._id });
+					// 	}
+					// })
 					.then(() => {
 						if (_sd._id) {
 							return deleteLogs(_sd._id, 'log');
