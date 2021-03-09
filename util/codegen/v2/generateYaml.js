@@ -827,7 +827,7 @@ function generateYaml(config) {
 		}
 	};
 	if (mathDefinition) {
-		swagger.paths['/utils/{id}/math'] = {
+		swagger.paths['/{id}/math'] = {
 			'x-swagger-router-controller': `${methodName.controller}`,
 			'put': {
 				description: `Does math operation on a '${config.name}'`,
