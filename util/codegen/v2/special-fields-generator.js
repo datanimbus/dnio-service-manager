@@ -649,7 +649,7 @@ function genrateCode(config) {
 		schema.forEach(def => {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
-			if (key != '_id' && def) {
+			if (key != '_id' && def.properties) {
 				if (def.type == 'Geojson' || def.properties.geoType) {
 					code.push(`\tlet ${_.camelCase(path)}New = _.get(newData, '${path}')`);
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
