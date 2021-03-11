@@ -108,7 +108,7 @@ function genrateCode(config) {
 	code.push('\t\tlet promises = Object.keys(filter).map(async (key) => {');
 	parseSchemaForFilter(schema);
 	code.push('\t\t\tif (!flag) {');
-	code.push('\t\t\t\tif (typeof filter[key] == \'object\') {');
+	code.push('\t\t\t\tif (typeof filter[key] == \'object\' && filter[key]) {');
 	code.push('\t\t\t\t\tif (Array.isArray(filter[key])) {');
 	code.push('\t\t\t\t\t\tconst promiseArr = filter[key].map(async (item, i) => {');
 	code.push('\t\t\t\t\t\t\treturn await patchRelationInFilter(req, item, errors);');
