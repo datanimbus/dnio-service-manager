@@ -42,7 +42,7 @@ function generateFiles(_txnId, config) {
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/utils/special-fields.utils.js'), specialFieldsGenrator.genrateCode(config), 'utf-8'))
 		.then(() => logger.info(`[${_txnId}] GenerateFiles :: ${id} :: Your project structure is ready`))
 		.catch(err => {
-			logger.error(`[${_txnId}] GenerateFiles :: ${id} :: ${err.message}`);
+			logger.error(`[${_txnId}] GenerateFiles :: ${id} :: `, err);
 			del(config.path);
 			throw err;
 		});
