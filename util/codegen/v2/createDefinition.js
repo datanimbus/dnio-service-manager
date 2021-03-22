@@ -199,9 +199,6 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 						mongoSchema[key]['validate'] = [validationObj];
 					}
 				}
-				if (attribute['properties']['unique'] && attribute['type'] === 'Number') {
-					mongoSchema[key]['sparse'] = true;
-				}
 				if (attribute['properties']['pattern']) {
 					let functionBody;
 					if (attribute['properties']['password']) {
