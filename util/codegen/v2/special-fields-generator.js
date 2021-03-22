@@ -380,7 +380,9 @@ function genrateCode(config) {
 					if (def.properties.unique) {
 						code.push(`\tval = _.get(newData, '${path}');`);
 						code.push('\tif (val) {');
-						code.push(`\t\tconst doc = await model.find({ '${path}': val }).collation({ locale: 'en', strength: 2 }).lean();`);
+						code.push(`\t\tlet query = { '${path}': val };`);
+						code.push(`\t\tif(oldData) query['_id'] = {'$ne': oldData._id};`);
+						code.push(`\t\tconst doc = await model.find(query).collation({ locale: 'en', strength: 2 }).lean();`);
 						code.push('\t\tif (doc && doc.length > 0) {');
 						code.push(`\t\t\terrors['${path}'] = '${path} field should be unique';`);
 						code.push('\t\t}');
