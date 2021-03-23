@@ -231,11 +231,14 @@ function genrateCode(config) {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
-				if (def.properties.relatedTo && def.type != 'Array') {
+				if ((def.properties.relatedTo || def.type == 'User') && def.type != 'Array') {
 					code.push(`\tlet ${_.camelCase(path + '._id')} = _.get(newData, '${path}._id')`);
 					code.push(`\tif (${_.camelCase(path + '._id')}) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')});`);
+					if(def.properties.relatedTo)
+						code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')});`);
+					else
+						code.push(`\t\t\tconst doc = await commonUtils.getUserDoc(req, ${_.camelCase(path + '._id')});`);
 					code.push('\t\t\t\tif (!doc) {');
 					code.push(`\t\t\t\t\terrors['${path}'] = ${_.camelCase(path + '._id')} + ' not found';`);
 					code.push('\t\t\t\t} else {');
@@ -248,12 +251,15 @@ function genrateCode(config) {
 				} else if (def.type == 'Object') {
 					parseSchemaForRelation(def.definition, path);
 				} else if (def.type == 'Array') {
-					if (def.definition[0].properties.relatedTo) {
+					if (def.definition[0].properties.relatedTo || def.definition[0].type == 'User') {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push('\t\t\ttry {');
-						code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
+						if(def.definition[0].properties.relatedTo)
+							code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
+						else
+							code.push(`\t\t\t\tconst doc = await commonUtils.getUserDoc(req, item._id);`);
 						code.push('\t\t\t\t\tif (!doc) {');
 						code.push(`\t\t\t\t\t\terrors['${path}.' + i] = item._id + ' not found';`);
 						code.push('\t\t\t\t\t} else {');
@@ -381,8 +387,8 @@ function genrateCode(config) {
 						code.push(`\tval = _.get(newData, '${path}');`);
 						code.push('\tif (val) {');
 						code.push(`\t\tlet query = { '${path}': val };`);
-						code.push(`\t\tif(oldData) query['_id'] = {'$ne': oldData._id};`);
-						code.push(`\t\tconst doc = await model.find(query).collation({ locale: 'en', strength: 2 }).lean();`);
+						code.push('\t\tif(oldData) query[\'_id\'] = {\'$ne\': oldData._id};');
+						code.push('\t\tconst doc = await model.find(query).collation({ locale: \'en\', strength: 2 }).lean();');
 						code.push('\t\tif (doc && doc.length > 0) {');
 						code.push(`\t\t\terrors['${path}'] = '${path} field should be unique';`);
 						code.push('\t\t}');
