@@ -259,7 +259,7 @@ function genrateCode(config) {
 						if(def.definition[0].properties.relatedTo)
 							code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
 						else
-							code.push(`\t\t\t\tconst doc = await commonUtils.getUserDoc(req, item._id);`);
+							code.push('\t\t\t\tconst doc = await commonUtils.getUserDoc(req, item._id);');
 						code.push('\t\t\t\t\tif (!doc) {');
 						code.push(`\t\t\t\t\t\terrors['${path}.' + i] = item._id + ' not found';`);
 						code.push('\t\t\t\t\t} else {');
