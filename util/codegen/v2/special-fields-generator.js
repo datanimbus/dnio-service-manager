@@ -235,7 +235,7 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path + '._id')} = _.get(newData, '${path}._id')`);
 					code.push(`\tif (${_.camelCase(path + '._id')}) {`);
 					code.push('\t\ttry {');
-					if(def.properties.relatedTo)
+					if (def.properties.relatedTo)
 						code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')});`);
 					else
 						code.push(`\t\t\tconst doc = await commonUtils.getUserDoc(req, ${_.camelCase(path + '._id')});`);
@@ -256,7 +256,7 @@ function genrateCode(config) {
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push('\t\t\ttry {');
-						if(def.definition[0].properties.relatedTo)
+						if (def.definition[0].properties.relatedTo)
 							code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
 						else
 							code.push('\t\t\t\tconst doc = await commonUtils.getUserDoc(req, item._id);');
@@ -411,11 +411,19 @@ function genrateCode(config) {
 					code.push(`\t\t\tif (_.differenceWith((_.get(newData, '${path}')||[]), (_.get(oldData, '${path}')||[]), _.isEqual)) {`);
 					// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
 					// code.push(`\t\t\tdelete newData['${path}'];`);
-					code.push(`\t\t\t_.unset(newData, '${path}');`);
+					code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
+					code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+					code.push('\t\t\t\t} else {');
+					code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} else {');
 					// code.push(`\t\t\tdelete newData['${path}'];`);
-					code.push(`\t\t\t_.unset(newData, '${path}');`);
+					code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
+					code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+					code.push('\t\t\t\t} else {');
+					code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+					code.push('\t\t\t\t}');
 					code.push('\t\t}');
 				} else {
 					if (def.properties.createOnly) {
@@ -423,11 +431,19 @@ function genrateCode(config) {
 						code.push(`\t\t\tif (_.get(newData, '${path}') !== _.get(oldData, '${path}')) {`);
 						// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
 						// code.push(`\t\t\tdelete newData['${path}'];`);
-						code.push(`\t\t\t_.unset(newData, '${path}');`);
+						code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
+						code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+						code.push('\t\t\t\t} else {');
+						code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 						code.push('\t\t} else {');
 						// code.push(`\t\t\tdelete newData['${path}'];`);
-						code.push(`\t\t\t_.unset(newData, '${path}');`);
+						code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
+						code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+						code.push('\t\t\t\t} else {');
+						code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+						code.push('\t\t\t\t}');
 						code.push('\t\t}');
 					}
 				}
