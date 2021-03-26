@@ -409,7 +409,8 @@ function genrateCode(config) {
 				} else if (def.type == 'Array' && def.properties && def.properties.createOnly) {
 					code.push('\t\tif (!forceRemove) {');
 					code.push(`\t\t\tif (_.differenceWith((_.get(newData, '${path}')||[]), (_.get(oldData, '${path}')||[]), _.isEqual)) {`);
-					code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
+					// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
+					code.push(`\t\t\tdelete newData['${path}'];`);
 					code.push('\t\t\t}');
 					code.push('\t\t} else {');
 					code.push(`\t\t\tdelete newData['${path}'];`);
@@ -418,7 +419,8 @@ function genrateCode(config) {
 					if (def.properties.createOnly) {
 						code.push('\t\tif (!forceRemove) {');
 						code.push(`\t\t\tif (_.get(newData, '${path}') !== _.get(oldData, '${path}')) {`);
-						code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
+						// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
+						code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push('\t\t\t}');
 						code.push('\t\t} else {');
 						code.push(`\t\t\tdelete newData['${path}'];`);
