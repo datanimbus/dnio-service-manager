@@ -467,6 +467,8 @@ function genrateCode(config) {
 					code.push('\t\t\t\t\t\t} else {');
 					code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id']['$in'] = tempFilter['${path}._id']['$in'].concat(ids);`);
 					code.push('\t\t\t\t\t\t}');
+					code.push('\t\t\t\t\t} else {');
+					code.push('\t\t\t\t\t\ttempFilter[key] = filter[key]');
 					code.push('\t\t\t\t\t}');
 					code.push('\t\t\t\t\tflag = true;');
 					code.push('\t\t\t\t} catch (e) {');
