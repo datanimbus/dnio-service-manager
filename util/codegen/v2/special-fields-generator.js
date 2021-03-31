@@ -412,17 +412,17 @@ function genrateCode(config) {
 					// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
 					// code.push(`\t\t\tdelete newData['${path}'];`);
 					code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-					code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+					code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t} else {');
-					code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} else {');
 					// code.push(`\t\t\tdelete newData['${path}'];`);
 					code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-					code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+					code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t} else {');
-					code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t}');
 				} else {
@@ -432,17 +432,17 @@ function genrateCode(config) {
 						// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
 						// code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-						code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+						code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t} else {');
-						code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 						code.push('\t\t} else {');
 						// code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-						code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+						code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t} else {');
-						code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t}');
 					}
