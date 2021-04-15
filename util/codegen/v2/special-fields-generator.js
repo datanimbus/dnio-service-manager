@@ -571,7 +571,11 @@ function genrateCode(config) {
 					code.push('\t\ttry {');
 					code.push(`\t\t\tconst doc = await commonUtils.decryptText(req, ${_.camelCase(path + '.value')});`);
 					code.push('\t\t\tif (doc) {');
-					code.push(`\t\t\t\t_.set(newData, '${path}.value', doc);`);
+					code.push(`\t\t\t\tif(req.query && req.query.forFile) {`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
+					code.push('\t\t\t\t} else {');
+					code.push(`\t\t\t\t\t_.set(newData, '${path}.value', doc);`);
+					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
@@ -588,7 +592,11 @@ function genrateCode(config) {
 						code.push('\t\t\t\tif (item && item.value) {');
 						code.push('\t\t\t\t\tconst doc = await commonUtils.decryptText(req, item.value);');
 						code.push('\t\t\t\t\tif (doc) {');
-						code.push('\t\t\t\t\t\titem.value = doc;');
+						code.push('\t\t\t\t\t\tif (req.query && req.query.forFile) {');
+						code.push('\t\t\t\t\t\t\titem = doc;');
+						code.push('\t\t\t\t\t\t} else {');
+						code.push('\t\t\t\t\t\t\titem.value = doc;');
+						code.push('\t\t\t\t\t\t}');
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
