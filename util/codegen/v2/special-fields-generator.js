@@ -412,17 +412,17 @@ function genrateCode(config) {
 					// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
 					// code.push(`\t\t\tdelete newData['${path}'];`);
 					code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-					code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+					code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t} else {');
-					code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} else {');
 					// code.push(`\t\t\tdelete newData['${path}'];`);
 					code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-					code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+					code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t} else {');
-					code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 					code.push('\t\t\t\t}');
 					code.push('\t\t}');
 				} else {
@@ -432,17 +432,17 @@ function genrateCode(config) {
 						// code.push(`\t\t\t\terrors['${path}'] = '${path} field cannot be updated, Violation of Create Only';`);
 						// code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-						code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+						code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t} else {');
-						code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t}');
 						code.push('\t\t} else {');
 						// code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push('\t\t\t\tif(newData instanceof mongoose.Document) {');
-						code.push(`\t\t\t\t\tnewData.set('${path}', undefined);`);
+						code.push(`\t\t\t\t\tnewData.set('${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t} else {');
-						code.push(`\t\t\t\t\t_.unset(newData, '${path}');`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t\t\t}');
 						code.push('\t\t}');
 					}
@@ -467,6 +467,8 @@ function genrateCode(config) {
 					code.push('\t\t\t\t\t\t} else {');
 					code.push(`\t\t\t\t\t\t\ttempFilter['${path}._id']['$in'] = tempFilter['${path}._id']['$in'].concat(ids);`);
 					code.push('\t\t\t\t\t\t}');
+					code.push('\t\t\t\t\t} else {');
+					code.push('\t\t\t\t\t\ttempFilter[key] = filter[key]');
 					code.push('\t\t\t\t\t}');
 					code.push('\t\t\t\t\tflag = true;');
 					code.push('\t\t\t\t} catch (e) {');
@@ -569,7 +571,11 @@ function genrateCode(config) {
 					code.push('\t\ttry {');
 					code.push(`\t\t\tconst doc = await commonUtils.decryptText(req, ${_.camelCase(path + '.value')});`);
 					code.push('\t\t\tif (doc) {');
-					code.push(`\t\t\t\t_.set(newData, '${path}.value', doc);`);
+					code.push(`\t\t\t\tif(req.query && req.query.forFile) {`);
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
+					code.push('\t\t\t\t} else {');
+					code.push(`\t\t\t\t\t_.set(newData, '${path}.value', doc);`);
+					code.push('\t\t\t\t}');
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
@@ -586,7 +592,11 @@ function genrateCode(config) {
 						code.push('\t\t\t\tif (item && item.value) {');
 						code.push('\t\t\t\t\tconst doc = await commonUtils.decryptText(req, item.value);');
 						code.push('\t\t\t\t\tif (doc) {');
-						code.push('\t\t\t\t\t\titem.value = doc;');
+						code.push('\t\t\t\t\t\tif (req.query && req.query.forFile) {');
+						code.push('\t\t\t\t\t\t\titem = doc;');
+						code.push('\t\t\t\t\t\t} else {');
+						code.push('\t\t\t\t\t\t\titem.value = doc;');
+						code.push('\t\t\t\t\t\t}');
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
@@ -685,7 +695,7 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path)}Old = _.get(oldData, '${path}')`);
 					code.push(`\tif (${_.camelCase(path)}New && !_.isEqual(${_.camelCase(path)}New,${_.camelCase(path)}Old)) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\tconst doc = await commonUtils.getGeoDetails(req, '${_.camelCase(path)}', ${_.camelCase(path)}New.userInput);`);
+					code.push(`\t\t\tconst doc = await commonUtils.getGeoDetails(req, '${_.camelCase(path)}', ${_.camelCase(path)}New);`);
 					code.push('\t\t\tif (doc) {');
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc.geoObj);`);
 					code.push('\t\t\t}');
@@ -703,7 +713,7 @@ function genrateCode(config) {
 						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (item, i) => {`);
 						code.push(`\t\t\tif (!_.find(${_.camelCase(path)}Old, item)) {`);
 						code.push('\t\t\t\ttry {');
-						code.push(`\t\t\t\t\tconst doc = await commonUtils.getGeoDetails(req, '${_.camelCase(path)}', item.userInput);`);
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.getGeoDetails(req, '${_.camelCase(path)}', item);`);
 						code.push('\t\t\t\t\tif (doc) {');
 						code.push('\t\t\t\t\t\t_.assign(item, doc.geoObj);');
 						code.push('\t\t\t\t\t}');
