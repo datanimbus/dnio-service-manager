@@ -80,7 +80,7 @@ if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "data.stack:sm :: Building base image"
     echo "****************************************************"
     cd $WORKSPACE/../ds-base
-    
+    sed -i.bak s#__image_tag__#$TAG# Dockerfile
     docker build --no-cache -t data.stack:base.$TAG .
     cd $WORKSPACE
 
@@ -114,7 +114,7 @@ else
     echo "****************************************************"
     
     cd $WORKSPACE/../ds-base
-
+    sed -i.bak s#__image_tag__#$TAG# Dockerfile
     docker build -t data.stack:base.$TAG .
     cd $WORKSPACE
 
