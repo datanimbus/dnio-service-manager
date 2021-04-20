@@ -571,7 +571,7 @@ function genrateCode(config) {
 					code.push('\t\ttry {');
 					code.push(`\t\t\tconst doc = await commonUtils.decryptText(req, ${_.camelCase(path + '.value')});`);
 					code.push('\t\t\tif (doc) {');
-					code.push(`\t\t\t\tif(req.query && req.query.forFile) {`);
+					code.push('\t\t\t\tif(req.query && req.query.forFile) {');
 					code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
 					code.push('\t\t\t\t} else {');
 					code.push(`\t\t\t\t\t_.set(newData, '${path}.value', doc);`);
