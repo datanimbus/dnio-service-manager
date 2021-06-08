@@ -292,19 +292,32 @@ function genrateCode(config) {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
-				if (def.properties.relatedTo && def.type != 'Array') {
-					code.push(`\tlet ${_.camelCase(path + '._id')} = _.get(newData, '${path}._id')`);
+				if ((def.properties.relatedTo || def.type == 'User') && def.type != 'Array') {
+					code.push(`\tlet ${_.camelCase(path + '._id')} = _.get(newData, '${path}._id');`);
 					code.push(`\tif (${_.camelCase(path + '._id')}) {`);
 					code.push('\t\ttry {');
 					code.push(`\t\t\tif (!expandForSelect || (expandForSelect && commonUtils.isExpandAllowed(req, '${path}'))) {`);
-					code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')});`);
-					code.push('\t\t\t\tif (doc) {');
-					code.push(`\t\t\t\t\tdoc._id = ${_.camelCase(path + '._id')};`);
-					code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
-					code.push('\t\t\t\t}');
+					if (def.properties.relatedTo) {
+						code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')});`);
+						code.push('\t\t\t\tif (doc) {');
+						code.push(`\t\t\t\t\tdoc._id = ${_.camelCase(path + '._id')};`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
+						code.push('\t\t\t\t}');
+					}
+					else {
+						code.push(`\t\t\tconst doc = await commonUtils.getUserDoc(req, ${_.camelCase(path + '._id')});`);
+						code.push('\t\t\t\tif (!doc) {');
+						code.push(`\t\t\t\t\terrors['${path}'] = ${_.camelCase(path + '._id')} + ' not found';`);
+						code.push('\t\t\t\t} else {');
+						code.push(`\t\t\t\t\t_.set(newData, 'user.basicDetails', doc.basicDetails);`);
+						code.push(`\t\t\t\t\t_.set(newData, 'user.attributes', doc.attributes);`);
+						code.push(`\t\t\t\t\t_.set(newData, 'user.username', doc.username);`);
+						code.push(`\t\t\t\t\t_.set(newData, 'user._id', doc._id);`);
+						code.push('\t\t\t\t}');
+					}
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\t// errors['${path}'] = e.message ? e.message : e;`);
+					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
 				} else if (def.type == 'Object') {
