@@ -182,6 +182,43 @@ paths:
           description: No records to list with the given parameter set.
         '500':
           description: Internal server error
+  '/service/utils/{app}/{name}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieves a serviceManager
+      operationId: serviceManagerShowByName
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: draft
+          in: query
+          type: boolean
+          description: return draft document if true  
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: Id of the object to be updated
+        - name: name
+          in: path
+          type: string
+          required: true
+          description: Id of the object to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
   /service/count:
     x-swagger-router-controller: controller 
     get:

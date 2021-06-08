@@ -59,5 +59,7 @@ exports.enableCalendar = serviceManagerController.enableCalendar;
 exports.disableCalendar = serviceManagerController.disableCalendar;
 exports.checkUnique = serviceManagerController.checkUnique;
 exports.countByStatus = serviceManagerController.countByStatus;
+
+exports.serviceManagerShowByName = serviceManagerController.showByName;
 module.exports = exports;
     

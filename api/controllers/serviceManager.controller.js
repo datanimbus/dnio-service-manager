@@ -198,7 +198,7 @@ draftSchema.pre('save', function (next) {
 function reserved(def) {
 	var keywords = ['schema', 'collection', 'db', 'save', 'get', 'model', 'default', 'modelname'];
 	var promise = def.map(ele => {
-		if(ele.key && keywords.includes(ele.key.toLowerCase()))
+		if (ele.key && keywords.includes(ele.key.toLowerCase()))
 			throw new Error(ele.key + ' cannot be used as an attribute name');
 		if (ele.type == 'Object' || ele.type == 'Array')
 			return reserved(ele.definition);
@@ -583,7 +583,7 @@ function checkOutGoingRelation(serviceId) {
 function removeIncomingRelation(serviceId, req) {
 	logger.info(`[${req.get('TxnId')}] ${serviceId} : Removing incoming relationships`);
 	let promiseArr = [];
-	return crudder.model.find({'relatedSchemas.incoming.service': serviceId })
+	return crudder.model.find({ 'relatedSchemas.incoming.service': serviceId })
 		.then(docs => {
 			logger.info(`[${req.get('TxnId')}] ${serviceId} : Found ${docs.length} incoming relationships`);
 			docs.forEach(doc => {
@@ -782,8 +782,8 @@ e.createDoc = (_req, _res) => {
 			.then(port => _req.body.port = port)
 			.then(() => smHooks.validateAppAndGetAppData(_req))
 			.then((appData) => {
-				if(!('disableInsights' in _req.body)) {
-					_req.body.disableInsights = appData.disableInsights; 
+				if (!('disableInsights' in _req.body)) {
+					_req.body.disableInsights = appData.disableInsights;
 				}
 				return apiUniqueCheck(_req.body.api, _req.body.app);
 			})
@@ -996,8 +996,8 @@ e.updateDoc = (_req, _res) => {
 				}
 			}
 			let isCounterChangeRequired = false;
-			let oldIdElement = oldData.definition ? oldData.definition.find(d=> d.key == '_id') : {};
-			let newIdElement = _req.body.definition ? _req.body.definition.find(d=> d.key == '_id') : {};
+			let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
+			let newIdElement = _req.body.definition ? _req.body.definition.find(d => d.key == '_id') : {};
 			let padding = newIdElement ? newIdElement.padding : null;
 			if (!definitionComparison) {
 				logger.debug('Definition has changed!');
@@ -1030,7 +1030,7 @@ e.updateDoc = (_req, _res) => {
 					if (oldData.api && _req.body.api && oldData.api != _req.body.api) {
 						return apiUniqueCheck(_req.body.api, _req.body.app, ID)
 							.then(() => {
-								if(oldData.relatedSchemas && oldData.relatedSchemas.incoming)
+								if (oldData.relatedSchemas && oldData.relatedSchemas.incoming)
 									return smhelper.canUpdateAPI(oldData.relatedSchemas.incoming);
 								else
 									return Promise.resolve();
@@ -1117,9 +1117,9 @@ e.updateDoc = (_req, _res) => {
  */
 
 function allowedChangeForCalendarDS(oldDefinition, newDefinition) {
-	if(oldDefinition.length != newDefinition.length) return false;
-	for(var i = 0; i < oldDefinition.length; i++) {
-		if(newDefinition[i].key == 'name' && oldDefinition[i].key == 'name') {
+	if (oldDefinition.length != newDefinition.length) return false;
+	for (var i = 0; i < oldDefinition.length; i++) {
+		if (newDefinition[i].key == 'name' && oldDefinition[i].key == 'name') {
 			delete newDefinition[i].propperties.enum;
 			delete oldDefinition[i].propperties.enum;
 		}
@@ -1200,7 +1200,7 @@ e.deployAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	logger.debug(`[${txnId}] Inside deployAPIHandler`);
 	let user = _req.get('User');
-	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')): false;
+	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')) : false;
 	let socket = _req.app.get('socket');
 	let isReDeploymentRequired = false;
 	let preHookUpdated = false;
@@ -1291,8 +1291,8 @@ e.deployAPIHandler = (_req, _res) => {
 							}
 							if (oldData.name != _newData.name) isReDeploymentRequired = true;
 							if (oldData.disableInsights != _newData.disableInsights) isReDeploymentRequired = true;
-							if(oldData.permanentDeleteData != _newData.permanentDeleteData) isReDeploymentRequired = true;
-							
+							if (oldData.permanentDeleteData != _newData.permanentDeleteData) isReDeploymentRequired = true;
+
 							removeSoftDeletedRecords = !oldData.permanentDeleteData && _newData.permanentDeleteData;
 							logger.debug('oldWizard ' + JSON.stringify(oldData.wizard));
 							logger.debug('newWizard ' + JSON.stringify(_newData.wizard));
@@ -1311,8 +1311,8 @@ e.deployAPIHandler = (_req, _res) => {
 							}
 							let newDefinition = _newData.definition;
 							let definitionComparison = deepEqual(oldData.definition, _newData.definition);
-							let oldIdElement = oldData.definition ? oldData.definition.find(d=> d.key == '_id') : {};
-							let newIdElement = _newData.definition ? _newData.definition.find(d=> d.key == '_id') : {};
+							let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
+							let newIdElement = _newData.definition ? _newData.definition.find(d => d.key == '_id') : {};
 							let isCounterChangeRequired = false;
 							let padding = newIdElement ? newIdElement.padding : null;
 							if (!definitionComparison) {
@@ -1421,7 +1421,7 @@ e.deployAPIHandler = (_req, _res) => {
 										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Reindexing the collection :: ${data.collectionName}`);
 										// removing soft deleted record with check
 										let promise = Promise.resolve();
-										if(removeSoftDeletedRecords) {
+										if (removeSoftDeletedRecords) {
 											promise = mongoDBVishnu.dropCollection(data.collectionName + '.deleted');
 										}
 										return promise.then(() => mongoDBVishnu.collection(data.collectionName).dropIndexes())
@@ -1475,7 +1475,7 @@ e.startAPIHandler = (_req, _res) => {
 	let socket = _req.app.get('socket');
 	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
 		.then(doc => {
-			if(doc && doc.definition.length == 1 ) throw new Error('Data service definition not found.');
+			if (doc && doc.definition.length == 1) throw new Error('Data service definition not found.');
 			if (doc) {
 				checkOutGoingRelation(id)
 					.then(() => {
@@ -1743,7 +1743,7 @@ e.destroyService = (_req, _res) => {
 				originalDoc = JSON.parse(JSON.stringify(doc));
 				crudder.model.findOneAndUpdate({ _id: originalDoc._id }, { status: 'Pending' })
 					.then(() => logger.info(`[${txnId}] Undeploying data service ${doc._id}`))
-					.then(() => _res.status(202).json({message: 'Undeploying data service ...'}))
+					.then(() => _res.status(202).json({ message: 'Undeploying data service ...' }))
 					.catch(err => {
 						_res.status(500).json({ message: err.message });
 					});
@@ -1753,7 +1753,7 @@ e.destroyService = (_req, _res) => {
 				throw new Error('Can not delete this Service');
 			} else {
 				logger.error(`[${txnId}] Service not found`);
-				_res.status(404).json({message: 'Service not found'});
+				_res.status(404).json({ message: 'Service not found' });
 				throw new Error('Service not found');
 			}
 		}, (data) => {
@@ -1772,7 +1772,7 @@ e.destroyService = (_req, _res) => {
 				return destroyDeployment(id, 0, _req);
 		})
 		.then(() => {
-			deployUtil.sendToSocket(socket, 'serviceStatus', {_id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
+			deployUtil.sendToSocket(socket, 'serviceStatus', { _id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
 			logger.debug(`[${txnId}] Socket updated :: serviceStatus :: Entity has been stopped.`);
 			deployUtil.deleteServiceInUserMgmt(id, _req);
 			// deployUtil.deleteServiceInWorkflow(id, _req);
@@ -1998,7 +1998,7 @@ e.changeStatus = function (req, res) {
 				});
 			}
 			else {
-				let outRelationIds = data && data.relatedSchemas && data.relatedSchemas.outgoing ? data.relatedSchemas.outgoing.map(_d => _d.service): [];
+				let outRelationIds = data && data.relatedSchemas && data.relatedSchemas.outgoing ? data.relatedSchemas.outgoing.map(_d => _d.service) : [];
 				let outgoingAPIs;
 				return crudder.model.find({ _id: { $in: outRelationIds } }, { app: 1, api: 1, _id: 1, port: 1, relatedSchemas: 1 }).lean(true)
 					.then((inSrvc => {
@@ -2122,7 +2122,7 @@ e.startAllServices = (_req, _res) => {
 		.then(docs => {
 			if (docs) {
 				let promises = docs.map(doc => {
-					if(doc.definition.length == 1) return;
+					if (doc.definition.length == 1) return;
 					doc = doc.toObject();
 					// doc.definition = JSON.parse(doc.definition);
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
@@ -2542,6 +2542,41 @@ function customShow(req, res) {
 	}
 }
 
+async function showByName(req, res) {
+	try {
+		const draft = req.swagger.params.draft.value;
+		const name = req.swagger.params.name.value;
+		const app = req.swagger.params.app.value;
+		let select = req.swagger.params.select.value;
+		select = select ? select.split(',') : [];
+		const filter = { name: name, app: app, '_metadata.deleted': false };
+		let query;
+		let doc;
+		if (draft) {
+			query = draftCrudder.model.findOne(filter);
+			if (select.length > 0) {
+				query = query.select(select.join(' '));
+			}
+			doc = await query.lean();
+		}
+		if (!doc) {
+			query = crudder.model.findOne(filter);
+			if (select.length > 0) {
+				query = query.select(select.join(' '));
+			}
+			doc = await query.lean();
+		}
+		if (!doc) {
+			return res.status(404).json({ message: 'Document not found' });
+		}
+		res.status(200).json(doc);
+	} catch (err) {
+		logger.error('Error in showByName');
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
 function customIndex(req, res) {
 	let draft = req.swagger.params.draft.value;
 	if (draft)
@@ -2934,6 +2969,7 @@ module.exports = {
 	create: e.createDoc,
 	index: customIndex,
 	show: customShow,
+	showByName: showByName,
 	destroy: e.destroyService,
 	update: e.updateDoc,
 	health: e.health,
