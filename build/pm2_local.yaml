@@ -4,7 +4,7 @@ apps:
   max_restarts: 5
   env:
     MONGO_AUTHOR_DBNAME: datastackConfig
-    MONGO_LOGS_DBNAME: odpLogs
+    MONGO_LOGS_DBNAME: datastackLogs
     DATA_STACK_NAMESPACE: appveen
     MONGO_RECONN_TRIES: 1000
     MONGO_RECONN_TIME_MILLI: 21600
