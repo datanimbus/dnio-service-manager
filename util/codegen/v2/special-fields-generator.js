@@ -98,7 +98,7 @@ function genrateCode(config) {
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
 	code.push('async function cascadeRelation(req, newData, oldData) {');
-	code.push(`\tif (!req.query.cascade || req.query.cascade != 'true') {`);
+	code.push('\tif (!req.query.cascade || req.query.cascade != \'true\') {');
 	code.push('\t\treturn null;');
 	code.push('\t}');
 	parseSchemaForCascadeRelation(schema);
@@ -401,7 +401,7 @@ function genrateCode(config) {
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push('\t\t\ttry {');
-						code.push(`\t\t\t\tif (!_.isEmpty(item)) {`);
+						code.push('\t\t\t\tif (!_.isEmpty(item)) {');
 						code.push(`\t\t\t\t\tconst doc = await commonUtils.upsertDocument(req, '${def.definition[0].properties.relatedTo}', item);`);
 						code.push('\t\t\t\t\tif (doc) {');
 						code.push('\t\t\t\t\t\t_.assign(item, doc);');
