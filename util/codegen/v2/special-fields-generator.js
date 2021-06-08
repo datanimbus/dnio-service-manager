@@ -309,10 +309,10 @@ function genrateCode(config) {
 						code.push('\t\t\t\tif (!doc) {');
 						code.push(`\t\t\t\t\terrors['${path}'] = ${_.camelCase(path + '._id')} + ' not found';`);
 						code.push('\t\t\t\t} else {');
-						code.push(`\t\t\t\t\t_.set(newData, 'user.basicDetails', doc.basicDetails);`);
-						code.push(`\t\t\t\t\t_.set(newData, 'user.attributes', doc.attributes);`);
-						code.push(`\t\t\t\t\t_.set(newData, 'user.username', doc.username);`);
-						code.push(`\t\t\t\t\t_.set(newData, 'user._id', doc._id);`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}.basicDetails', doc.basicDetails);`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}.attributes', doc.attributes);`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}.username', doc.username);`);
+						code.push(`\t\t\t\t\t_.set(newData, '${path}._id', doc._id);`);
 						code.push('\t\t\t\t}');
 					}
 					code.push('\t\t\t}');
