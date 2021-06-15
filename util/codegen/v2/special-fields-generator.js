@@ -256,7 +256,7 @@ function genrateCode(config) {
 					code.push(`\tif (${_.camelCase(path + '._id')}) {`);
 					code.push('\t\ttry {');
 					if (def.properties.relatedTo)
-						code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')});`);
+						code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')}, true);`);
 					else
 						code.push(`\t\t\tconst doc = await commonUtils.getUserDoc(req, ${_.camelCase(path + '._id')});`);
 					code.push('\t\t\t\tif (!doc) {');
@@ -277,7 +277,7 @@ function genrateCode(config) {
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push('\t\t\ttry {');
 						if (def.definition[0].properties.relatedTo)
-							code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id);`);
+							code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id, true);`);
 						else
 							code.push('\t\t\t\tconst doc = await commonUtils.getUserDoc(req, item._id);');
 						code.push('\t\t\t\t\tif (!doc) {');
