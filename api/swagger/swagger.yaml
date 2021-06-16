@@ -1212,6 +1212,10 @@ definitions:
               type: string
             failMessage:
               type: [string, 'null']  
+            type:
+              type: [string, 'null']
+            refId:
+              type: [string, 'null']
       preHooks:
         type: [array, 'null']
         items:
@@ -1221,7 +1225,11 @@ definitions:
             url: 
               type: string
             failMessage:
-              type: [string, 'null']  
+              type: [string, 'null']
+            type:
+              type: [string, 'null']
+            refId:
+              type: [string, 'null']
       workflowHooks:
         type: [object, 'null']
         properties:
@@ -1238,6 +1246,10 @@ definitions:
                       type: string
                     failMessage:
                       type: [string, 'null']
+                    type:
+                      type: [string, 'null']
+                    refId:
+                      type: [string, 'null']
               discard:
                 type: [array, 'null']
                 items:
@@ -1247,7 +1259,11 @@ definitions:
                     url: 
                       type: string
                     failMessage:
-                      type: [string, 'null']  
+                      type: [string, 'null']
+                    type:
+                      type: [string, 'null']
+                    refId:
+                      type: [string, 'null']
               approve:
                 type: [array, 'null']
                 items:
@@ -1257,6 +1273,10 @@ definitions:
                     url: 
                       type: string
                     failMessage:
+                      type: [string, 'null']
+                    type:
+                      type: [string, 'null']
+                    refId:
                       type: [string, 'null']
               reject:
                 type: [array, 'null']
@@ -1268,6 +1288,10 @@ definitions:
                       type: string
                     failMessage:
                       type: [string, 'null']
+                    type:
+                      type: [string, 'null']
+                    refId:
+                      type: [string, 'null']
               rework:
                 type: [array, 'null']
                 items:
@@ -1277,6 +1301,10 @@ definitions:
                     url: 
                       type: string
                     failMessage:
+                      type: [string, 'null']
+                    type:
+                      type: [string, 'null']
+                    refId:
                       type: [string, 'null']
       tags:
         type: [array, 'null']
