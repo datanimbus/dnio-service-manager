@@ -214,6 +214,12 @@ var definition = {
 			},
 			'failMessage': {
 				'type': 'String'
+			},
+			'type': {
+				'type': 'String'
+			},
+			'refId': {
+				'type': 'String'
 			}
 		}]
 	},
@@ -227,6 +233,12 @@ var definition = {
 			},
 			'failMessage': {
 				'type': 'String'
+			},
+			'type': {
+				'type': 'String'
+			},
+			'refId': {
+				'type': 'String'
 			}
 		}]
 	},
@@ -239,6 +251,12 @@ var definition = {
 					},
 					'url': {
 						'type': 'String'
+					},
+					'type': {
+						'type': 'String'
+					},
+					'refId': {
+						'type': 'String'
 					}
 				}]
 			},
@@ -248,6 +266,12 @@ var definition = {
 						'type': 'String'
 					},
 					'url': {
+						'type': 'String'
+					},
+					'type': {
+						'type': 'String'
+					},
+					'refId': {
 						'type': 'String'
 					}
 				}]
@@ -259,6 +283,12 @@ var definition = {
 					},
 					'url': {
 						'type': 'String'
+					},
+					'type': {
+						'type': 'String'
+					},
+					'refId': {
+						'type': 'String'
 					}
 				}]
 			},
@@ -269,6 +299,12 @@ var definition = {
 					},
 					'url': {
 						'type': 'String'
+					},
+					'type': {
+						'type': 'String'
+					},
+					'refId': {
+						'type': 'String'
 					}
 				}]
 			},
@@ -278,6 +314,12 @@ var definition = {
 						'type': 'String'
 					},
 					'url': {
+						'type': 'String'
+					},
+					'type': {
+						'type': 'String'
+					},
+					'refId': {
 						'type': 'String'
 					}
 				}]
