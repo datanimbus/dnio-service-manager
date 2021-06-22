@@ -207,8 +207,8 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 						if(value && value.value && value.value.trim()){
 							var arr = re.exec(value.value.trim());
 							if(!arr) return false;
-							// return (arr[0] == arr.input);
-							return re.test(value);
+							return (arr[0] == arr.input);
+							// return re.test(value.value);
 						}
 						return true;
 						`;
@@ -218,8 +218,8 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 						if(value && value.trim()){
 							var arr = re.exec(value.trim());
 							if(!arr) return false;
-							//return (arr[0] == arr.input);
-							return re.test(value);
+							return (arr[0] == arr.input);
+							// return re.test(value);
 						}
 						return true;
 						`;
