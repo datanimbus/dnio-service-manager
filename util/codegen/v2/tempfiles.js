@@ -16,6 +16,7 @@ function dockerFile(config) {
 	return `FROM ${base}
 WORKDIR /app
 COPY . .
+RUN cp -r /app/mongoKeys /
 ENV NODE_ENV production
 ENV DATA_STACK_APP ${config.app}
 ENV SERVICE_ID ${config._id}
