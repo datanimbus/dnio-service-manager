@@ -81,15 +81,17 @@ function generateFolderStructure(_txnId, config) {
 	mkdirp.sync(path.join(config.path, 'mongoKeys'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'mongoKeys')}`);
 
-	let mongoDBKeys = fs.readdirSync(path.join('/', 'mongoKeys'));
-	logger.debug(`[${_txnId}] MongoDB Key location :: ${id} :: ${path.join('/', 'mongoKeys')}`);
-	mongoDBKeys.forEach(key => {
-		if(key.indexOf('pem') != -1) {
-			logger.debug(`[${_txnId}] MongoDB Keys :: ${id} :: ${key}`);
-			fs.copyFileSync(path.join('/', 'mongoKeys', key), path.join(config.path, 'mongoKeys', key));
-			logger.debug(`[${_txnId}] MongoDB Keys copied :: ${id} :: ${path.join('/', 'mongoKeys', key)} -> ${path.join(config.path, 'mongoKeys', key)}`);
-		}
-	});
+	if(fs.existsSync(path.join('/', 'mongoKeys'))) {
+		let mongoDBKeys = fs.readdirSync(path.join('/', 'mongoKeys'));
+		logger.debug(`[${_txnId}] MongoDB Key location :: ${id} :: ${path.join('/', 'mongoKeys')}`);
+		mongoDBKeys.forEach(key => {
+			if(key.indexOf('pem') != -1) {
+				logger.debug(`[${_txnId}] MongoDB Keys :: ${id} :: ${key}`);
+				fs.copyFileSync(path.join('/', 'mongoKeys', key), path.join(config.path, 'mongoKeys', key));
+				logger.debug(`[${_txnId}] MongoDB Keys copied :: ${id} :: ${path.join('/', 'mongoKeys', key)} -> ${path.join(config.path, 'mongoKeys', key)}`);
+			}
+		});
+	}
 
 	if (!envConfig.isK8sEnv()) {
 		logger.info(`[${_txnId}] GenerateFolderStructure :: ${id} :: Local ENV :: Copying Structure`);
