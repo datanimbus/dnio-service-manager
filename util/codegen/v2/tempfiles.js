@@ -29,6 +29,7 @@ ENV ID_PREFIX ${config.idDetails.prefix || '""'}
 ENV ID_SUFFIX ${config.idDetails.suffix || '""'}
 ENV ID_COUNTER ${config.idDetails.counter}
 ENV PERMANENT_DELETE ${config.permanentDeleteData}
+ENV DATA_STACK_ALLOWED_FILE_TYPE ${config.allowedFileTypes}
 EXPOSE ${config.port}
 CMD [ "node", "app.js" ]
 `;
@@ -56,6 +57,7 @@ HOSTNAME="localhost"
 DATA_STACK_APP_NS="appveen-${config.app}"
 DATA_STACK_NAMESPACE="appveen"
 DATA_STACK_APP="${config.app}"
+DATA_STACK_ALLOWED_FILE_TYPE="${config.allowedFileTypes}"
 `;
 }
 
