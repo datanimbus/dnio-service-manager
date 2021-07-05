@@ -84,6 +84,7 @@ function genrateCode(config) {
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
 	code.push('async function expandDocument(req, newData, oldData, expandForSelect) {');
+	code.push('\tconst errors = {};');
 	parseSchemaForExpand(schema);
 	code.push('\treturn newData;');
 	code.push('}');
@@ -98,6 +99,7 @@ function genrateCode(config) {
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
 	code.push('async function cascadeRelation(req, newData, oldData) {');
+	code.push('\tconst errors = {};');
 	code.push('\tif (!req.query.cascade || req.query.cascade != \'true\') {');
 	code.push('\t\treturn null;');
 	code.push('\t}');
