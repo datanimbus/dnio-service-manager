@@ -31,6 +31,9 @@ var definition = {
 	'headers': {
 		'type': 'Object'
 	},
+	'allowedFileTypes': {
+		'type': ['String']
+	},
 	'wizard': {
 		'type': [{
 			'name': 'String',

@@ -162,6 +162,9 @@ schema.pre('save', function (next, req) {
 	}
 	let user = req.headers ? req.headers.user : 'AUTO';
 	self._metadata.lastUpdatedBy = user;
+	if (!self.allowedFileTypes || self.allowedFileTypes.length === 0) {
+		self.allowedFileTypes = envConfig.allowedExt;
+	}
 	next();
 });
 
