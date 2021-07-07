@@ -450,6 +450,9 @@ function genrateCode(config) {
 					if (def.properties.unique) {
 						code.push(`\t\tschema.index({ '${path}': 1 }, { unique: '${path} field should be unique', sparse: true, collation: { locale: 'en', strength: 2 } });`);
 					}
+					if (def.properties.geoType) {
+						code.push(`\t\tschema.index({ '${path}.geometry': '2dsphere' }, { name: '${path}_geoJson' });`);
+					}
 				}
 			}
 		});
