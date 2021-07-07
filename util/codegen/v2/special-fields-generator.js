@@ -339,6 +339,7 @@ function genrateCode(config) {
 					}
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
+					code.push(`\t\t\t\t\t_.set(newData, '${path}', null);`);
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
