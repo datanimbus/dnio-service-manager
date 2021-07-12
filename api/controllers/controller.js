@@ -24,6 +24,7 @@ exports.purgeService = serviceManagerController.purge;
 exports.purgeLogsService = serviceManagerController.purgeLogsService;
 exports.stopAllServices = serviceManagerController.stopAllServices;
 exports.startAllServices = serviceManagerController.startAllServices;
+exports.repairAllServices = serviceManagerController.repairAllServices;
 exports.serviceAudit = serviceAuditController.index;
 exports.health = serviceManagerController.health;
 exports.readiness = serviceManagerController.readiness;

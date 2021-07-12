@@ -638,6 +638,30 @@ paths:
           description: No records to list with the given parameter set.
         '500':
           description: Internal server error  
+  '/{app}/service/repair' :
+    x-swagger-router-controller: controller
+    put:
+      description: reapir all services of a app
+      operationId: repairAllServices
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation  
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: repair all service
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error  
   /globalSchema:
     x-swagger-router-controller: controller
     get:

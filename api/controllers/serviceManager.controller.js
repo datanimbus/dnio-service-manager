@@ -2223,6 +2223,36 @@ e.stopAllServices = (_req, _res) => {
 		});
 };
 
+e.repairAllServices = (_req, _res) => {
+	var app = _req.swagger.params.app.value;
+	crudder.model.find({
+		'app': app,
+	})
+		.then(docs => {
+			if (docs && docs.length > 0) {
+				let promises = docs.map(doc => {
+					if (doc.definition.length == 1) return;
+					return updateDeployment(_req, _res, doc.toObject());
+				});
+				_res.status(202).json({
+					message: 'Request to repair all data services has been received'
+				});
+				return Promise.all(promises);
+			} else {
+				_res.status(400).json({
+					message: 'No entity found'
+				});
+			}
+		})
+		.catch(e => {
+			logger.error(e.message);
+			if (!_res.headersSent) _res.status(500).json({
+				message: e.message
+			});
+		});
+};
+
+
 e.repairService = (_req, _res) => {
 	let id = _req.swagger.params.id.value;
 	return crudder.model.findOne({
@@ -2989,6 +3019,7 @@ module.exports = {
 	getCounter: e.getCounter,
 	stopAllServices: e.stopAllServices,
 	startAllServices: e.startAllServices,
+	repairAllServices: e.repairAllServices,
 	repairService: e.repairService,
 	purge: e.purge,
 	purgeLogsService: e.purgeLogsService,
