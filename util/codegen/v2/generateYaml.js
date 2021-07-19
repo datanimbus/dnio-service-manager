@@ -1203,7 +1203,7 @@ function generateYaml(config) {
 	};
 	swagger.paths['/utils/export'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
+		'post': {
 			description: `Retrieve a list of '${config.name}'`,
 			operationId: `${methodName.exportAll}`,
 			parameters: config.enableSearchIndex ? JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, searchOption, totalRecord]) : JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, totalRecord]),
