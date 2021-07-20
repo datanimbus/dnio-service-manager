@@ -158,31 +158,31 @@ const countParameters = [{
 
 const exportParameters = [{
 	name: 'filter',
-	in: 'query',
+	in: 'body',
 	type: 'string',
 	description: 'Filter records based on certain fields'
 },
 {
 	name: 'select',
-	in: 'query',
+	in: 'body',
 	type: 'string',
 	description: 'Comma seperated fields to be displayed'
 },
 {
 	name: 'sort',
-	in: 'query',
+	in: 'body',
 	type: 'string',
 	description: 'sort parameter'
 },
 {
 	name: 'skip',
-	in: 'query',
+	in: 'body',
 	type: 'integer',
 	description: 'Number of records to skip'
 },
 {
 	name: 'batchSize',
-	in: 'query',
+	in: 'body',
 	type: 'integer',
 	description: 'Batch size for cursor'
 },
