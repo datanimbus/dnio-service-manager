@@ -435,20 +435,16 @@ function genrateCode(config) {
 	function createIndex(schema, parentKey) {
 		schema.forEach(def => {
 			let key = def.key;
-			const path = parentKey ? parentKey + '.' + key : key;
+			let path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
 				if (def.type == 'Object' && !def.properties.geoType) {
 					createIndex(def.definition, path);
 				} else if (def.type == 'Array') {
-					// code.push(`\t if((_.get(newData,'${path}')||[]).length !== (_.get(newData,'${path}')||[]).length) {`);
-					// code.push(`\t\t errors.${path} = true;`);
-					// code.push(`\t }`);
-					// code.push(`\t for(let i=0;i<newData.${path};i++){`);
-					// code.push(`\t\t const item = newData.${path}[i];`);
-					// createIndex(def.definition, path);
-					// code.push(`\t }`);
 				} else {
 					if (def.properties.unique) {
+						if (def.type === 'User' || def.properties.relatedTo) {
+							path = path + '._id';
+						}
 						code.push(`\t\tschema.index({ '${path}': 1 }, { unique: '${path} field should be unique', sparse: true, collation: { locale: 'en', strength: 2 } });`);
 					}
 					if (def.properties.geoType) {
