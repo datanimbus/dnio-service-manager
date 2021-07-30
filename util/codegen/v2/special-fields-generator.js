@@ -462,7 +462,7 @@ function genrateCode(config) {
 	function parseSchemaForUnique(schema, parentKey) {
 		schema.forEach(def => {
 			let key = def.key;
-			const path = parentKey ? parentKey + '.' + key : key;
+			let path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
 				if (def.type == 'Object') {
 					parseSchemaForUnique(def.definition, path);
@@ -476,6 +476,9 @@ function genrateCode(config) {
 					// code.push(`\t }`);
 				} else {
 					if (def.properties.unique) {
+						if (def.type === 'User' || def.properties.relatedTo) {
+							path = path + '._id';
+						}
 						code.push(`\tval = _.get(newData, '${path}');`);
 						code.push('\tif (val) {');
 						code.push(`\t\tlet query = { '${path}': val };`);
