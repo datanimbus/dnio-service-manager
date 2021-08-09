@@ -166,6 +166,43 @@ const countParameters = [{
 	default: false
 }];
 
+const exportParameters = [{
+	name: 'filter',
+	in: 'body',
+	type: 'string',
+	description: 'Filter records based on certain fields'
+},
+{
+	name: 'select',
+	in: 'body',
+	type: 'string',
+	description: 'Comma seperated fields to be displayed'
+},
+{
+	name: 'sort',
+	in: 'body',
+	type: 'string',
+	description: 'sort parameter'
+},
+{
+	name: 'skip',
+	in: 'body',
+	type: 'integer',
+	description: 'Number of records to skip'
+},
+{
+	name: 'batchSize',
+	in: 'body',
+	type: 'integer',
+	description: 'Batch size for cursor'
+},
+{
+	name: 'authorization',
+	in: 'header',
+	type: 'string',
+	description: 'The JWT token for req.validation'
+}];
+
 function getType(type) {
 	type = type == 'largeString' ? 'String' : type;
 	type = type == 'String' ? 'string' : type;
@@ -1286,10 +1323,10 @@ function generateYaml(config) {
 	};
 	swagger.paths[basePath + '/utils/export'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
+		'post': {
 			description: `Retrieve a list of '${config.name}'`,
 			operationId: `${methodName.exportAll}`,
-			parameters: config.enableSearchIndex ? JSON.parse(JSON.stringify(getParameters)).concat([expandOption, searchOption, totalRecord, timezone]) : JSON.parse(JSON.stringify(getParameters)).concat([expandOption, totalRecord, timezone]),
+			parameters: config.enableSearchIndex ? JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, searchOption, totalRecord, timezone]) : JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, totalRecord, timezone]),
 			responses: {
 				'200': {
 					description: 'List of the entites'
