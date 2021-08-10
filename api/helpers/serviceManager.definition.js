@@ -329,6 +329,9 @@ var definition = {
 			}
 		}
 	},
+	'stateModel': {
+		'type': 'object'
+	},
 	'flags': {
 		'type': {
 			'apiEndpointChanged': {
