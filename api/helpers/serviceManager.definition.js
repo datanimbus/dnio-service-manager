@@ -330,7 +330,12 @@ var definition = {
 		}
 	},
 	'stateModel': {
-		'type': 'object'
+		'type': {
+			'attribute': { 'type': 'String' },
+			'initialState': { 'type': 'String' },
+			'states': { 'type': 'Object' },
+			'enabled': { 'type': 'Boolean'}
+		}
 	},
 	'flags': {
 		'type': {
