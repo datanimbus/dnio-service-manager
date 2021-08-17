@@ -332,7 +332,7 @@ var definition = {
 	'stateModel': {
 		'type': {
 			'attribute': { 'type': 'String' },
-			'initialState': { 'type': 'String' },
+			'initialStates': { 'type': 'String' },
 			'states': { 'type': 'Object' },
 			'enabled': { 'type': 'Boolean'}
 		}
