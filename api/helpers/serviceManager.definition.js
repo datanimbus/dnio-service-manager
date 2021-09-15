@@ -329,6 +329,14 @@ var definition = {
 			}
 		}
 	},
+	'stateModel': {
+		'type': {
+			'attribute': { 'type': 'String' },
+			'initialStates': [ { 'type': 'String' } ],
+			'states': { 'type': 'Object' },
+			'enabled': { 'type': 'Boolean'}
+		}
+	},
 	'flags': {
 		'type': {
 			'apiEndpointChanged': {
