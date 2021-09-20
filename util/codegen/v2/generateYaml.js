@@ -215,8 +215,9 @@ function getCreateDefinition(defArr) {
 		} else if (attribute['type'] === 'Array') {
 			if (attribute['definition'][0]['type'] === 'Array') {
 				definition = {
-					type: ['array', 'null'],
-					items: getCreateDefinition(attribute['definition'])
+					type: 'array',
+					items: getCreateDefinition(attribute['definition']),
+					nullable: true
 				};
 			} else {
 				definition = getCreateDefinition(attribute['definition']);
@@ -246,29 +247,34 @@ function getCreateDefinition(defArr) {
 		} else if (attribute['type'] == 'Array') {
 			if (attribute['definition'][0]['type'] === 'Array') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
 					items: {
-						type: ['array', 'null'],
-						items: getCreateDefinition(attribute['definition'])
-					}
+						type: 'array',
+						items: getCreateDefinition(attribute['definition']),
+						nullable: true
+					},
+					nullable: true
 				};
 			} else if (attribute['definition'][0]['type'] === 'Object') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
-					items: getCreateDefinition(attribute['definition'])
+					type: 'array',
+					items: getCreateDefinition(attribute['definition']),
+					nullable: true
 				};
 			}
 			else if (attribute['definition'][0]['type'] === 'User') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
-					items: getCreateDefinition(attribute['definition'])
+					type: 'array',
+					items: getCreateDefinition(attribute['definition']),
+					nullable: true
 				};
 			} else {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
 					items: {
 						type: getType(attribute['definition'][0]['type'])
-					}
+					},
+					nullable: true
 				};
 			}
 		} else {
@@ -278,7 +284,8 @@ function getCreateDefinition(defArr) {
 				};
 			} else {
 				definition['properties'][el] = {
-					type: [getType(attribute['type']), 'null']
+					type: getType(attribute['type']),
+					nullable: true
 				};
 			}
 			if (attribute['properties'] && attribute['properties']['enum']) {
@@ -370,7 +377,7 @@ function generateYaml(config) {
 	getUpdateDefinition(updateDefinition);
 	var basePath = config.api.charAt(0) === '/' ? config.api : '/' + config.api;
 	var swagger = {
-		swagger: '2.0',
+		swagger: '3.0',
 		info: {
 			version: `${config.version}`,
 			title: config.name + ' API'

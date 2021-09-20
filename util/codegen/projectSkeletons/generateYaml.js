@@ -253,29 +253,34 @@ function getCreateDefinition(json) {
 		} else if (json[el]['type'] == 'Array') {
 			if (json[el]['definition']['_self']['type'] === 'Array') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
 					items: {
-						type: ['array', 'null'],
-						items: getCreateDefinition(json[el]['definition'])
-					}
+						type: 'array',
+						items: getCreateDefinition(json[el]['definition']),
+						nullable: true
+					},
+					nullable: true
 				};
 			} else if (json[el]['definition']['_self']['type'] === 'Object') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
-					items: getCreateDefinition(json[el]['definition'])
+					type: 'array',
+					items: getCreateDefinition(json[el]['definition']),
+					nullable: true
 				};
 			}
 			else if (json[el]['definition']['_self']['type'] === 'User') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
-					items: getCreateDefinition(json[el]['definition'])
+					type: 'array',
+					items: getCreateDefinition(json[el]['definition']),
+					nullable: true
 				};
 			} else {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
 					items: {
 						type: getType(json[el]['definition']['_self']['type'])
-					}
+					},
+					nullable: true
 				};
 			}
 		} else {
@@ -285,7 +290,8 @@ function getCreateDefinition(json) {
 				};
 			} else {
 				definition['properties'][el] = {
-					type: [getType(json[el]['type']), 'null']
+					type: getType(json[el]['type']),
+					nullable: true
 				};
 			}
 			if (json[el]['properties'] && json[el]['properties']['enum']) {
@@ -370,7 +376,7 @@ function generateYaml(config) {
 	getUpdateDefinition(updateDefinition);
 	var basePath = config.api.charAt(0) === '/' ? config.api : '/' + config.api;
 	var swagger = {
-		swagger: '2.0',
+		swagger: '3.0',
 		info: {
 			version: '0.0.1',
 			title: config.name + ' API'
