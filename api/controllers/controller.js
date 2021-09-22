@@ -7,7 +7,7 @@ const tagsController = require('./tags.controller.js');
 const swaggerDocController = require('./swaggerDoc.controller.js');
 const serviceAuditController = require('./service.audit.controller.js');
 const globalSchemaAuditController = require('./globalSchema.audit.controller.js');
-
+const swagger3DocController = require('./swagger3.controller');
 //exports
 var exports = {};
 exports.serviceManagerVerifyHook = serviceManagerController.verifyHook;
@@ -62,5 +62,6 @@ exports.checkUnique = serviceManagerController.checkUnique;
 exports.countByStatus = serviceManagerController.countByStatus;
 
 exports.serviceManagerShowByName = serviceManagerController.showByName;
+exports.swagger3DocShow = swagger3DocController.getSwagger;
+
 module.exports = exports;
-    

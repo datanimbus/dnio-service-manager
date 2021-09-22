@@ -1191,7 +1191,31 @@ paths:
         '404':
           description: No records to list with the given parameter set.
         '500':
-          description: Internal server error                                                     
+          description: Internal server error
+  /swagger/{id}:
+    x-swagger-router-controller: controller
+    get:
+      description: get swagger 3.0
+      operationId: swagger3DocShow
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: Id of the data service to be shown
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+      responses:
+        '200':
+          description: Get swagger 3.0
+        '400':
+          description: Bad parametes
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error.
 definitions:
   serviceManager_create:
     required:
