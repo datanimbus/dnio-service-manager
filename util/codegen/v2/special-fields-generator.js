@@ -221,6 +221,22 @@ function genrateCode(config) {
 	code.push('}');
 	code.push('');
 
+
+
+
+	/**----------------------- ROLES AND PERMISSIONS------------------- */
+
+	parseRolesForPermisison(config.role.roles);
+	code.push('');
+	code.push('function filterByPermission(permissions, data) {');
+	parseFieldsForPermisison(config.role.fields);
+	code.push('}');
+	code.push('');
+
+
+
+
+
 	/**------------------------ EXPORTS ----------------------- */
 	/**------------------------ CONSTANTS ----------------------- */
 	code.push('module.exports.createOnlyFields = createOnlyFields;');
@@ -243,6 +259,8 @@ function genrateCode(config) {
 	code.push('module.exports.enrichGeojson = enrichGeojson;');
 	code.push('module.exports.validateDateFields = validateDateFields;');
 	code.push('module.exports.cascadeRelation = cascadeRelation;');
+
+	code.push('module.exports.filterByPermission = filterByPermission;');
 
 
 	return code.join('\n');
@@ -440,6 +458,7 @@ function genrateCode(config) {
 				if (def.type == 'Object' && !def.properties.geoType) {
 					createIndex(def.definition, path);
 				} else if (def.type == 'Array') {
+					// No index for Array
 				} else {
 					if (def.properties.unique) {
 						if (def.type === 'User' || def.properties.relatedTo) {
@@ -894,6 +913,46 @@ function genrateCode(config) {
 					}
 				}
 			}
+		});
+	}
+
+
+
+
+
+	function parseFieldsForPermisison(fields, parentKey) {
+		Object.keys(fields).forEach(key => {
+			const dataKey = parentKey ? parentKey + '.' + key : key;
+			const permObj = fields[key]._p;
+			if (permObj) {
+				const permIds = Object.keys(permObj).map(e => ({ id: e, val: permObj[e] })).filter(e => e.val == 'R').map(e => e.id);
+				code.push(`\tif (_.intersection(${JSON.stringify(permIds)}, permissions).length == 0) {`);
+				code.push(`\t\t_.unset('${dataKey}', data);`);
+				code.push('\t}');
+			} else {
+				parseFieldsForPermisison(fields[key], key);
+			}
+		});
+	}
+
+	function parseRolesForPermisison(roles) {
+		const methodIdMap = {};
+		roles.forEach(e => {
+			return e.operations.forEach(o => {
+				if (!methodIdMap[o.method]) {
+					methodIdMap[o.method] = [];
+				}
+				methodIdMap[o.method].push(e.id);
+			});
+		});
+		Object.keys(methodIdMap).forEach(method => {
+			code.push(`function hasPermissionFor${method}(permissions) {`);
+			code.push(`\tif (_.intersection(${JSON.stringify(methodIdMap[method])}, permissions).length == 0) {`);
+			code.push('\t\treturn false;');
+			code.push('\t}');
+			code.push('\treturn true;');
+			code.push('}');
+			code.push(`module.exports.hasPermissionFor${method} = hasPermissionFor${method};`);
 		});
 	}
 }
