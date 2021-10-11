@@ -228,8 +228,12 @@ function genrateCode(config) {
 
 	parseRolesForPermisison(config.role.roles);
 	code.push('');
-	code.push('function filterByPermission(permissions, data) {');
+	code.push('function filterByPermission(req, permissions, data) {');
+	code.push(`\tif (req.user.isSuperAdmin) {`);
+	code.push('\t\treturn data;');
+	code.push('\t}');
 	parseFieldsForPermisison(config.role.fields);
+	code.push('\t\treturn data;');
 	code.push('}');
 	code.push('');
 
@@ -946,7 +950,12 @@ function genrateCode(config) {
 			});
 		});
 		Object.keys(methodIdMap).forEach(method => {
-			code.push(`function hasPermissionFor${method}(permissions) {`);
+			code.push(`function hasPermissionFor${method}(req, permissions) {`);
+			//Super Admin Code
+			code.push(`\tif (req.user.isSuperAdmin) {`);
+			code.push('\t\treturn true;');
+			code.push('\t}');
+			//Normal User Code
 			code.push(`\tif (_.intersection(${JSON.stringify(methodIdMap[method])}, permissions).length == 0) {`);
 			code.push('\t\treturn false;');
 			code.push('\t}');
