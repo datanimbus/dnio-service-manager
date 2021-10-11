@@ -121,6 +121,7 @@ let queueMgmt = require('./util/queueMgmt');
 dataStackutils.eventsUtil.setNatsClient(queueMgmt.client);
 var logToQueue = dataStackutils.logToQueue('sm', queueMgmt.client, envConfig.logQueueName, 'sm.logs');
 app.use(logToQueue);
+app.use(require('./util/auth'));
 
 // swaggerRouter configuration
 var options = {
