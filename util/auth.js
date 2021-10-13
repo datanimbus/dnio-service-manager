@@ -33,6 +33,11 @@ router.use((req, res, next) => {
     if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.locals.app) > -1)) {
         req.locals.skipPermissionCheck = true;
     }
+    if (req.locals.app) {
+        req.user.appPermissions = req.user.allPermissions.find(e => e.app === req.locals.app) || [];
+    } else {
+        req.user.appPermissions = [];
+    }
     next();
 });
 
@@ -40,26 +45,26 @@ router.use(['/sm/service', '/sm/service/.*', '/:id/draftDelete', '/:id/purge/all
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (!req.user.permissions.some(e => e.startsWith('PMDS') || e.startsWith('PVDS'))) {
+    if (!req.user.appPermissions.some(e => e.startsWith('PMDS') || e.startsWith('PVDS'))) {
         return res.status(403).json({ message: 'You don\'t have access for this API' });
     }
-    if (!req.user.permissions.indexOf('PMDSD') && ['_id', 'app', 'definition', 'draftVersion'].some(key => _.has(req.body, key))) {
+    if (!req.user.appPermissions.indexOf('PMDSD') && ['_id', 'app', 'definition', 'draftVersion'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Design' });
     }
 
-    if (!req.user.permissions.indexOf('PMDSI') && ['app', 'webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
+    if (!req.user.appPermissions.indexOf('PMDSI') && ['app', 'webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Integration' });
     }
 
-    if (!req.user.permissions.indexOf('PMDSE') && ['app', 'wizard', 'stateModel'].some(key => _.has(req.body, key))) {
+    if (!req.user.appPermissions.indexOf('PMDSE') && ['app', 'wizard', 'stateModel'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Experience' });
     }
 
-    if (!req.user.permissions.indexOf('PMDSR') && ['app', 'role'].some(key => _.has(req.body, key))) {
+    if (!req.user.appPermissions.indexOf('PMDSR') && ['app', 'role'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Roles' });
     }
 
-    if (!req.user.permissions.indexOf('PMDSS') && ['disableInsights', 'permanentDeleteData', 'app', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
+    if (!req.user.appPermissions.indexOf('PMDSS') && ['disableInsights', 'permanentDeleteData', 'app', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Settings' });
     }
     const temp = res.end;
@@ -73,7 +78,7 @@ router.use(['/:id/start', '/:id/stop', '/:id/deploy', '/:id/repair'], async (req
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (!req.user.permissions.some(e => e.startsWith('PMDSP'))) {
+    if (!req.user.appPermissions.some(e => e.startsWith('PMDSP'))) {
         return res.status(403).json({ message: 'You don\'t have access for this API' });
     }
     next();
@@ -83,7 +88,7 @@ router.use('/sm/globalSchema', async (req, res, next) => {
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (!req.user.permissions.some(e => e.startsWith('PML') || e.startsWith('PVL'))) {
+    if (!req.user.appPermissions.some(e => e.startsWith('PML') || e.startsWith('PVL'))) {
         return res.status(403).json({ message: 'You don\'t have access for this API' });
     }
     next();
@@ -96,7 +101,7 @@ router.use([
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (!req.user.permissions.some(e => e.startsWith('PMU') || e.startsWith('PVU') || e.startsWith('PMB') || e.startsWith('PVB'))) {
+    if (!req.user.appPermissions.some(e => e.startsWith('PMU') || e.startsWith('PVU') || e.startsWith('PMB') || e.startsWith('PVB'))) {
         return res.status(403).json({ message: 'You don\'t have access for this API' });
     }
     next();
@@ -107,10 +112,7 @@ router.use(['/sm/:app/service/.*'], async (req, res, next) => {
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (req.user.apps && req.user.apps.indexOf(req.params.app) == -1) {
-        return res.status(403).json({ message: 'You don\'t have access for this API' });
-    }
-    next();
+    res.status(403).json({ message: 'You don\'t have access for this API' });
 });
 
 router.use(['/sm/app/:app'], async (req, res, next) => {
