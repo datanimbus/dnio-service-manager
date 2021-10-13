@@ -17,24 +17,27 @@ router.use(AuthCacheMW({ permittedUrls, secret: config.TOKEN_SECRET, decodeOnly:
 
 router.use((req, res, next) => {
     if (req.params.app) {
-        return next();
-    }
-    if (req.query.app) {
-        req.params.app = req.query.app;
+        req.locals.app = req.params.app;
+    } else if (req.query.app) {
+        req.locals.app = req.query.app;
     } else if (req.query.filter) {
         let filter = req.query.filter;
         if (typeof filter === 'string') {
             filter = JSON.parse(filter);
         }
-        req.params.app = filter.app;
+        req.locals.app = filter.app;
     } else if (req.body.app) {
-        req.params.app = req.body.app;
+        req.locals.app = req.body.app;
+    }
+    // check if user is app admin or super admin
+    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.locals.app) > -1)) {
+        req.locals.skipPermissionCheck = true;
     }
     next();
 });
 
 router.use(['/sm/service', '/sm/service/.*', '/:id/draftDelete', '/:id/purge/all', '/:id/purge/:type', '/:id/count', '/:id/:app/idCount', '/calendar]enable', '/calendar/disable', '/logs', '/:id/lockDocument/count', '/tags'], async (req, res, next) => {
-    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.params.app) == -1)) {
+    if (req.locals.skipPermissionCheck) {
         return next();
     }
     if (!req.user.permissions.some(e => e.startsWith('PMDS') || e.startsWith('PVDS'))) {
@@ -67,7 +70,7 @@ router.use(['/sm/service', '/sm/service/.*', '/:id/draftDelete', '/:id/purge/all
 });
 
 router.use(['/:id/start', '/:id/stop', '/:id/deploy', '/:id/repair'], async (req, res, next) => {
-    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.params.app) == -1)) {
+    if (req.locals.skipPermissionCheck) {
         return next();
     }
     if (!req.user.permissions.some(e => e.startsWith('PMDSP'))) {
@@ -77,7 +80,7 @@ router.use(['/:id/start', '/:id/stop', '/:id/deploy', '/:id/repair'], async (req
 });
 
 router.use('/sm/globalSchema', async (req, res, next) => {
-    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.params.app) == -1)) {
+    if (req.locals.skipPermissionCheck) {
         return next();
     }
     if (!req.user.permissions.some(e => e.startsWith('PML') || e.startsWith('PVL'))) {
@@ -90,7 +93,7 @@ router.use([
     '/validateUserDeletion/:app/:userId',
     '/userDeletion/:app/:userId'
 ], async (req, res, next) => {
-    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.params.app) == -1)) {
+    if (req.locals.skipPermissionCheck) {
         return next();
     }
     if (!req.user.permissions.some(e => e.startsWith('PMU') || e.startsWith('PVU') || e.startsWith('PMB') || e.startsWith('PVB'))) {
@@ -101,7 +104,7 @@ router.use([
 
 router.use(['/sm/:app/service/.*'], async (req, res, next) => {
     //Check is User is App Admin
-    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.params.app) == -1)) {
+    if (req.locals.skipPermissionCheck) {
         return next();
     }
     if (req.user.apps && req.user.apps.indexOf(req.params.app) == -1) {
