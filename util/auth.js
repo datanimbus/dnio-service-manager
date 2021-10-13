@@ -6,15 +6,8 @@ const config = require('../config/config');
 const logger = global.logger;
 
 const permittedUrls = [
-    "/api/a/rbac/login",
-    "/api/a/rbac/ldap/login",
-    "/api/a/rbac/azure/login",
-    "/api/a/rbac/azure/login/callback",
-    "/api/a/rbac/azure/userFetch/callback",
-    "/api/a/rbac/authType/",
-    "/api/a/rbac/closeAllSessions",
-    "/gw/health/live",
-    "/gw/health/ready",
+    "/sm/health/live",
+    "/sm/health/ready",
     "/service/{id}/statusChange",
     "/service/{id}/statusChangeFromMaintenance",
     "/service/{id}/checkUnique"
