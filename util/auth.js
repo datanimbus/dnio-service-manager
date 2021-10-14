@@ -30,13 +30,16 @@ router.use((req, res, next) => {
         req.locals.app = req.body.app;
     }
     // check if user is app admin or super admin
-    if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.locals.app) > -1)) {
-        req.locals.skipPermissionCheck = true;
-    }
-    if (req.locals.app) {
-        req.user.appPermissions = req.user.allPermissions.find(e => e.app === req.locals.app) || [];
-    } else {
-        req.user.appPermissions = [];
+
+    if (req.user) {
+        if (req.locals.app) {
+            req.user.appPermissions = req.user.allPermissions.find(e => e.app === req.locals.app) || [];
+        } else {
+            req.user.appPermissions = [];
+        }
+        if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.locals.app) > -1)) {
+            req.locals.skipPermissionCheck = true;
+        }
     }
     next();
 });
