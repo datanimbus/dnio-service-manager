@@ -332,9 +332,29 @@ var definition = {
 	'stateModel': {
 		'type': {
 			'attribute': { 'type': 'String' },
-			'initialStates': [ { 'type': 'String' } ],
+			'initialStates': [{ 'type': 'String' }],
 			'states': { 'type': 'Object' },
-			'enabled': { 'type': 'Boolean'}
+			'enabled': { 'type': 'Boolean' }
+		}
+	},
+	'workflowConfig': {
+		'type': {
+			'enabled': { 'type': 'Boolean' },
+			'makerCheckers': {
+				'type': [
+					{
+						'name': { 'type': 'String' },
+						'steps': {
+							'type': [
+								{
+									'name': { 'type': 'String' },
+									'approvals': { 'type': 'Number' }
+								}
+							]
+						}
+					}
+				]
+			}
 		}
 	},
 	'flags': {
