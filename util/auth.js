@@ -6,8 +6,6 @@ const config = require('../config/config');
 const logger = global.logger;
 
 const permittedUrls = [
-    "/sm/health/live",
-    "/sm/health/ready",
     "/service/{id}/statusChange",
     "/service/{id}/statusChangeFromMaintenance",
     "/service/{id}/checkUnique"
