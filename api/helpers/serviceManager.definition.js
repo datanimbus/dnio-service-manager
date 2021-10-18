@@ -347,6 +347,7 @@ var definition = {
 						'steps': {
 							'type': [
 								{
+									'id': { 'type': 'String' },
 									'name': { 'type': 'String' },
 									'approvals': { 'type': 'Number' }
 								}
