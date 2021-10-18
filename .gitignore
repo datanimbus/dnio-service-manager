@@ -44,3 +44,4 @@ generatedServices/*
 coverage
 build.sh
 send.sh
+test.js
