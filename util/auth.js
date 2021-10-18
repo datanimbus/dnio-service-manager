@@ -16,6 +16,9 @@ const permittedUrls = [
 router.use(AuthCacheMW({ permittedUrls, secret: config.TOKEN_SECRET, decodeOnly: true }));
 
 router.use((req, res, next) => {
+    if (!req.locals) {
+        req.locals = {};
+    }
     if (req.params.app) {
         req.locals.app = req.params.app;
     } else if (req.query.app) {
