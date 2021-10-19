@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { AuthCacheMW } = require('@appveen/ds-auth-cache');
 const _ = require('lodash');
 const config = require('../config/config');
+const trimUtils = require('./auth.trim');
 
 const logger = global.logger;
 
@@ -83,7 +84,7 @@ router.use((req, res, next) => {
 
     if (req.user) {
         if (req.locals.app) {
-            req.user.appPermissions = req.user.allPermissions.find(e => e.app === req.locals.app) || [];
+            req.user.appPermissions = (req.user.allPermissions || []).find(e => e.app === req.locals.app) || [];
         } else {
             req.user.appPermissions = [];
         }
@@ -97,7 +98,7 @@ router.use((req, res, next) => {
 router.use((req, res, next) => {
 
     // Check if path required only authentication checks.
-    if (onlyAuthUrls.some(e => compareURL(e, req.path))) {
+    if (_.concat(onlyAuthUrls, permittedUrls).some(e => compareURL(e, req.path))) {
         return next();
     }
 
@@ -124,6 +125,7 @@ router.use((req, res, next) => {
             return next();
         }
     }
+
     return res.status(403).json({ message: 'You don\'t have access for this API' });
 });
 
@@ -255,32 +257,40 @@ function comparator(main, pattern) {
 
 
 router.use(['/sm/service', '/sm/service/:id'], async (req, res, next) => {
+
+    const original = res.json;
+    function json_hook(json) {
+        if (Array.isArray(json)) {
+            json.forEach(data => trimUtils.trimData(req, data));
+        } else if (json && typeof json === 'object') {
+            trimUtils.trimData(req, json);
+        }
+        return original.call(this, json);
+    }
+    res.json = json_hook;
+
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (req.user.appPermissions.indexOf('PMDSD') == -1 && ['_id', 'app', 'definition', 'draftVersion'].some(key => _.has(req.body, key))) {
+    if (req.user.appPermissions.indexOf('PMDSD') == -1 && ['definition'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Design' });
     }
 
-    if (req.user.appPermissions.indexOf('PMDSI') == -1 && ['app', 'webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
+    if (req.user.appPermissions.indexOf('PMDSI') == -1 && ['webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Integration' });
     }
 
-    if (req.user.appPermissions.indexOf('PMDSE') == -1 && ['app', 'wizard', 'stateModel'].some(key => _.has(req.body, key))) {
+    if (req.user.appPermissions.indexOf('PMDSE') == -1 && ['wizard', 'stateModel'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Experience' });
     }
 
-    if (req.user.appPermissions.indexOf('PMDSR') == -1 && ['app', 'role'].some(key => _.has(req.body, key))) {
+    if (req.user.appPermissions.indexOf('PMDSR') == -1 && ['role'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Roles' });
     }
 
-    if (req.user.appPermissions.indexOf('PMDSS') == -1 && ['disableInsights', 'permanentDeleteData', 'app', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
+    if (req.user.appPermissions.indexOf('PMDSS') == -1 && ['disableInsights', 'permanentDeleteData', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
         return res.status(403).json({ message: 'You don\'t have access for Settings' });
     }
-    const temp = res.end;
-    res.end = function (data) {
-        temp(data);
-    };
     next();
 });
 
