@@ -107,6 +107,7 @@ router.use((req, res, next) => {
     // Check if path is for internal Use.
     if (internalUrls.some(e => compareURL(e, req.path))) {
         // Some Auth check for internal URLs required.
+        req.locals.skipPermissionCheck = true;
         return next();
     }
 
