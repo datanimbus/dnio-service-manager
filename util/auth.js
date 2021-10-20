@@ -7,6 +7,8 @@ const trimUtils = require('./auth.trim');
 const logger = global.logger;
 
 const permittedUrls = [
+    "/sm/health/live",
+    "/sm/health/ready",
     "/sm/service/{id}/checkUnique",
     "/sm/service/verifyHook"
 ];
