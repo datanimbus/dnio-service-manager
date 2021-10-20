@@ -149,9 +149,9 @@ function compareURL(tempUrl, url) {
 }
 
 function canAccessPath(req) {
-    if (compareURL('/sm/service', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
-            if (_.intersection(req.appPermissions, ['PML']).length > 0) {
+            if (_.intersection(req.user.appPermissions, ['PMDS']).length > 0) {
                 return true;
             } else {
                 return false;
@@ -159,9 +159,9 @@ function canAccessPath(req) {
         }
         return true;
     }
-    if (compareURL('/sm/service/{id}', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
-            if (_.intersection(req.appPermissions, ['PML']).length > 0) {
+            if (_.intersection(req.user.appPermissions, ['PMDS']).length > 0) {
                 return true;
             } else {
                 return false;
@@ -169,36 +169,36 @@ function canAccessPath(req) {
         }
         return true;
     }
-    if (compareURL('/sm/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/service/count', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/service/audit', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service/audit', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/service/audit/count', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service/audit/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/draftDelete', req.path) && _.intersectionWith(req.appPermissions, ['PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/{id}/draftDelete', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/purge/all', req.path) && _.intersection(req.appPermissions, ['PMDSS']).length > 0) {
+    if (compareURL('/sm/{id}/purge/all', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/purge/{type}', req.path) && _.intersection(req.appPermissions, ['PMDSS']).length > 0) {
+    if (compareURL('/sm/{id}/purge/{type}', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/service/{id}/swagger', req.path) && _.intersectionWith(req.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+    if (compareURL('/sm/service/{id}/swagger', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/service/{id}/checkUnique', req.path) && _.intersection(req.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
+    if (compareURL('/sm/service/{id}/checkUnique', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/globalSchema', req.path) && _.intersection(req.appPermissions, ['PVL', 'PML']).length > 0) {
+    if (compareURL('/sm/globalSchema', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
         if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
-            if (_.intersection(req.appPermissions, ['PML']).length > 0) {
+            if (_.intersection(req.user.appPermissions, ['PML']).length > 0) {
                 return true;
             } else {
                 return false;
@@ -206,9 +206,9 @@ function canAccessPath(req) {
         }
         return true;
     }
-    if (compareURL('/sm/globalSchema/{id}', req.path) && _.intersection(req.appPermissions, ['PVL', 'PML']).length > 0) {
+    if (compareURL('/sm/globalSchema/{id}', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
         if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
-            if (_.intersection(req.appPermissions, ['PML']).length > 0) {
+            if (_.intersection(req.user.appPermissions, ['PML']).length > 0) {
                 return true;
             } else {
                 return false;
@@ -216,37 +216,37 @@ function canAccessPath(req) {
         }
         return true;
     }
-    if (compareURL('/sm/globalSchema/count', req.path) && _.intersection(req.appPermissions, ['PVL', 'PML']).length > 0) {
+    if (compareURL('/sm/globalSchema/count', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/globalSchema/audit', req.path) && _.intersection(req.appPermissions, ['PVL', 'PML']).length > 0) {
+    if (compareURL('/sm/globalSchema/audit', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/globalSchema/audit/count', req.path) && _.intersection(req.appPermissions, ['PVL', 'PML']).length > 0) {
+    if (compareURL('/sm/globalSchema/audit/count', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/start', req.path) && _.intersection(req.appPermissions, ['PMDSPS']).length > 0) {
+    if (compareURL('/sm/{id}/start', req.path) && _.intersection(req.user.appPermissions, ['PMDSPS']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/stop', req.path) && _.intersection(req.appPermissions, ['PMDSPS']).length > 0) {
+    if (compareURL('/sm/{id}/stop', req.path) && _.intersection(req.user.appPermissions, ['PMDSPS']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/deploy', req.path) && _.intersection(req.appPermissions, ['PMDSPD']).length > 0) {
+    if (compareURL('/sm/{id}/deploy', req.path) && _.intersection(req.user.appPermissions, ['PMDSPD']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/repair', req.path) && _.intersection(req.appPermissions, ['PMDSPD']).length > 0) {
+    if (compareURL('/sm/{id}/repair', req.path) && _.intersection(req.user.appPermissions, ['PMDSPD']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/count', req.path) && _.intersectionWith(req.appPermissions, ['PMDS', 'PVDS'], comparator).length > 0) {
+    if (compareURL('/sm/{id}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS', 'PVDS'], comparator).length > 0) {
         return true;
     }
-    if (compareURL('/sm/{id}/{app}/idCount', req.path) && _.intersection(req.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
+    if (compareURL('/sm/{id}/{app}/idCount', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/logs', req.path) && _.intersection(req.appPermissions, ['PVDSA']).length > 0) {
+    if (compareURL('/sm/logs', req.path) && _.intersection(req.user.appPermissions, ['PVDSA']).length > 0) {
         return true;
     }
-    if (compareURL('/sm/tags', req.path) && _.intersection(req.appPermissions, ['PVDSS', 'PMDSS']).length > 0) {
+    if (compareURL('/sm/tags', req.path) && _.intersection(req.user.appPermissions, ['PVDSS', 'PMDSS']).length > 0) {
         return true;
     }
     return false;
@@ -274,24 +274,26 @@ router.use(['/sm/service', '/sm/service/:id'], async (req, res, next) => {
     if (req.locals.skipPermissionCheck) {
         return next();
     }
-    if (req.user.appPermissions.indexOf('PMDSD') == -1 && ['definition'].some(key => _.has(req.body, key))) {
-        return res.status(403).json({ message: 'You don\'t have access for Design' });
-    }
+    if ((req.method == 'POST' || req.method == 'PUT')) {
+        if (req.user.appPermissions.indexOf('PMDSD') == -1 && ['definition'].some(key => _.has(req.body, key))) {
+            return res.status(403).json({ message: 'You don\'t have access for Design' });
+        }
 
-    if (req.user.appPermissions.indexOf('PMDSI') == -1 && ['webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
-        return res.status(403).json({ message: 'You don\'t have access for Integration' });
-    }
+        if (req.user.appPermissions.indexOf('PMDSI') == -1 && ['webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
+            return res.status(403).json({ message: 'You don\'t have access for Integration' });
+        }
 
-    if (req.user.appPermissions.indexOf('PMDSE') == -1 && ['wizard', 'stateModel'].some(key => _.has(req.body, key))) {
-        return res.status(403).json({ message: 'You don\'t have access for Experience' });
-    }
+        if (req.user.appPermissions.indexOf('PMDSE') == -1 && ['wizard', 'stateModel'].some(key => _.has(req.body, key))) {
+            return res.status(403).json({ message: 'You don\'t have access for Experience' });
+        }
 
-    if (req.user.appPermissions.indexOf('PMDSR') == -1 && ['role'].some(key => _.has(req.body, key))) {
-        return res.status(403).json({ message: 'You don\'t have access for Roles' });
-    }
+        if (req.user.appPermissions.indexOf('PMDSR') == -1 && ['role'].some(key => _.has(req.body, key))) {
+            return res.status(403).json({ message: 'You don\'t have access for Roles' });
+        }
 
-    if (req.user.appPermissions.indexOf('PMDSS') == -1 && ['disableInsights', 'permanentDeleteData', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
-        return res.status(403).json({ message: 'You don\'t have access for Settings' });
+        if (req.user.appPermissions.indexOf('PMDSS') == -1 && ['disableInsights', 'permanentDeleteData', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
+            return res.status(403).json({ message: 'You don\'t have access for Settings' });
+        }
     }
     next();
 });
