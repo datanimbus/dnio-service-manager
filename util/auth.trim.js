@@ -2,7 +2,7 @@ const _ = require('lodash');
 
 
 function trimData(req, data) {
-    if (!data) {
+    if (!data || req.user.skipPermissionCheck) {
         return;
     }
     if (req.user.appPermissions.indexOf('PMDSD') == -1 && ['definition'].some(key => _.has(req.body, key))) {

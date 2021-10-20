@@ -263,10 +263,12 @@ router.use(['/sm/service', '/sm/service/:id'], async (req, res, next) => {
 
     const original = res.json;
     function json_hook(json) {
-        if (Array.isArray(json)) {
-            json.forEach(data => trimUtils.trimData(req, data));
-        } else if (json && typeof json === 'object') {
-            trimUtils.trimData(req, json);
+        if (json && !req.user.skipPermissionCheck) {
+            if (Array.isArray(json)) {
+                json.forEach(data => trimUtils.trimData(req, data));
+            } else if (json && typeof json === 'object') {
+                trimUtils.trimData(req, json);
+            }
         }
         return original.call(this, json);
     }
