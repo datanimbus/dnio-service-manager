@@ -229,7 +229,12 @@ function genrateCode(config) {
 	parseRolesForPermisison(config.role.roles);
 	code.push('');
 	code.push('function filterByPermission(req, permissions, data) {');
+	//Super Admin Code
 	code.push(`\tif (req.user.isSuperAdmin) {`);
+	code.push('\t\treturn data;');
+	code.push('\t}');
+	//Data Service Admin Code
+	code.push(`\tif (_.intersection(['ADMIN_${config._id}'], permissions).length > 0) {`);
 	code.push('\t\treturn data;');
 	code.push('\t}');
 	parseFieldsForPermisison(config.role.fields);
@@ -237,6 +242,11 @@ function genrateCode(config) {
 	code.push('}');
 	code.push('');
 
+
+	/**----------------------- MULTI-LEVEL WF------------------- */
+	if (config.workflowConfig && config.workflowConfig.makerCheckers) {
+		parseMultiLevelWF(config.workflowConfig.makerCheckers);
+	}
 
 
 
@@ -955,14 +965,66 @@ function genrateCode(config) {
 			code.push(`\tif (req.user.isSuperAdmin) {`);
 			code.push('\t\treturn true;');
 			code.push('\t}');
-			//Normal User Code
-			code.push(`\tif (_.intersection(${JSON.stringify(methodIdMap[method])}, permissions).length == 0) {`);
-			code.push('\t\treturn false;');
+			//Data Service Admin Code
+			code.push(`\tif (_.intersection(['ADMIN_${config._id}'], permissions).length > 0) {`);
+			code.push('\t\treturn true;');
 			code.push('\t}');
-			code.push('\treturn true;');
+			//Normal User Code
+			code.push(`\tif (_.intersection(${JSON.stringify(methodIdMap[method])}, permissions).length > 0) {`);
+			code.push('\t\treturn true;');
+			code.push('\t}');
+			code.push('\treturn false;');
 			code.push('}');
 			code.push(`module.exports.hasPermissionFor${method} = hasPermissionFor${method};`);
 		});
+	}
+
+	function parseMultiLevelWF(workflow) {
+		if (!workflow) {
+			return;
+		}
+		let steps;
+		if (Array.isArray(workflow)) {
+			steps = workflow[0].steps;
+		} else {
+			steps = workflow.steps;
+		}
+		code.push(`const hasWFPermissionFor = {};`);
+		for (let index = 0; index < steps.length; index++) {
+			const step = steps[index];
+			// const methodName = _.camelCase(step.name);
+			const methodName = step.name.trim();
+			code.push(`hasWFPermissionFor['${methodName}'] = function(req, permissions) {`);
+			//Super Admin Code
+			code.push(`\tif (req.user.isSuperAdmin) {`);
+			code.push('\t\treturn true;');
+			code.push('\t}');
+			//Data Service Admin Code
+			code.push(`\tif (_.intersection(['ADMIN_${config._id}'], permissions).length > 0) {`);
+			code.push('\t\treturn true;');
+			code.push('\t}');
+			//Normal User Code
+			code.push(`\tif (_.intersection(['${step.id}'], permissions).length > 0) {`);
+			code.push('\t\treturn true;');
+			code.push('\t}');
+			code.push('\treturn fasle;');
+			code.push('}');
+			code.push(`module.exports.hasWFPermissionFor = hasWFPermissionFor;`);
+		}
+
+
+		code.push(`function getNextWFStep(req, currentStep) {`);
+		for (let index = 0; index < steps.length - 1; index++) {
+			const currStep = steps[index];
+			const nextStep = steps[index + 1];
+			code.push(`\tif ('${currStep.name}' === currentStep) {`);
+			code.push(`\t\treturn '${nextStep.name}';`);
+			code.push('\t}');
+		}
+		code.push('\treturn null;');
+		code.push('}');
+		code.push(`module.exports.getNextWFStep = getNextWFStep;`);
+
 	}
 }
 
