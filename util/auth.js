@@ -88,7 +88,8 @@ router.use((req, res, next) => {
         req.user = {};
     }
     if (req.locals.app) {
-        req.user.appPermissions = (req.user.allPermissions || []).find(e => e.app === req.locals.app) || [];
+        const temp = (req.user.allPermissions || []).find(e => e.app === req.locals.app);
+        req.user.appPermissions = temp ? temp.permissions : [];
     } else {
         req.user.appPermissions = [];
     }
