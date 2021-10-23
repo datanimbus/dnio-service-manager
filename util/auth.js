@@ -151,6 +151,14 @@ function compareURL(tempUrl, url) {
 }
 
 function canAccessPath(req) {
+
+    if (compareURL('/sm/service', req.path) && req.method === 'GET') {
+        return true;
+    }
+    if (compareURL('/sm/service/{id}', req.path) && req.method === 'GET') {
+        return true;
+    }
+
     if (compareURL('/sm/service', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
         if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
             if (_.intersection(req.user.appPermissions, ['PMDS']).length > 0) {
