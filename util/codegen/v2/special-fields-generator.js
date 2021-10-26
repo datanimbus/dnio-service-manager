@@ -983,6 +983,9 @@ function genrateCode(config) {
 		if (!workflow) {
 			return;
 		}
+		if (Array.isArray(workflow) && !workflow[0]) {
+			return;
+		}
 		let steps;
 		if (Array.isArray(workflow)) {
 			steps = workflow[0].steps;
