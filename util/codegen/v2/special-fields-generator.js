@@ -1010,7 +1010,7 @@ function genrateCode(config) {
 			code.push(`\tif (_.intersection(['${step.id}'], permissions).length > 0) {`);
 			code.push('\t\treturn true;');
 			code.push('\t}');
-			code.push('\treturn fasle;');
+			code.push('\treturn false;');
 			code.push('}');
 			code.push(`module.exports.hasWFPermissionFor = hasWFPermissionFor;`);
 		}
