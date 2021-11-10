@@ -1244,19 +1244,19 @@ e.deployAPIHandler = (_req, _res) => {
 					}
 					// svcObject.definition = JSON.parse(svcObject.definition);
 					let promise = Promise.resolve();
-					let role = svcObject.role;
-					if (role) {
-						let permObj = {
-							app: svcObject.app,
-							entity: svcObject._id,
-							entityName: svcObject.name,
-							roles: role ? role.roles : null,
-							fields: role && role.fields ? JSON.stringify(role.fields) : null,
-							// to check => converted to array
-							definition: svcObject.definition
-						};
-						promise = deployUtil.updateRolesUserMgmt(svcObject._id, permObj, _req);
-					}
+					// let role = svcObject.role;
+					// if (role) {
+					// 	let permObj = {
+					// 		app: svcObject.app,
+					// 		entity: svcObject._id,
+					// 		entityName: svcObject.name,
+					// 		roles: role ? role.roles : null,
+					// 		fields: role && role.fields ? JSON.stringify(role.fields) : null,
+					// 		// to check => converted to array
+					// 		definition: svcObject.definition
+					// 	};
+					// 	promise = deployUtil.updateRolesUserMgmt(svcObject._id, permObj, _req);
+					// }
 					return promise
 						.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
 						.then(() => {
@@ -1356,21 +1356,21 @@ e.deployAPIHandler = (_req, _res) => {
 									return Promise.resolve();
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
-								.then(() => {
-									// srvcObj = _data;
-									let role = _d.role;
-									if (!role) return Promise.resolve();
-									let permObj = {
-										app: srvcObj.app,
-										entity: srvcObj._id,
-										entityName: srvcObj.name,
-										roles: role ? role.roles : null,
-										fields: role && role.fields ? JSON.stringify(role.fields) : null,
-										// to check => converted to array
-										definition: newDefinition
-									};
-									return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
-								})
+								// .then(() => {
+								// 	// srvcObj = _data;
+								// 	let role = _d.role;
+								// 	if (!role) return Promise.resolve();
+								// 	let permObj = {
+								// 		app: srvcObj.app,
+								// 		entity: srvcObj._id,
+								// 		entityName: srvcObj.name,
+								// 		roles: role ? role.roles : null,
+								// 		fields: role && role.fields ? JSON.stringify(role.fields) : null,
+								// 		// to check => converted to array
+								// 		definition: newDefinition
+								// 	};
+								// 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
+								// })
 								.then(() => {
 									if (!definitionComparison) {
 										return deployUtil.updateInPM(srvcObj._id, _req);
