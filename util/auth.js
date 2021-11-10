@@ -212,7 +212,7 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/sm/globalSchema', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
-		if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
+		if ((req.method == 'POST')) {
 			if (_.intersection(req.user.appPermissions, ['PML']).length > 0) {
 				return true;
 			} else {
@@ -222,7 +222,7 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/sm/globalSchema/{id}', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
-		if ((req.method == 'POST' || req.method == 'PUT' || req.method == 'DELETE')) {
+		if ((req.method == 'PUT' || req.method == 'DELETE')) {
 			if (_.intersection(req.user.appPermissions, ['PML']).length > 0) {
 				return true;
 			} else {
