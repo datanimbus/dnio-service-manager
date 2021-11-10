@@ -125,6 +125,10 @@ router.use((req, res, next) => {
 			return next();
 		}
 
+		if (!req.locals.app) {
+			return res.status(400).json({ message: 'App value needed for this API' });
+		}
+
 		// Check if user has permission for the path.
 		if (canAccessPath(req)) {
 			return next();
