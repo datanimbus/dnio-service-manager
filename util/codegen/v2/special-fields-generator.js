@@ -230,7 +230,7 @@ function genrateCode(config) {
 	code.push('');
 	code.push('function filterByPermission(req, permissions, data) {');
 	//Super Admin Code
-	code.push(`\tif (req.user.isSuperAdmin) {`);
+	code.push('\tif (req.user.isSuperAdmin) {');
 	code.push('\t\treturn data;');
 	code.push('\t}');
 	//Data Service Admin Code
@@ -962,7 +962,7 @@ function genrateCode(config) {
 		Object.keys(methodIdMap).forEach(method => {
 			code.push(`function hasPermissionFor${method}(req, permissions) {`);
 			//Super Admin Code
-			code.push(`\tif (req.user.isSuperAdmin) {`);
+			code.push('\tif (req.user.isSuperAdmin) {');
 			code.push('\t\treturn true;');
 			code.push('\t}');
 			//Data Service Admin Code
@@ -992,14 +992,14 @@ function genrateCode(config) {
 		} else {
 			steps = workflow.steps;
 		}
-		code.push(`const hasWFPermissionFor = {};`);
+		code.push('const hasWFPermissionFor = {};');
 		for (let index = 0; index < steps.length; index++) {
 			const step = steps[index];
 			// const methodName = _.camelCase(step.name);
 			const methodName = step.name.trim();
 			code.push(`hasWFPermissionFor['${methodName}'] = function(req, permissions) {`);
 			//Super Admin Code
-			code.push(`\tif (req.user.isSuperAdmin) {`);
+			code.push('\tif (req.user.isSuperAdmin) {');
 			code.push('\t\treturn true;');
 			code.push('\t}');
 			//Data Service Admin Code
@@ -1012,11 +1012,11 @@ function genrateCode(config) {
 			code.push('\t}');
 			code.push('\treturn false;');
 			code.push('}');
-			code.push(`module.exports.hasWFPermissionFor = hasWFPermissionFor;`);
+			code.push('module.exports.hasWFPermissionFor = hasWFPermissionFor;');
 		}
 
 
-		code.push(`function getNextWFStep(req, currentStep) {`);
+		code.push('function getNextWFStep(req, currentStep) {');
 		for (let index = 0; index < steps.length - 1; index++) {
 			const currStep = steps[index];
 			const nextStep = steps[index + 1];
@@ -1026,7 +1026,7 @@ function genrateCode(config) {
 		}
 		code.push('\treturn null;');
 		code.push('}');
-		code.push(`module.exports.getNextWFStep = getNextWFStep;`);
+		code.push('module.exports.getNextWFStep = getNextWFStep;');
 
 	}
 }
