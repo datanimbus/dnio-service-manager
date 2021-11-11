@@ -292,23 +292,23 @@ router.use(['/sm/service', '/sm/service/:id'], async (req, res, next) => {
 		return next();
 	}
 	if ((req.method == 'POST' || req.method == 'PUT')) {
-		if (req.user.appPermissions.indexOf('PMDSD') == -1 && ['definition'].some(key => _.has(req.body, key))) {
+		if (_.intersection(req.user.appPermissions, ['PMDSD']).length == 0 && ['definition'].some(key => _.has(req.body, key))) {
 			return res.status(403).json({ message: 'You don\'t have access for Design' });
 		}
 
-		if (req.user.appPermissions.indexOf('PMDSI') == -1 && ['webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
+		if (_.intersection(req.user.appPermissions, ['PMDSI']).length == 0 && ['webHooks', 'preHooks', 'postHooks'].some(key => _.has(req.body, key))) {
 			return res.status(403).json({ message: 'You don\'t have access for Integration' });
 		}
 
-		if (req.user.appPermissions.indexOf('PMDSE') == -1 && ['wizard', 'stateModel'].some(key => _.has(req.body, key))) {
+		if (_.intersection(req.user.appPermissions, ['PMDSE']).length == 0 && ['wizard', 'stateModel'].some(key => _.has(req.body, key))) {
 			return res.status(403).json({ message: 'You don\'t have access for Experience' });
 		}
 
-		if (req.user.appPermissions.indexOf('PMDSR') == -1 && ['role'].some(key => _.has(req.body, key))) {
+		if (_.intersection(req.user.appPermissions, ['PMDSR', 'PMDSD']).length == 0 && ['role'].some(key => _.has(req.body, key))) {
 			return res.status(403).json({ message: 'You don\'t have access for Roles' });
 		}
 
-		if (req.user.appPermissions.indexOf('PMDSS') == -1 && ['disableInsights', 'permanentDeleteData', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
+		if (_.intersection(req.user.appPermissions, ['PMDSS']).length == 0 && ['disableInsights', 'permanentDeleteData', 'api', 'versionValidity', 'headers', 'enableSearchIndex'].some(key => _.has(req.body, key))) {
 			return res.status(403).json({ message: 'You don\'t have access for Settings' });
 		}
 	}
