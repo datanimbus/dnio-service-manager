@@ -999,9 +999,9 @@ function genrateCode(config) {
 			const methodName = step.name.trim();
 			code.push(`hasWFPermissionFor['${methodName}'] = function(req, permissions) {`);
 			//Super Admin Code
-			code.push('\tif (req.user.isSuperAdmin) {');
-			code.push('\t\treturn true;');
-			code.push('\t}');
+			// code.push('\tif (req.user.isSuperAdmin) {');
+			// code.push('\t\treturn true;');
+			// code.push('\t}');
 			//Data Service Admin Code
 			code.push(`\tif (_.intersection(['ADMIN_${config._id}'], permissions).length > 0) {`);
 			code.push('\t\treturn true;');
