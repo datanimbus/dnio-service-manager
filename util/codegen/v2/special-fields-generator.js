@@ -226,7 +226,7 @@ function genrateCode(config) {
 
 	/**----------------------- ROLES AND PERMISSIONS------------------- */
 
-	parseRolesForPermisison(config.role.roles);
+	parseRolesForPermisison(config.role.roles, config.workflowConfig);
 	code.push('');
 	code.push('function filterByPermission(req, permissions, data) {');
 	//Super Admin Code
@@ -949,7 +949,7 @@ function genrateCode(config) {
 		});
 	}
 
-	function parseRolesForPermisison(roles) {
+	function parseRolesForPermisison(roles, workflowConfig) {
 		const methodIdMap = {};
 		roles.forEach(e => {
 			return e.operations.forEach(o => {
@@ -973,6 +973,16 @@ function genrateCode(config) {
 			code.push(`\tif (_.intersection(${JSON.stringify(methodIdMap[method])}, permissions).length > 0) {`);
 			code.push('\t\treturn true;');
 			code.push('\t}');
+
+			//If GET Method check for review Permissions as Well
+			if (method === 'GET' && workflowConfig && workflowConfig.enabled && workflowConfig.makerCheckers && workflowConfig.makerCheckers[0]) {
+				const steps = (workflowConfig.makerCheckers[0].steps || []);
+				const wfPermissions = steps.map(e => e.id);
+				code.push(`\tif (_.intersection(${JSON.stringify(wfPermissions)}, permissions).length > 0) {`);
+				code.push('\t\treturn true;');
+				code.push('\t}');
+			}
+
 			code.push('\treturn false;');
 			code.push('}');
 			code.push(`module.exports.hasPermissionFor${method} = hasPermissionFor${method};`);
