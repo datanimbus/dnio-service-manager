@@ -15,7 +15,8 @@ const permittedUrls = [
 
 const onlyAuthUrls = [
 	'/sm/service/verifyHook',
-	'/sm/{id}/lockDocument/count'
+	'/sm/{id}/lockDocument/count',
+	'/sm/service/{id}/swagger'
 ];
 
 const internalUrls = [
@@ -45,7 +46,6 @@ const commonUrls = [
 	'/sm/{id}/draftDelete',
 	'/sm/{id}/purge/all',
 	'/sm/{id}/purge/{type}',
-	'/sm/service/{id}/swagger',
 	'/sm/service/{id}/checkUnique',
 	'/sm/globalSchema',
 	'/sm/globalSchema/{id}',
@@ -205,9 +205,9 @@ function canAccessPath(req) {
 	if (compareURL('/sm/{id}/purge/{type}', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/service/{id}/swagger', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
-		return true;
-	}
+	// if (compareURL('/sm/service/{id}/swagger', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	// 	return true;
+	// }
 	if (compareURL('/sm/service/{id}/checkUnique', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
 		return true;
 	}
