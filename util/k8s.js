@@ -36,6 +36,7 @@ e.deploymentCreate = (_schema) => {
 	envVars.push({ name: 'MONGO_LOGS_BASE_URL', value: process.env.MONGO_LOGS_BASE_URL });
 	envVars.push({ name: 'MONGO_LOGS_DBNAME', value: process.env.MONGO_LOGS_DBNAME });
 	envVars.push({ name: 'LOG_LEVEL', value: process.env.LOG_LEVEL });
+	envVars.push({ name: 'MAX_JSON_SIZE', value: process.env.MAX_JSON_SIZE });
 	let options = {
 		'livenessProbe': JSON.parse(JSON.stringify(probeObject)),
 		'readinessProbe': JSON.parse(JSON.stringify(probeObject))
@@ -87,6 +88,7 @@ e.deploymentUpdate = (_schema) => {
 	envVars.push({ name: 'MONGO_LOGS_BASE_URL', value: process.env.MONGO_LOGS_BASE_URL });
 	envVars.push({ name: 'MONGO_LOGS_DBNAME', value: process.env.MONGO_LOGS_DBNAME });
 	envVars.push({ name: 'LOG_LEVEL', value: process.env.LOG_LEVEL });
+	envVars.push({ name: 'MAX_JSON_SIZE', value: process.env.MAX_JSON_SIZE });
 	let options = {
 		'livenessProbe': JSON.parse(JSON.stringify(probeObject)),
 		'readinessProbe': JSON.parse(JSON.stringify(probeObject))
