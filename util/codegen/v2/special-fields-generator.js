@@ -941,7 +941,7 @@ function genrateCode(config) {
 			if (permObj) {
 				const permIds = Object.keys(permObj).map(e => ({ id: e, val: permObj[e] })).filter(e => e.val == 'R').map(e => e.id);
 				code.push(`\tif (_.intersection(${JSON.stringify(permIds)}, permissions).length == 0) {`);
-				code.push(`\t\t_.unset('${dataKey}', data);`);
+				code.push(`\t\t_.unset(data, '${dataKey}');`);
 				code.push('\t}');
 			} else {
 				parseFieldsForPermisison(fields[key], key);
