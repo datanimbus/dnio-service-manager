@@ -32,13 +32,15 @@ function generateFiles(_txnId, config) {
 	config.projectName = config._id;
 	config.path = './generatedServices/' + config.projectName;
 	config['definition'] = config['definition'].filter(attr => attr.key != '_id');
+	const yamlJSON = generateYaml(config);
+	const yamlDump = jsyaml.dump(yamlJSON);
 	return generateFolderStructure(_txnId, config)
 		.then(() => generateDefinition(_txnId, config))
 		.then((definition) => fs.writeFileSync(path.join(config.path, 'api/helpers/service.definition.js'), definition, 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'service.json'), JSON.stringify(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, '.env'), dotEnvFile(config), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'Dockerfile'), dockerFile(config), 'utf-8'))
-		.then(() => fs.writeFileSync(path.join(config.path, 'api/swagger/swagger.yaml'), jsyaml.safeDump(generateYaml(config)), 'utf-8'))
+		.then(() => fs.writeFileSync(path.join(config.path, 'api/swagger/swagger.yaml'), yamlDump, 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(config.path, 'api/utils/special-fields.utils.js'), specialFieldsGenrator.genrateCode(config), 'utf-8'))
 		.then(() => logger.info(`[${_txnId}] GenerateFiles :: ${id} :: Your project structure is ready`))
 		.catch(err => {
@@ -59,22 +61,22 @@ function generateFolderStructure(_txnId, config) {
 
 	mkdirp.sync(config.path);
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${config.path}`);
-	
+
 	mkdirp.sync(path.join(config.path, 'api/controllers'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/controllers')}`);
-	
+
 	mkdirp.sync(path.join(config.path, 'api/models'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/models')}`);
-	
+
 	mkdirp.sync(path.join(config.path, 'api/helpers'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/helpers')}`);
-	
+
 	mkdirp.sync(path.join(config.path, 'api/utils'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/utils')}`);
 
 	mkdirp.sync(path.join(config.path, 'output'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'output')}`);
-	
+
 	mkdirp.sync(path.join(config.path, 'api/swagger'));
 	logger.trace(`[${_txnId}] GenerateFolderStructure :: ${id} :: ${path.join(config.path, 'api/swagger')}`);
 	if (!envConfig.isK8sEnv()) {
