@@ -237,6 +237,17 @@ function genrateCode(config) {
 	code.push(`\tif (_.intersection(['ADMIN_${config._id}'], permissions).length > 0) {`);
 	code.push('\t\treturn data;');
 	code.push('\t}');
+
+	//Reviewer Code
+	let makerCheckersIds = [];
+	if (config.workflowConfig && config.workflowConfig.makerCheckers && config.workflowConfig.makerCheckers[0]) {
+		const steps = (config.workflowConfig.makerCheckers[0].steps || []);
+		makerCheckersIds = steps.map(e => e.id);
+	}
+	code.push(`\tif (_.intersection(${JSON.stringify(makerCheckersIds)}, permissions).length > 0) {`);
+	code.push('\t\treturn data;');
+	code.push('\t}');
+
 	parseFieldsForPermisison(config.role.fields);
 	code.push('\t\treturn data;');
 	code.push('}');
