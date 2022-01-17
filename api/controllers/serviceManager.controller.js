@@ -1379,12 +1379,21 @@ e.deployAPIHandler = (_req, _res) => {
 								.then(() => {
 									return _newData.remove(_req);
 								})
-								.then(() => {
+								.then(async () => {
 									dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
 									_res.status(202).json({ message: 'Deployment process started' });
 									if (!envConfig.isCosmosDB() && srvcObj.collectionName != oldData.collectionName) {
 										isReDeploymentRequired = true;
-										return renameCollections(oldData.collectionName, srvcObj.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
+										if (envConfig.isK8sEnv()) {
+											await k8s.deploymentDelete(_req.get('TxnId'), oldData)
+											logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${oldData._id}`);
+											await k8s.serviceDelete(_req.get('TxnId'), oldData);
+											logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${oldData._id}`);
+										} else {
+											logger.info(`[${_req.get('TxnId')}] PM2 not supported`);
+										}
+										await renameCollections(oldData.collectionName, srvcObj.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
+										return;
 									}
 								})
 								.then(() => smHooks.updateServicesInGlobalSchema(srvcObj, _req))
