@@ -1643,50 +1643,39 @@ function destroyDeployment(id, count, _req) {
 		});
 }
 
-function renameCollections(oldColl, newColl, app) {
-	let mongoDBVishnu = global.mongoConnection.db(app);
-	if (mongoDBVishnu) {
-		return mongoDBVishnu.collection(oldColl).rename(newColl)
-			.then(out => {
-				logger.info('Collection name changed from ' + oldColl + ' to ' + newColl);
-				logger.debug(out);
-				return mongoDBVishnu.collection('counters').findOne({
-					_id: oldColl
-				});
-			})
-			.then(_d => {
-				if (_d) {
-					let newObj = JSON.parse(JSON.stringify(_d));
-					newObj._id = newColl;
-					return mongoDBVishnu.collection('counters').insert(newObj);
-				}
-			})
-			.then(_o => {
-				if (_o) {
-					logger.info('Added counter for ' + newColl);
-					return mongoDBVishnu.collection('counters').remove({
-						_id: oldColl
-					});
-				}
-			})
-			.then(_o => {
-				if (_o) {
-					logger.info('Removed counter for ' + oldColl);
-				}
-				return mongoDBVishnu.collection(oldColl + '.files').rename(newColl + '.files');
-			})
-			.then(out => {
-				logger.info('Collection name changed from ' + oldColl + '.files' + ' to ' + newColl + '.files');
-				logger.debug(out);
-				return mongoDBVishnu.collection(oldColl + '.chunks').rename(newColl + '.chunks');
-			})
-			.then(out => {
-				logger.info('Collection name changed from ' + oldColl + '.chunks' + ' to ' + newColl + '.chunks');
-				logger.debug(out);
-			})
-			.catch(err => {
-				logger.error(err.message);
-			});
+async function renameCollections(oldColl, newColl, app) {
+	try {
+		const mongoDBAppcenter = global.mongoConnection.db(app);
+		if (mongoDBAppcenter) {
+			await mongoDBAppcenter.collection(oldColl).rename(newColl);
+			logger.info('Collection name changed from ' + oldColl + ' to ' + newColl);
+			const doc = await mongoDBAppcenter.collection('counters').findOne({ _id: oldColl });
+			if (doc) {
+				const newObj = JSON.parse(JSON.stringify(doc));
+				newObj._id = newColl;
+				await mongoDBAppcenter.collection('counters').insert(newObj);
+				logger.info('Added counter for ' + newColl);
+				await mongoDBAppcenter.collection('counters').remove({ _id: oldColl });
+				logger.info('Removed counter for ' + oldColl);
+			}
+			await mongoDBAppcenter.collection(oldColl + '.bulkCreate').rename(newColl + '.bulkCreate');
+			logger.info('Collection name changed from ' + oldColl + '.bulkCreate' + ' to ' + newColl + '.bulkCreate');
+			await mongoDBAppcenter.collection(oldColl + '.dedupe').rename(newColl + '.dedupe');
+			logger.info('Collection name changed from ' + oldColl + '.dedupe' + ' to ' + newColl + '.dedupe');
+			await mongoDBAppcenter.collection(oldColl + '.exports').rename(newColl + '.exports');
+			logger.info('Collection name changed from ' + oldColl + '.exports' + ' to ' + newColl + '.exports');
+			await mongoDBAppcenter.collection(oldColl + '.fileImport.chunks').rename(newColl + '.fileImport.chunks');
+			logger.info('Collection name changed from ' + oldColl + '.fileImport.chunks' + ' to ' + newColl + '.fileImport.chunks');
+			await mongoDBAppcenter.collection(oldColl + '.fileImport.files').rename(newColl + '.fileImport.files');
+			logger.info('Collection name changed from ' + oldColl + '.fileImport.files' + ' to ' + newColl + '.fileImport.files');
+			await mongoDBAppcenter.collection(oldColl + '.fileTransfers').rename(newColl + '.fileTransfers');
+			logger.info('Collection name changed from ' + oldColl + '.fileTransfers' + ' to ' + newColl + '.fileTransfers');
+			await mongoDBAppcenter.collection(oldColl + '.workflow').rename(newColl + '.workflow');
+			logger.info('Collection name changed from ' + oldColl + '.workflow' + ' to ' + newColl + '.workflow');
+		}
+	} catch (err) {
+		logger.error(err.message);
+		throw err;
 	}
 }
 
