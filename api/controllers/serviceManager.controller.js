@@ -1201,7 +1201,9 @@ function rollBackDeploy(id, req) {
 
 e.deployAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	logger.debug(`[${txnId}] Inside deployAPIHandler`);
+	let ID = _req.swagger.params.id.value;
+	logger.info(`[${txnId}] Service deploy request received for service ${ID}`);
+
 	let user = _req.get('User');
 	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')) : false;
 	let socket = _req.app.get('socket');
@@ -1213,52 +1215,40 @@ e.deployAPIHandler = (_req, _res) => {
 	let isAuditIndexDeleteRequired = false;
 	let isApiEndpointChanged = false;
 	let removeSoftDeletedRecords = false;
-	let ID = _req.swagger.params.id.value;
+	
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
 			if (!_d) {
-				logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: No data found in DB`);
+				logger.debug(`[${txnId}] No data found in DB for service ${ID}`);
 				_res.status(404).json({ message: 'Not found' });
-			}
-			else {
-				logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Old data found in DB`);
-				logger.trace(`[${txnId}] Deploy API handler :: ${ID} :: Data from DB :: ${JSON.stringify(_d)}`);
+			} else {
+				logger.debug(`[${txnId}] Old data found in DB for service ${ID}`);
+				logger.trace(`[${txnId}] Old Data from DB :: ${JSON.stringify(_d)}`);
+				
 				let oldData = JSON.parse(JSON.stringify(_d));
 				if (_d.status != 'Draft' && !_d.draftVersion) {
-					logger.error(`[${txnId}] Deploy API handler :: ${ID} :: No draft data found`);
+					logger.error(`[${txnId}] No draft data found for service ${ID}`);
 					throw new Error('Draft not available for this data service');
 				}
 				if (_d.status === 'Draft') {
 					let svcObject = _d.toObject();
 					if (envConfig.verifyDeploymentUser && !isSuperAdmin && svcObject && svcObject._metadata && svcObject._metadata.lastUpdatedBy == user) {
-						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: User cannot deploy own changes.`);
+						logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${svcObject.status}`);
 						return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 					}
-					if (!svcObject.definition || svcObject.definition.length == 1) {
-						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: definition not found`);
+					if (!svcObject.schemaFree && (!svcObject.definition || svcObject.definition.length == 1)) {
+						logger.error(`[${txnId}] Definition not found for service ${ID}`);
 						throw new Error('Data service definition not found.');
 					}
 					if (!svcObject.versionValidity) {
-						logger.error(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: Data settings not configured`);
+						logger.error(`[${txnId}] Data settings not configured for service ${ID}`);
 						throw new Error('Data settings are not configured for the data service.');
 					}
-					// svcObject.definition = JSON.parse(svcObject.definition);
+
 					let promise = Promise.resolve();
-					// let role = svcObject.role;
-					// if (role) {
-					// 	let permObj = {
-					// 		app: svcObject.app,
-					// 		entity: svcObject._id,
-					// 		entityName: svcObject.name,
-					// 		roles: role ? role.roles : null,
-					// 		fields: role && role.fields ? JSON.stringify(role.fields) : null,
-					// 		// to check => converted to array
-					// 		definition: svcObject.definition
-					// 	};
-					// 	promise = deployUtil.updateRolesUserMgmt(svcObject._id, permObj, _req);
-					// }
+					
 					return promise
-						.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
+						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req) })
 						.then(() => {
 							let newHooks = {
 								'webHooks': svcObject.webHooks,
@@ -1268,7 +1258,7 @@ e.deployAPIHandler = (_req, _res) => {
 						})
 						.then(() => deployUtil.deployService(svcObject, socket, _req, false, false))
 						.then(() => {
-							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: ${svcObject.status} :: Deployment process started`);
+							logger.info(`[${txnId}] Deployment process started for service ${ID} status ${svcObject.status}`);
 							dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
 							_res.status(202).json({ message: 'Deployment process started' });
 						});

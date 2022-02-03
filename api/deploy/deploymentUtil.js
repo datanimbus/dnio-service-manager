@@ -1,12 +1,14 @@
-let e = {};
+const mongoose = require('mongoose');
+const request = require('request');
+const _ = require('lodash');
+
 const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
 const envConfig = require('../../config/config.js');
 const dm = require('../deploy/deploymentManager');
 const fileIO = require('../../util/codegen/lib/fileIO.js');
-const mongoose = require('mongoose');
-const request = require('request');
-const _ = require('lodash');
+
 const logger = global.logger;
+let e = {};
 
 // to check
 // commented as attributeList is not required anymore
@@ -208,58 +210,99 @@ e.updateDocument = (model, query, updateObj, req) => {
 		});
 };
 
-e.deployService = (_schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) => {
-	let id = _schemaDetails._id;
+e.deployService = (schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) => {
+	let id = schemaDetails._id;
 	let txnId = req.get('TxnId') || req.headers.txnId;
-	logger.info(`[${txnId}] Deploy service :: ${id}`);
-	let systemFields = {
-		'File': [],
-		'Geojson': []
-	};
-	e.getSystemFields(systemFields, '', _schemaDetails.definition, ['File', 'Geojson']);
-	_schemaDetails.geoJSONFields = systemFields.Geojson;
-	_schemaDetails.fileFields = systemFields.File;
-	return globalDefHelper.expandSchemaWithGlobalDef(_schemaDetails.app, _schemaDetails.definition)
-		.then(def => {
-			logger.trace(`[${txnId}] Deploy service :: ${id} :: Updated definition :: ${JSON.stringify(def)}`);
-			logger.trace(`[${txnId}] Deploy service :: ${id} :: Schema details obj :: ${JSON.stringify(_schemaDetails)}`);
-			_schemaDetails.definition = def;
-			_schemaDetails.definition = globalDefHelper.expandSchemaWithSystemGlobalDef(_schemaDetails.definition);
-			return e.updateDocument(mongoose.model('services'), { _id: id }, { status: 'Pending' }, req);
-		})
-		.then((_d) => {
-			logger.debug(`[${txnId}] Deploy service :: ${id} :: Service moved to pending status`);
-			logger.trace(`[${txnId}] Deploy service :: ${id} :: ${JSON.stringify(_d)}`);
-			return dm.deployService(txnId, _schemaDetails, _isUpdate, _isDeleteAndCreate);
-		})
-		.catch(e => {
-			logger.error(`[${txnId}] Deploy service :: ${id} :: Deployment failed :: ${e}`);
-			// cleanup should happen where the code is generated
-			// TODO: Jerry/Shobhit
-			var startPromise = new Promise.resolve();
-			startPromise.then(() => {
-				fileIO.deleteFolderRecursive('./generatedServices/' + id);
+
+	logger.info(`[${txnId}] Deployment utils deploy service :: ${id}`);
+	logger.debug(`[${txnId}] Schema free service? - ${schemaDetails.schemaFree}`);
+
+	if (schemaDetails.schemaFree) {
+		return e.updateDocument(mongoose.model('services'), { _id: id }, { status: 'Pending' }, req)
+			.then(doc => {
+				logger.debug(`[${txnId}] Service moved to pending status ${id}`);
+				logger.trace(`[${txnId}] Service details :: ${JSON.stringify(doc)}`);
+				return dm.deployService(txnId, schemaDetails, _isUpdate, _isDeleteAndCreate);
 			})
-				.then(() => {
-					if (socket) {
-						e.sendToSocket(socket, 'serviceStatus', {
-							_id: id,
-							message: 'Undeployed',
-							app: _schemaDetails.app
-						});
-					}
+			.catch(e => {
+				logger.error(`[${txnId}] Deployment failed for service ${id} :: ${e}`);
+				logger.debug(`[${txnId}] Cleaning up deployment changes for service ${id}`);
+
+				var startPromise = new Promise.resolve();
+				startPromise
+					.then(() => {
+						fileIO.deleteFolderRecursive('./generatedServices/' + id);
+					})
+					.then(() => {
+						logger.debug(`[${txnId}] Cleanup :: Generated service folder deleted ${id}`)
+						if (socket) {
+							e.sendToSocket(socket, 'serviceStatus', {
+								_id: id,
+								message: 'Undeployed',
+								app: schemaDetails.app
+							});
+						}
+					})
+					.then(() => {
+						logger.debug(`[${txnId}] Updating document status in db ${id} :: Errored`)
+						return e.updateDocument(mongoose.model('services'), {
+							_id: id
+						}, {
+							status: 'Errored',
+							comment: e.message
+						}, req);
+					})
+					.catch(err => logger.error(`[${txnId}] Error cleaning deployment changes for service ${id} :: ${err.message}`));
+			});
+	} else {
+		let systemFields = {
+			'File': [],
+			'Geojson': []
+		};
+		e.getSystemFields(systemFields, '', schemaDetails.definition, ['File', 'Geojson']);
+		schemaDetails.geoJSONFields = systemFields.Geojson;
+		schemaDetails.fileFields = systemFields.File;
+		return globalDefHelper.expandSchemaWithGlobalDef(schemaDetails.app, schemaDetails.definition)
+			.then(def => {
+				logger.trace(`[${txnId}] Deploy service :: ${id} :: Updated definition :: ${JSON.stringify(def)}`);
+				logger.trace(`[${txnId}] Deploy service :: ${id} :: Schema details obj :: ${JSON.stringify(schemaDetails)}`);
+				schemaDetails.definition = def;
+				schemaDetails.definition = globalDefHelper.expandSchemaWithSystemGlobalDef(schemaDetails.definition);
+				return e.updateDocument(mongoose.model('services'), { _id: id }, { status: 'Pending' }, req);
+			})
+			.then((_d) => {
+				logger.debug(`[${txnId}] Deploy service :: ${id} :: Service moved to pending status`);
+				logger.trace(`[${txnId}] Deploy service :: ${id} :: ${JSON.stringify(_d)}`);
+				return dm.deployService(txnId, schemaDetails, _isUpdate, _isDeleteAndCreate);
+			})
+			.catch(e => {
+				logger.error(`[${txnId}] Deploy service :: ${id} :: Deployment failed :: ${e}`);
+				
+				var startPromise = new Promise.resolve();
+				startPromise.then(() => {
+					fileIO.deleteFolderRecursive('./generatedServices/' + id);
 				})
-				.then(() => {
-					return e.updateDocument(mongoose.model('services'), {
-						_id: id
-					}, {
-						status: 'Errored',
-						comment: e.message
-					}, req);
-				})
-				.catch(err => logger.error(`[${txnId}] Deploy service :: ${id} :: ${err.message}`));
-			logger.error(`[${txnId}] Deploy service :: ${id} :: ${e.message}`);
-		});
+					.then(() => {
+						if (socket) {
+							e.sendToSocket(socket, 'serviceStatus', {
+								_id: id,
+								message: 'Undeployed',
+								app: schemaDetails.app
+							});
+						}
+					})
+					.then(() => {
+						return e.updateDocument(mongoose.model('services'), {
+							_id: id
+						}, {
+							status: 'Errored',
+							comment: e.message
+						}, req);
+					})
+					.catch(err => logger.error(`[${txnId}] Deploy service :: ${id} :: ${err.message}`));
+				logger.error(`[${txnId}] Deploy service :: ${id} :: ${e.message}`);
+			});
+	}
 };
 
 e.updateInPM = function (id, req) {
