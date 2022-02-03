@@ -34,6 +34,10 @@ var definition = {
 	'allowedFileTypes': {
 		'type': ['String']
 	},
+	'schemaFree': {
+		'type': 'Boolean',
+		'default': false
+	},
 	'wizard': {
 		'type': [{
 			'name': 'String',
