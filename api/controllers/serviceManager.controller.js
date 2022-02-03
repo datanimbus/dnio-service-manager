@@ -55,7 +55,7 @@ schema.pre('validate', function (next) {
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
 	// if (self.definition) self.definition = self.definition.trim();
 	if (self.name && _.isEmpty(self.name)) next(new Error('name is empty'));
-	if (self.definition && _.isEmpty(self.definition)) next(new Error('definition is empty'));
+	if (self.definition && _.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
 	if (!_.isEmpty(self.preHooks)) {
 		let preHookNames = _.uniq(self.preHooks.map(_d => _d.name));
 		if (preHookNames.length != self.preHooks.length) {
@@ -951,37 +951,40 @@ function validateCounterChange(isCounterChangeRequired, id, counter, app) {
 
 e.updateDoc = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	logger.debug('Inside updateDoc');
 	let ID = _req.swagger.params.id.value;
+	logger.info(`[${txnId}] Update service request received for ${ID}`);
+	
 	delete _req.body.collectionName;
 	delete _req.body.version;
 	_req.body._id = ID;
-	// replaceRelationWithString(_req.body.definition);
-	logger.debug('Incoming data');
-	logger.debug(JSON.stringify(_req.body));
-	// let role = _req.body.role;
-	// delete _req.body.role;
+	
+	logger.trace(`[${txnId}] Payload received :: ${JSON.stringify(_req.body)}`);
+	
 	let promise = Promise.resolve();
+
 	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers || []);
-	if (_req.body.definition) {
+	if (!_req.body.schemaFree && _req.body.definition) {
 		promise = globalDefHelper.expandSchemaWithGlobalDef(_req.body.app, _req.body.definition);
 	}
+
 	return promise
 		.then(expandedDef => {
 			if (expandedDef) _req.body.definition = expandedDef;
 		})
 		.then(() => crudder.model.findOne({ _id: ID, '_metadata.deleted': false }))
 		.then(_d => {
-			logger.debug('Data from DB.');
-			logger.debug(JSON.stringify(_d));
+			logger.trace(`[${txnId}] Document from DB for ${ID} :: ${JSON.stringify(_d)}`);
+
 			let oldData = JSON.parse(JSON.stringify(_d));
 			if (!_d) {
+				logger.error(`[${txnId}] Document not found in DB`)
 				return _res.status(404).json({
 					message: 'Not found'
 				});
 			}
-			logger.debug('Old data found!');
+
 			if (_req.body.app && _req.body.app !== oldData.app) {
+				logger.error(`[${txnId}] App change not permitted :: oldApp ${oldData.app} :: newApp ${_req.body.app}`);
 				return _res.status(400).json({
 					message: 'App change not permitted'
 				});
@@ -998,6 +1001,7 @@ e.updateDoc = (_req, _res) => {
 					});
 				}
 			}
+			
 			let isCounterChangeRequired = false;
 			let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
 			let newIdElement = _req.body.definition ? _req.body.definition.find(d => d.key == '_id') : {};
@@ -1043,7 +1047,7 @@ e.updateDoc = (_req, _res) => {
 					}
 				})
 				.then(() => {
-					if (_req.body.definition) return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], _req.body.app);
+					if (_req.body.definition && !self.schemaFree) return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], _req.body.app);
 				})
 				.then(() => {
 					if (_d.status === 'Draft') {
