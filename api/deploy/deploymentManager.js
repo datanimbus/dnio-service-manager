@@ -1,24 +1,29 @@
 'use strict';
 
+const fs = require('fs');
+const request = require('request');
+const archiver = require('archiver');
+
+const schemaFreeGen = require('../../util/schemaFreeGen');
 const codeGen = require('../../util/codegen/v2');
 const config = require('../../config/config.js');
-const logger = global.logger;
-const archiver = require('archiver');
 const fileIO = require('../../util/codegen/lib/fileIO.js');
+
 const deploymentUrlCreate = config.baseUrlDM + '/deployment';
 const deploymentUrlUpdate = config.baseUrlDM + '/updateDeployment';
 const deploymentApiChange = config.baseUrlDM + '/apiChange';
-const fs = require('fs');
-const request = require('request');
+const logger = global.logger;
 
-function __zip(_txnId, _path, _dest) {
-	logger.debug(`[${_txnId}] Creating archive :: ${_dest}`);
+function __zip(txnId, _path, _dest) {
+	logger.debug(`[${txnId}] Creating archive :: ${_dest}`);
+
 	return new Promise((_resolve, _reject) => {
 		let output = fs.createWriteStream(_dest);
 		var archive = archiver('zip');
+
 		output.on('close', () => _resolve('Done'));
 		archive.on('error', (_err) => {
-			logger.error(`[${_txnId}] Error creating archive :: ${_dest} :: ${_err.message}`);
+			logger.error(`[${txnId}] Error creating archive :: ${_dest} :: ${_err.message}`);
 			_reject(_err);
 		});
 		archive.pipe(output);
@@ -27,46 +32,94 @@ function __zip(_txnId, _path, _dest) {
 	});
 }
 
+function generateFiles(txnId, schema) {
+	if (schema.schemaFree) {
+		return schemaFreeGen.generateFiles(txnId, schema)
+	} else {
+		return codeGen.generateFiles(txnId, schema);
+	}
+}
+
 var e = {};
-e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
-	const id = _schema._id;
-	logger.info(`[${_txnId}] DM deploy :: ${id}`);
+e.deployService = (txnId, schema, _isUpdate, _oldData) => {
+	const id = schema._id;
+	logger.info(`[${txnId}] Deploying service to DM :: ${id}`);
+
 	var deploymentUrl;
 	var envObj = {};
+	
 	return new Promise((resolve, reject) => {
-		codeGen.generateFiles(_txnId, _schema)
+		generateFiles(txnId, schema)
 			.then(() => {
-				var envKeys = ['FQDN', 'GOOGLE_API_KEY', 'HOOK_CONNECTION_TIMEOUT', 'HOOK_RETRY', 'LOG_LEVEL', 'MODE', 'MONGO_APPCENTER_URL', 'MONGO_AUTHOR_DBNAME', 'MONGO_AUTHOR_URL', 'MONGO_LOGS_DBNAME', 'MONGO_LOGS_URL', 'MONGO_RECONN_TIME_MILLI', 'MONGO_RECONN_TRIES', 'MONGO_CONNECTION_POOL_SIZE', 'STREAMING_CHANNEL', 'STREAMING_HOST', 'STREAMING_PASS', 'STREAMING_RECONN_ATTEMPTS', 'STREAMING_RECONN_TIMEWAIT_MILLI', 'STREAMING_USER', 'DATA_STACK_NAMESPACE', 'CACHE_CLUSTER', 'CACHE_HOST', 'CACHE_PORT', 'RELEASE', 'TLS_REJECT_UNAUTHORIZED', 'API_REQUEST_TIMEOUT', 'TZ_DEFAULT', 'MAX_JSON_SIZE', 'STORAGE_ENGINE', 'STORAGE_AZURE_CONNECTION_STRING', 'STORAGE_AZURE_CONTAINER', 'STORAGE_AZURE_SHARED_KEY', 'STORAGE_AZURE_TIMEOUT'];
+				var envKeys = [
+					'FQDN',
+					'GOOGLE_API_KEY',
+					'HOOK_CONNECTION_TIMEOUT',
+					'HOOK_RETRY',
+					'LOG_LEVEL',
+					'MODE',
+					'MONGO_APPCENTER_URL',
+					'MONGO_AUTHOR_DBNAME',
+					'MONGO_AUTHOR_URL',
+					'MONGO_LOGS_DBNAME',
+					'MONGO_LOGS_URL',
+					'MONGO_RECONN_TIME_MILLI',
+					'MONGO_RECONN_TRIES',
+					'MONGO_CONNECTION_POOL_SIZE',
+					'STREAMING_CHANNEL',
+					'STREAMING_HOST',
+					'STREAMING_PASS',
+					'STREAMING_RECONN_ATTEMPTS',
+					'STREAMING_RECONN_TIMEWAIT_MILLI',
+					'STREAMING_USER',
+					'DATA_STACK_NAMESPACE',
+					'CACHE_CLUSTER',
+					'CACHE_HOST',
+					'CACHE_PORT',
+					'RELEASE',
+					'TLS_REJECT_UNAUTHORIZED',
+					'API_REQUEST_TIMEOUT',
+					'TZ_DEFAULT',
+					'MAX_JSON_SIZE',
+					'STORAGE_ENGINE',
+					'STORAGE_AZURE_CONNECTION_STRING',
+					'STORAGE_AZURE_CONTAINER',
+					'STORAGE_AZURE_SHARED_KEY',
+					'STORAGE_AZURE_TIMEOUT'
+				];
 
 				for (var i in envKeys) {
 					var val = envKeys[i];
 					envObj[val] = process.env[val];
 				}
 
-				envObj['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + _schema.app).toLowerCase();
+				envObj['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + schema.app).toLowerCase();
 				envObj['NODE_OPTIONS'] = `--max-old-space-size=${config.maxHeapSize}`;
-				envObj['SERVICE_ID'] = `${_schema._id}`;
-				envObj['SERVICE_PORT'] = `${_schema.port}`;
-				_schema.api = (_schema.api).substring(1);
+				envObj['SERVICE_ID'] = `${schema._id}`;
+				envObj['SERVICE_PORT'] = `${schema.port}`;
+				schema.api = (schema.api).substring(1);
+
+				logger.trace(`[${txnId}] Environment variables to send to DM ${id} :: ${JSON.stringify(envObj)}`);
 			})
 			.then(() => {
-				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Generating zip file`);
+				logger.debug(`[${txnId}] Generating zip file ${id}`);
+
 				if (!fs.existsSync('./generatedServices/' + id)) {
-					logger.error(`[${_txnId}] DM deploy :: ${id} :: ./generatedServices/${id} directory doesn't exist`);
+					logger.error(`[${txnId}] Error :: ./generatedServices/${id} directory doesn't exist`);
 					return new Error(`Missing directory :: ./generatedServices/${id}`);
 				}
 			})
-			.then(() => __zip(_txnId, `./generatedServices/${id}`, `./generatedServices/${id}_${_schema.version}.zip`))
-			.then(() => logger.debug(`[${_txnId}] DM deploy :: ${id} :: Zip file :: ./generatedServices/${id}_${_schema.version}.zip`))
+			.then(() => __zip(txnId, `./generatedServices/${id}`, `./generatedServices/${id}_${schema.version}.zip`))
+			.then(() => logger.debug(`[${txnId}] Zip file generated for service ${id} :: ./generatedServices/${id}_${schema.version}.zip`))
 			.then(() => {
 				var formData = {
 					deployment: JSON.stringify({
 						image: id,
 						imagePullPolicy: 'Always',
-						namespace: config.dataStackNS + '-' + _schema.app,
-						port: _schema.port,
-						name: _schema.api,
-						version: _schema.version,
+						namespace: config.dataStackNS + '-' + schema.app,
+						port: schema.port,
+						name: schema.api,
+						version: schema.version,
 						envVars: envObj,
 						volumeMounts: {
 							'file-export': {
@@ -77,8 +130,8 @@ e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 						options: {
 							livenessProbe: {
 								httpGet: {
-									path: '/' + _schema.app + '/' + _schema.api + '/utils/health/live',
-									port: _schema.port,
+									path: '/' + schema.app + '/' + schema.api + '/utils/health/live',
+									port: schema.port,
 									scheme: 'HTTP'
 								},
 								initialDelaySeconds: 5,
@@ -86,8 +139,8 @@ e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 							},
 							readinessProbe: {
 								httpGet: {
-									path: '/' + _schema.app + '/' + _schema.api + '/utils/health/ready',
-									port: _schema.port,
+									path: '/' + schema.app + '/' + schema.api + '/utils/health/ready',
+									port: schema.port,
 									scheme: 'HTTP'
 								},
 								initialDelaySeconds: 5,
@@ -96,33 +149,37 @@ e.deployService = (_txnId, _schema, _isUpdate, _oldData) => {
 						}
 					}),
 					oldDeployment: JSON.stringify(_oldData),
-					file: fs.createReadStream(`./generatedServices/${id}_${_schema.version}.zip`),
+					file: fs.createReadStream(`./generatedServices/${id}_${schema.version}.zip`),
 				};
-				logger.debug(`[${_txnId}] DM deploy :: ${id} :: Uploading to DM...`);
+				logger.debug(`[${txnId}] Uploading service to DM :: ${id}`);
+				
 				if (_oldData) deploymentUrl = deploymentApiChange;
 				else if (_isUpdate) deploymentUrl = deploymentUrlUpdate;
 				else deploymentUrl = deploymentUrlCreate;
-				logger.debug(`[${_txnId}] DM deploy :: ${id} :: URL :: ${deploymentUrl}`);
+				
+				logger.debug(`[${txnId}] DM deployment URL :: ${deploymentUrl}`);
+
 				return request.post({ url: deploymentUrl, formData: formData }, function (err, httpResponse, body) {
 					if (err) {
-						logger.error(`[${_txnId}] DM deploy :: ${id} :: Upload failed :: ${err.message}`);
+						logger.error(`[${txnId}] DM deployment upload failed for service ${id} :: ${err.message}`);
 						return reject(err);
 					}
 					if (httpResponse.statusCode >= 400) {
 						let errorMsg = body && body.message ? body.message : 'DM returned statusCode ' + httpResponse.statusCode;
-						logger.error(`[${_txnId}] DM deploy :: ${id} :: DM error :: ${errorMsg}`);
+						logger.error(`[${txnId}] DM responded with error :: ${errorMsg}`);
 						return reject(new Error(errorMsg));
 					}
-					logger.info(`[${_txnId}] DM deploy :: ${id} :: Process queued in DM`);
-					logger.debug(`[${_txnId}] DM deploy :: ${id} :: Upload to DM successful!`);
-					logger.trace(`[${_txnId}] DM deploy :: ${id} :: DM response - ${JSON.stringify(body)}`);
+
+					logger.info(`[${txnId}] Upload to DM successful! :: Deployment process queued in DM for service ${id}`);
+					logger.trace(`[${txnId}] Deployment queued DM response for service ${id} :: ${JSON.stringify(body)}`);
+
 					fileIO.deleteFolderRecursive('./generatedServices/' + id);
 					fileIO.removeFile('./generatedServices/' + id + '_1.zip');
 					resolve('Process queued in DM');
 				});
 			})
 			.catch(e => {
-				logger.error(`[${_txnId}] DM deploy :: ${id} :: ${e.message}`);
+				logger.error(`[${txnId}] Error deploying service to DM :: ${id} :: ${e.message}`);
 				reject(e);
 			});
 	});
