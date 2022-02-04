@@ -71,7 +71,7 @@ draftSchema.pre('validate', function (next) {
 	self.api = self.api.trim();
 	// self.definition = self.definition.trim();
 	if (_.isEmpty(self.name)) next(new Error('name is empty'));
-	if (_.isEmpty(self.definition)) next(new Error('definition is empty'));
+	if (_.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
 	if (!_.isEmpty(self.preHooks)) {
 		let preHookNames = _.uniq(self.preHooks.map(_d => _d.name));
 		if (preHookNames.length != self.preHooks.length) {
