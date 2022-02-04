@@ -1001,7 +1001,7 @@ e.updateDoc = (_req, _res) => {
 					});
 				}
 			}
-			
+
 			let isCounterChangeRequired = false;
 			let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
 			let newIdElement = _req.body.definition ? _req.body.definition.find(d => d.key == '_id') : {};
@@ -1047,7 +1047,7 @@ e.updateDoc = (_req, _res) => {
 					}
 				})
 				.then(() => {
-					if (_req.body.definition && !self.schemaFree) return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], _req.body.app);
+					if (_req.body.definition && !_req.body.schemaFree) return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], _req.body.app);
 				})
 				.then(() => {
 					if (_d.status === 'Draft') {
