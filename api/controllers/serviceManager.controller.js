@@ -1209,8 +1209,8 @@ e.deployAPIHandler = (_req, _res) => {
 	logger.info(`[${txnId}] Service deploy request received for service ${ID}`);
 
 	let user = _req.get('User');
-	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')) : false;
 	let socket = _req.app.get('socket');
+	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')) : false;
 	let isReDeploymentRequired = false;
 	let preHookUpdated = false;
 	let isWebHookUpdateRequired = false;
@@ -1268,110 +1268,149 @@ e.deployAPIHandler = (_req, _res) => {
 						});
 				} else {
 					return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
-						.then(_newData => {
-							if (envConfig.verifyDeploymentUser && !isSuperAdmin && _newData && _newData._metadata && _newData._metadata.lastUpdatedBy == user) {
-								logger.error(`[${txnId}] Deploy API handler :: ${ID} :: User cannot deploy own changes.`);
+						.then(newData => {
+							if (envConfig.verifyDeploymentUser && !isSuperAdmin && newData && newData._metadata && newData._metadata.lastUpdatedBy == user) {
+								logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${newData.status}`);
 								return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 							}
-							if (_newData.webHooks || _newData.workflowHooks) isWebHookUpdateRequired = true;
-							if (oldData.api != _newData.api) {
+
+							if (newData.webHooks || newData.workflowHooks) {
+								logger.trace(`[${txnId}] Webhooks updated for service ${ID}`);
+								isWebHookUpdateRequired = true;
+							}
+
+							if (oldData.api != newData.api) {
+								logger.trace(`[${txnId}] API changed for service ${ID} :: oldAPI ${oldData.api} :: newAPI ${newData.api}`);
 								isApiEndpointChanged = true;
 								isDeleteAndCreateRequired = true;
 								isReDeploymentRequired = true;
 							}
-							if (oldData.enableSearchIndex != _newData.enableSearchIndex) {
+
+							if (oldData.enableSearchIndex != newData.enableSearchIndex) {
+								logger.trace(`[${txnId}] Enable Search Index option changed for service ${ID}`);
 								isReDeploymentRequired = true;
 							}
-							if (_newData.app && _newData.app !== oldData.app) {
-								logger.error(`[${txnId}] Deploy API handler :: ${ID} :: Old(${oldData.app}) app and New(${_newData.app}) app. App change not permitted`);
+
+							if (newData.app && newData.app !== oldData.app) {
+								logger.error(`[${txnId}] App change not permitted :: oldApp ${oldData.app} :: newApp ${_req.body.app}`);
 								return _res.status(400).json({ message: 'App change not permitted' });
 							}
-							if (oldData.name != _newData.name) isReDeploymentRequired = true;
-							if (oldData.disableInsights != _newData.disableInsights) isReDeploymentRequired = true;
-							if (oldData.permanentDeleteData != _newData.permanentDeleteData) isReDeploymentRequired = true;
 
-							removeSoftDeletedRecords = !oldData.permanentDeleteData && _newData.permanentDeleteData;
-							logger.debug('oldWizard ' + JSON.stringify(oldData.wizard));
-							logger.debug('newWizard ' + JSON.stringify(_newData.wizard));
-							if (!_.isEqual(JSON.parse(JSON.stringify(oldData.wizard)), JSON.parse(JSON.stringify(_newData.wizard)))) isWizardUpdateRequired = true;
-							if (oldData.versionValidity.validityType != _newData.versionValidity.validityType && _newData.versionValidity) {
+							if (oldData.name != newData.name) {
+								logger.trace(`[${txnId}] Service name changed for service ${ID} :: oldName ${oldData.name} :: newName ${newData.name}`);
+								isReDeploymentRequired = true;
+							}
+
+							if (oldData.disableInsights != newData.disableInsights) {
+								logger.trace(`[${txnId}] Disbale Insights changed for service ${ID}`);
+								isReDeploymentRequired = true;
+							}
+
+							if (oldData.permanentDeleteData != newData.permanentDeleteData) {
+								logger.trace(`[${txnId}] Permanent Delete changed for service ${ID}`);
+								isReDeploymentRequired = true;
+							}
+
+							removeSoftDeletedRecords = !oldData.permanentDeleteData && newData.permanentDeleteData;
+
+							logger.trace(`[${txnId}] OldWizard :: ${JSON.stringify(oldData.wizard)}`);
+							logger.trace(`[${txnId}] NewWizard :: ${JSON.stringify(newData.wizard)}`);
+
+							if (!_.isEqual(JSON.parse(JSON.stringify(oldData.wizard)), JSON.parse(JSON.stringify(newData.wizard)))) {
+								logger.trace(`[${txnId}] Wizard Updated for service ${ID}`);
+								isWizardUpdateRequired = true;
+							}
+							
+							if (newData.versionValidity && oldData.versionValidity.validityType != newData.versionValidity.validityType) {
+								logger.trace(`[${txnId}] Verson validity type changed for service ${ID}`);
 								isReDeploymentRequired = true;
 								isAuditIndexDeleteRequired = true;
 							}
-							if (!_.isEqual(JSON.parse(JSON.stringify(oldData.preHooks)), _newData.preHooks) || (_newData.experienceHooks && !_.isEqual(JSON.parse(JSON.stringify(oldData.experienceHooks)), _newData.experienceHooks))) {
-								logger.info('Pre-hooks OR Experience-hooks changed');
+
+							if (!_.isEqual(JSON.parse(JSON.stringify(oldData.preHooks)), newData.preHooks) || (newData.experienceHooks && !_.isEqual(JSON.parse(JSON.stringify(oldData.experienceHooks)), newData.experienceHooks))) {
+								logger.trace(`[${txnId}] Pre-hooks OR Experience-hooks changed for service ${ID}`);
 								preHookUpdated = true;
 							}
-							if (oldData.versionValidity.validityValue != _newData.versionValidity.validityValue && _newData.versionValidity) {
+
+							if (newData.versionValidity && oldData.versionValidity.validityValue != newData.versionValidity.validityValue) {
+								logger.trace(`[${txnId}] Verson validity value changed for service ${ID}`);
 								isReDeploymentRequired = true;
 								isAuditIndexDeleteRequired = true;
 							}
-							let newDefinition = _newData.definition;
-							let definitionComparison = deepEqual(oldData.definition, _newData.definition);
-							let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
-							let newIdElement = _newData.definition ? _newData.definition.find(d => d.key == '_id') : {};
-							let isCounterChangeRequired = false;
-							let padding = newIdElement ? newIdElement.padding : null;
-							if (!definitionComparison) {
-								logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Definition changed`);
-								if (padding > 15) {
-									logger.error(`[${txnId}] Deploy API handler :: ${ID} :: _id length cannot be greater than 15.`);
-									return _res.status(400).json({ 'message': '_id length cannot be greater than 15' });
-								}
-								if (oldIdElement['padding'] > newIdElement['padding']) {
-									logger.error(`[${txnId}] Deploy API handler :: ${ID} :: _id length cannot be decreased.`);
-									logger.error(`[${txnId}] Deploy API handler :: ${ID} :: old (${oldIdElement['padding']} new ${newIdElement['padding']})`);
-									return _res.status(400).json({ message: 'Decreasing _id\'s length in not allowed' });
-								}
-								if (newIdElement['counter'] && oldIdElement['counter'] != newIdElement['counter']) isCounterChangeRequired = true;
-								isReDeploymentRequired = true;
-							}
-							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) _newData.version = _d.version + 1;
-							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Redeployment required? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
-							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Webhook save required? ${isWebHookUpdateRequired ? 'YES' : 'NO'}`);
-							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Clean redeploy? ${isDeleteAndCreateRequired ? 'YES' : 'NO'}`);
-							logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Audit index delete required? ${isAuditIndexDeleteRequired ? 'YES' : 'NO'}`);
 
-							let srvcObj = JSON.parse(JSON.stringify(_newData.toObject()));
+							let newDefinition = newData.definition;
+							let definitionComparison;
+							let isCounterChangeRequired = false;
+
+							if (!oldData.schemaFree && newData.schemaFree) {
+								logger.trace(`[${txnId}] Service type changed to schema free for service ${ID}`);
+								isReDeploymentRequired = true;
+							} else {
+								definitionComparison = deepEqual(oldData.definition, newData.definition);
+								let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
+								let newIdElement = newData.definition ? newData.definition.find(d => d.key == '_id') : {};
+								let padding = newIdElement ? newIdElement.padding : null;
+	
+								if (newData.schemaFree && oldData.definition) {
+									isReDeploymentRequired = true;
+								} else if (!definitionComparison) {
+									logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Definition changed`);
+									if (padding > 15) {
+										logger.error(`[${txnId}] Deploy API handler :: ${ID} :: _id length cannot be greater than 15.`);
+										return _res.status(400).json({ 'message': '_id length cannot be greater than 15' });
+									}
+									if (oldIdElement['padding'] > newIdElement['padding']) {
+										logger.error(`[${txnId}] Deploy API handler :: ${ID} :: _id length cannot be decreased.`);
+										logger.error(`[${txnId}] Deploy API handler :: ${ID} :: old (${oldIdElement['padding']} new ${newIdElement['padding']})`);
+										return _res.status(400).json({ message: 'Decreasing _id\'s length in not allowed' });
+									}
+									if (newIdElement['counter'] && oldIdElement['counter'] != newIdElement['counter']) isCounterChangeRequired = true;
+									isReDeploymentRequired = true;
+								}
+							}
+							
+							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) newData.version = _d.version + 1;
+
+							logger.info(`[${txnId}] Redeployment required for service ${ID}? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
+							logger.info(`[${txnId}] Webhook save required for service ${ID}? ${isWebHookUpdateRequired ? 'YES' : 'NO'}`);
+							logger.info(`[${txnId}] Clean redeploy for service ${ID}? ${isDeleteAndCreateRequired ? 'YES' : 'NO'}`);
+							logger.info(`[${txnId}] Audit index delete required for service ${ID}? ${isAuditIndexDeleteRequired ? 'YES' : 'NO'}`);
+
+							let srvcObj = JSON.parse(JSON.stringify(newData.toObject()));
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
 							if (!definitionComparison) _d.definition = newDefinition;
 
 							let promise = Promise.resolve();
-							if (oldData.name != _newData.name) promise = nameUniqueCheck(_newData.name, _newData.app, ID);
+							if (oldData.name != newData.name) {
+								logger.debug(`[${txnId}] Checking if new service name is unique for service ${ID}`);
+								promise = nameUniqueCheck(newData.name, newData.app, ID);
+							}
+
 							return promise
 								.then(() => {
-									if (isApiEndpointChanged) return apiUniqueCheck(_newData.api, _newData.app, ID);
+									if (isApiEndpointChanged) {
+										logger.debug(`[${txnId}] Checking if new api endpoint is unique for service ${ID}`);
+										return apiUniqueCheck(newData.api, newData.app, ID);
+									}
 									return Promise.resolve();
 								})
 								.then(() => {
-									if (newDefinition) return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], _newData.app);
+									if (!newData.schemaFree && newDefinition) {
+										logger.debug(`[${txnId}] Validating id counter change for service ${ID}`);
+										return validateCounterChange(isCounterChangeRequired, ID, newIdElement['counter'], newData.app);
+									}
 									return Promise.resolve();
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
-								// .then(() => {
-								// 	// srvcObj = _data;
-								// 	let role = _d.role;
-								// 	if (!role) return Promise.resolve();
-								// 	let permObj = {
-								// 		app: srvcObj.app,
-								// 		entity: srvcObj._id,
-								// 		entityName: srvcObj.name,
-								// 		roles: role ? role.roles : null,
-								// 		fields: role && role.fields ? JSON.stringify(role.fields) : null,
-								// 		// to check => converted to array
-								// 		definition: newDefinition
-								// 	};
-								// 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
-								// })
 								.then(() => {
 									if (!definitionComparison) {
 										return deployUtil.updateInPM(srvcObj._id, _req);
 									}
 								})
 								.then(() => {
-									return _newData.remove(_req);
+									return newData.remove(_req);
 								})
 								.then(async () => {
 									dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
@@ -1405,7 +1444,7 @@ e.deployAPIHandler = (_req, _res) => {
 								})
 								.then(_e => {
 									if (_e) logger.info('counter for ' + oldData._id + ' updated successfully');
-									let newHooks = { 'webHooks': _newData.webHooks, 'workflowHooks': _newData.workflowHooks };
+									let newHooks = { 'webHooks': newData.webHooks, 'workflowHooks': newData.workflowHooks };
 									if (isWebHookUpdateRequired) return updateWebHook(ID, newHooks, _req);
 								})
 								.then(() => {
@@ -1422,10 +1461,8 @@ e.deployAPIHandler = (_req, _res) => {
 										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Redeploying under app ${_d.app}`);
 										logger.trace(`[${txnId}] Deploy API handler :: ${JSON.stringify(_d)}`);
 										var data = JSON.parse(JSON.stringify(_d));
-										// data.definition = JSON.parse(_d.definition);
 										let mongoDBVishnu = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
 										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Reindexing the collection :: ${data.collectionName}`);
-										// removing soft deleted record with check
 										let promise = Promise.resolve();
 										if (removeSoftDeletedRecords) {
 											promise = mongoDBVishnu.dropCollection(data.collectionName + '.deleted');
@@ -1445,8 +1482,8 @@ e.deployAPIHandler = (_req, _res) => {
 									}
 								})
 								.then(() => {
-									let eventsList = getAllEventsForDSUpdate(oldData, _newData);
-									eventsList.forEach(event => dataStackutils.eventsUtil.publishEvent(event, 'dataService', _req, _newData));
+									let eventsList = getAllEventsForDSUpdate(oldData, newData);
+									eventsList.forEach(event => dataStackutils.eventsUtil.publishEvent(event, 'dataService', _req, newData));
 								})
 								.catch(err => {
 									logger.debug('Inside catch');
