@@ -1341,15 +1341,18 @@ e.deployAPIHandler = (_req, _res) => {
 							let newDefinition = newData.definition;
 							let definitionComparison;
 							let isCounterChangeRequired = false;
+							let oldIdElement;
+							let newIdElement;
+							let padding;
 
 							if (!oldData.schemaFree && newData.schemaFree) {
 								logger.trace(`[${txnId}] Service type changed to schema free for service ${ID}`);
 								isReDeploymentRequired = true;
 							} else {
 								definitionComparison = deepEqual(oldData.definition, newData.definition);
-								let oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
-								let newIdElement = newData.definition ? newData.definition.find(d => d.key == '_id') : {};
-								let padding = newIdElement ? newIdElement.padding : null;
+								oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
+								newIdElement = newData.definition ? newData.definition.find(d => d.key == '_id') : {};
+								padding = newIdElement ? newIdElement.padding : null;
 	
 								if (newData.schemaFree && oldData.definition) {
 									isReDeploymentRequired = true;
