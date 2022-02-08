@@ -24,10 +24,10 @@ ENV SERVICE_VERSION ${serviceDetails.version}
 ENV SERVICE_PORT ${serviceDetails.port}
 ENV SERVICE_ENDPOINT ${serviceDetails.api}
 ENV SERVICE_COLLECTION ${serviceDetails.collectionName}
-ENV ID_PADDING ${serviceDetails.idDetails ? serviceDetails.idDetails.padding : '""'}
-ENV ID_PREFIX ${serviceDetails.idDetails ? serviceDetails.idDetails.prefix : '""'}
-ENV ID_SUFFIX ${serviceDetails.idDetails ? serviceDetails.idDetails.suffix : '""'}
-ENV ID_COUNTER ${serviceDetails.idDetails ? serviceDetails.idDetails.counter : '""'}
+ENV ID_PADDING ${serviceDetails.idDetails && serviceDetails.idDetails.padding ? serviceDetails.idDetails.padding : '""'}
+ENV ID_PREFIX ${serviceDetails.idDetails && serviceDetails.idDetails.prefix ? serviceDetails.idDetails.prefix : '""'}
+ENV ID_SUFFIX ${serviceDetails.idDetails && serviceDetails.idDetails.suffix ? serviceDetails.idDetails.suffix : '""'}
+ENV ID_COUNTER ${serviceDetails.idDetails && serviceDetails.idDetails.counter ? serviceDetails.idDetails.counter : '""'}
 ENV PERMANENT_DELETE ${serviceDetails.permanentDeleteData}
 ENV DATA_STACK_ALLOWED_FILE_TYPE ${serviceDetails.allowedFileTypes}
 ENV STORAGE_ENGINE ${process.env.STORAGE_ENGINE}
@@ -53,10 +53,10 @@ SERVICE_VERSION="${serviceDetails.version}"
 SERVICE_PORT="${serviceDetails.port}"
 SERVICE_ENDPOINT="${serviceDetails.api}"
 SERVICE_COLLECTION="${serviceDetails.collectionName}"
-ID_PADDING="${serviceDetails.idDetails ? serviceDetails.idDetails.padding : ''}"
-ID_PREFIX="${serviceDetails.idDetails ? serviceDetails.idDetails.prefix : ''}"
-ID_SUFFIX="${serviceDetails.idDetails ? serviceDetails.idDetails.suffix : ''}"
-ID_COUNTER="${serviceDetails.idDetails ? serviceDetails.idDetails.counter : ''}"
+ID_PADDING="${serviceDetails.idDetails && serviceDetails.idDetails.padding ? serviceDetails.idDetails.padding : ''}"
+ID_PREFIX="${serviceDetails.idDetails && serviceDetails.idDetails.prefix ? serviceDetails.idDetails.prefix : ''}"
+ID_SUFFIX="${serviceDetails.idDetails && serviceDetails.idDetails.suffix ? serviceDetails.idDetails.suffix : ''}"
+ID_COUNTER="${serviceDetails.idDetails && serviceDetails.idDetails.counter ? serviceDetails.idDetails.counter : ''}"
 PERMANENT_DELETE=${serviceDetails.permanentDeleteData}
 HOSTNAME="localhost"
 DATA_STACK_APP_NS="appveen-${serviceDetails.app}"
