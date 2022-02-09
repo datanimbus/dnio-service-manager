@@ -17,6 +17,14 @@ function generateFiles(txnId, serviceDetails) {
     logger.info(`[${txnId}] Generating files for schema free Service ${id}`);
     logger.trace(`[${txnId}] Generating files for service ${id} :: serviceDetails :: ${JSON.stringify(serviceDetails)}`);
 
+	serviceDetails.idDetails = serviceDetails['definition'].find(attr => attr.key == '_id');
+	if (serviceDetails.idDetails.counter && isNaN(serviceDetails.idDetails.counter)) throw new Error('Counter is not valid');
+	if (serviceDetails.idDetails.counter != null) serviceDetails.idDetails.counter = parseInt(serviceDetails.idDetails.counter);
+	if (serviceDetails.idDetails.padding && isNaN(serviceDetails.idDetails.padding)) throw new Error('Padding is not valid');
+	if (serviceDetails.idDetails.padding != null) serviceDetails.idDetails.padding = parseInt(serviceDetails.idDetails.padding);
+	serviceDetails['definitionWithId'] = JSON.parse(JSON.stringify(serviceDetails['definition']));
+	serviceDetails['definition'] = serviceDetails['definition'].filter(attr => attr.key != '_id');
+	
     serviceDetails.projectName = serviceDetails._id;
 	serviceDetails.path = './generatedServices/' + serviceDetails.projectName;
     const yamlJSON = generateYaml(serviceDetails);

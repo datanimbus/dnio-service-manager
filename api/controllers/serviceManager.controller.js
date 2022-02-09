@@ -391,6 +391,22 @@ draftSchema.pre('save', function (next) {
 	next();
 });
 
+schema.pre('save', async function (next) {
+	try {
+		if (!this.isNew && this.stateModel && this.stateModel.enabled) {
+			logger.info(`Updating existing records with initial state in state model for service ${this._id}`);
+			let obj = {};
+			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
+			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj});
+			logger.debug('Initial states updated - ', status);
+		}
+		next();
+	} catch (err) {
+		logger.error('Error updating initial state of existing records');
+		next(err);
+	}
+});
+
 function countAttr(def) {
 	let count = 0;
 	// if (def && typeof def === `object`) {
