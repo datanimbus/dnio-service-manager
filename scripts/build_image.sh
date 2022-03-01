@@ -2,8 +2,8 @@
 set -e
 if [ -f $WORKSPACE/../TOGGLE ]; then
     echo "****************************************************"
-    echo "data.stack:sm :: Toggle mode is on, terminating build"
-    echo "data.stack:sm :: BUILD CANCLED"
+    echo "data.stack.sm :: Toggle mode is on, terminating build"
+    echo "data.stack.sm :: BUILD CANCLED"
     echo "****************************************************"
     exit 0
 fi
@@ -28,8 +28,8 @@ if [ $1 ]; then
 fi
 if [ ! $REL ]; then
     echo "****************************************************"
-    echo "data.stack:sm :: Please Create file DATA_STACK_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
-    echo "data.stack:sm :: BUILD FAILED"
+    echo "data.stack.sm :: Please Create file DATA_STACK_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
+    echo "data.stack.sm :: BUILD FAILED"
     echo "****************************************************"
     exit 0
 fi
@@ -42,13 +42,13 @@ if [ $3 ]; then
 fi
 if [ $CICD ]; then
     echo "****************************************************"
-    echo "data.stack:sm :: CICI env found"
+    echo "data.stack.sm :: CICI env found"
     echo "****************************************************"
     TAG=$TAG"_"$cDate
     if [ ! -f $WORKSPACE/../DATA_STACK_NAMESPACE ]; then
         echo "****************************************************"
-        echo "data.stack:sm :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
-        echo "data.stack:sm :: BUILD FAILED"
+        echo "data.stack.sm :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
+        echo "data.stack.sm :: BUILD FAILED"
         echo "****************************************************"
         exit 0
     fi
@@ -58,34 +58,34 @@ fi
 sh $WORKSPACE/scripts/prepare_yaml.sh $REL $2
 
 echo "****************************************************"
-echo "data.stack:sm :: Using build :: "$TAG
+echo "data.stack.sm :: Using build :: "$TAG
 echo "****************************************************"
 
 cd $WORKSPACE
 
 echo "****************************************************"
-echo "data.stack:sm :: Adding IMAGE_TAG in Dockerfile :: "$TAG
+echo "data.stack.sm :: Adding IMAGE_TAG in Dockerfile :: "$TAG
 echo "****************************************************"
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
-    echo "data.stack:sm :: Doing a clean build"
+    echo "data.stack.sm :: Doing a clean build"
     echo "****************************************************"
     
-    docker build --no-cache -t data.stack:sm.$TAG .
+    docker build --no-cache -t data.stack.sm:$TAG .
     rm $WORKSPACE/../CLEAN_BUILD_SM
 
     echo "****************************************************"
-    echo "data.stack:sm :: Building base image"
+    echo "data.stack.sm :: Building base image"
     echo "****************************************************"
     cd $WORKSPACE/../ds-base
     sed -i.bak s#__image_tag__#$TAG# Dockerfile
-    docker build --no-cache -t data.stack:base.$TAG .
+    docker build --no-cache -t data.stack.base:$TAG .
     cd $WORKSPACE
 
     echo "****************************************************"
-    echo "data.stack:sm :: Copying deployment files"
+    echo "data.stack.sm :: Copying deployment files"
     echo "****************************************************"
 
     if [ $CICD ]; then
@@ -104,44 +104,44 @@ if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
 
 else
     echo "****************************************************"
-    echo "data.stack:sm :: Doing a normal build"
+    echo "data.stack.sm :: Doing a normal build"
     echo "****************************************************"
 
-    docker build -t data.stack:sm.$TAG .
+    docker build -t data.stack.sm:$TAG .
 
     echo "****************************************************"
-    echo "data.stack:sm :: Building base image"
+    echo "data.stack.sm :: Building base image"
     echo "****************************************************"
     
     cd $WORKSPACE/../ds-base
     sed -i.bak s#__image_tag__#$TAG# Dockerfile
-    docker build -t data.stack:base.$TAG .
+    docker build -t data.stack.base:$TAG .
     cd $WORKSPACE
 
     if [ $CICD ]; then
         if [ $DOCKER_REG ]; then
-            kubectl set image deployment/sm sm=$DOCKER_REG/data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
+            kubectl set image deployment/sm sm=$DOCKER_REG/data.stack.sm:$TAG -n $DATA_STACK_NS --record=true
         else 
-            kubectl set image deployment/sm sm=data.stack:sm.$TAG -n $DATA_STACK_NS --record=true
+            kubectl set image deployment/sm sm=data.stack.sm:$TAG -n $DATA_STACK_NS --record=true
         fi
     fi
 fi
 if [ $DOCKER_REG ]; then
     echo "****************************************************"
-    echo "data.stack:sm :: Docker Registry found, pushing image"
+    echo "data.stack.sm :: Docker Registry found, pushing image"
     echo "****************************************************"
 
-    echo "docker tag data.stack:sm.$TAG $DOCKER_REG/data.stack:sm.$TAG"
-    docker tag data.stack:sm.$TAG $DOCKER_REG/data.stack:sm.$TAG
-    echo "docker push $DOCKER_REG/data.stack:sm.$TAG"
-    docker push $DOCKER_REG/data.stack:sm.$TAG
+    echo "docker tag data.stack.sm:$TAG $DOCKER_REG/data.stack.sm:$TAG"
+    docker tag data.stack.sm:$TAG $DOCKER_REG/data.stack.sm:$TAG
+    echo "docker push $DOCKER_REG/data.stack.sm:$TAG"
+    docker push $DOCKER_REG/data.stack.sm:$TAG
 
-    echo "docker tag data.stack:base.$TAG $DOCKER_REG/data.stack:base.$TAG"
-    docker tag data.stack:base.$TAG $DOCKER_REG/data.stack:base.$TAG
-    echo "docker push $DOCKER_REG/data.stack:base.$TAG"
-    docker push $DOCKER_REG/data.stack:base.$TAG
+    echo "docker tag data.stack.base:$TAG $DOCKER_REG/data.stack.base:$TAG"
+    docker tag data.stack.base:$TAG $DOCKER_REG/data.stack.base:$TAG
+    echo "docker push $DOCKER_REG/data.stack.base:$TAG"
+    docker push $DOCKER_REG/data.stack.base:$TAG
 fi
 echo "****************************************************"
-echo "data.stack:sm :: BUILD SUCCESS :: data.stack:sm.$TAG"
+echo "data.stack.sm :: BUILD SUCCESS :: data.stack.sm:$TAG"
 echo "****************************************************"
 echo $TAG > $WORKSPACE/../LATEST_SM
