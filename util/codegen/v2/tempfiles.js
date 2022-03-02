@@ -10,7 +10,7 @@ function dockerFile(config) {
 	if (!process.env.IMAGE_TAG) {
 		process.env.IMAGE_TAG = 'dev';
 	}
-	let base = `${dockerReg}data.stack:base.${process.env.IMAGE_TAG}`;
+	let base = `${dockerReg}data.stack.base:${process.env.IMAGE_TAG}`;
 	if (dockerRegistryType == 'ECR') base = `${dockerReg}:data.stack.base.${process.env.IMAGE_TAG}`;
 	logger.debug(`Base image :: ${base}`);
 	return `FROM ${base}
