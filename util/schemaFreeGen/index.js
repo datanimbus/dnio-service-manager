@@ -12,10 +12,10 @@ const { generateYaml } = require('./generateYaml');
 const logger = global.logger;
 
 function generateFiles(txnId, serviceDetails) {
-    let id = serviceDetails._id;
+	let id = serviceDetails._id;
 
-    logger.info(`[${txnId}] Generating files for schema free Service ${id}`);
-    logger.trace(`[${txnId}] Generating files for service ${id} :: serviceDetails :: ${JSON.stringify(serviceDetails)}`);
+	logger.info(`[${txnId}] Generating files for schema free Service ${id}`);
+	logger.trace(`[${txnId}] Generating files for service ${id} :: serviceDetails :: ${JSON.stringify(serviceDetails)}`);
 
 	serviceDetails.idDetails = serviceDetails['definition'].find(attr => attr.key == '_id');
 	if (serviceDetails.idDetails.counter && isNaN(serviceDetails.idDetails.counter)) throw new Error('Counter is not valid');
@@ -25,12 +25,12 @@ function generateFiles(txnId, serviceDetails) {
 	serviceDetails['definitionWithId'] = JSON.parse(JSON.stringify(serviceDetails['definition']));
 	serviceDetails['definition'] = serviceDetails['definition'].filter(attr => attr.key != '_id');
 	
-    serviceDetails.projectName = serviceDetails._id;
+	serviceDetails.projectName = serviceDetails._id;
 	serviceDetails.path = './generatedServices/' + serviceDetails.projectName;
-    const yamlJSON = generateYaml(serviceDetails);
+	const yamlJSON = generateYaml(serviceDetails);
 	const yamlDump = jsyaml.dump(yamlJSON);
     
-    return generateFolderStructure(txnId, serviceDetails)
+	return generateFolderStructure(txnId, serviceDetails)
 		.then(() => fs.writeFileSync(path.join(serviceDetails.path, 'service.json'), JSON.stringify(serviceDetails), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(serviceDetails.path, '.env'), dotEnvFile(serviceDetails), 'utf-8'))
 		.then(() => fs.writeFileSync(path.join(serviceDetails.path, 'Dockerfile'), dockerFile(serviceDetails), 'utf-8'))

@@ -234,7 +234,7 @@ e.deployService = (schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =>
 						fileIO.deleteFolderRecursive('./generatedServices/' + id);
 					})
 					.then(() => {
-						logger.debug(`[${txnId}] Cleanup :: Generated service folder deleted ${id}`)
+						logger.debug(`[${txnId}] Cleanup :: Generated service folder deleted ${id}`);
 						if (socket) {
 							e.sendToSocket(socket, 'serviceStatus', {
 								_id: id,
@@ -244,7 +244,7 @@ e.deployService = (schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =>
 						}
 					})
 					.then(() => {
-						logger.debug(`[${txnId}] Updating document status in db ${id} :: Errored`)
+						logger.debug(`[${txnId}] Updating document status in db ${id} :: Errored`);
 						return e.updateDocument(mongoose.model('services'), {
 							_id: id
 						}, {
