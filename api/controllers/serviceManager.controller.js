@@ -1537,7 +1537,7 @@ e.startAPIHandler = (_req, _res) => {
 	let socket = _req.app.get('socket');
 	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
 		.then(doc => {
-			if (doc && doc.definition.length == 1) throw new Error('Data service definition not found.');
+			if (doc && !doc.schemaFree && doc.definition.length == 1) throw new Error('Data service definition not found.');
 			if (doc) {
 				checkOutGoingRelation(id)
 					.then(() => {
