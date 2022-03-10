@@ -993,7 +993,7 @@ e.updateDoc = (_req, _res) => {
 
 			let oldData = JSON.parse(JSON.stringify(_d));
 			if (!_d) {
-				logger.error(`[${txnId}] Document not found in DB`)
+				logger.error(`[${txnId}] Document not found in DB`);
 				return _res.status(404).json({
 					message: 'Not found'
 				});
@@ -1268,7 +1268,7 @@ e.deployAPIHandler = (_req, _res) => {
 					let promise = Promise.resolve();
 					
 					return promise
-						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req) })
+						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req); })
 						.then(() => {
 							let newHooks = {
 								'webHooks': svcObject.webHooks,
@@ -1437,7 +1437,7 @@ e.deployAPIHandler = (_req, _res) => {
 									if (!envConfig.isCosmosDB() && srvcObj.collectionName != oldData.collectionName) {
 										isReDeploymentRequired = true;
 										if (envConfig.isK8sEnv()) {
-											await k8s.deploymentDelete(_req.get('TxnId'), oldData)
+											await k8s.deploymentDelete(_req.get('TxnId'), oldData);
 											logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${oldData._id}`);
 											await k8s.serviceDelete(_req.get('TxnId'), oldData);
 											logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${oldData._id}`);
@@ -1537,7 +1537,7 @@ e.startAPIHandler = (_req, _res) => {
 	let socket = _req.app.get('socket');
 	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
 		.then(doc => {
-			if (doc && doc.definition.length == 1) throw new Error('Data service definition not found.');
+			if (doc && !doc.schemaFree && doc.definition.length == 1) throw new Error('Data service definition not found.');
 			if (doc) {
 				checkOutGoingRelation(id)
 					.then(() => {
