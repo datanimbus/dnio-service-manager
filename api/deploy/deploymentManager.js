@@ -34,7 +34,7 @@ function __zip(txnId, _path, _dest) {
 
 function generateFiles(txnId, schema) {
 	if (schema.schemaFree) {
-		return schemaFreeGen.generateFiles(txnId, schema)
+		return schemaFreeGen.generateFiles(txnId, schema);
 	} else {
 		return codeGen.generateFiles(txnId, schema);
 	}
