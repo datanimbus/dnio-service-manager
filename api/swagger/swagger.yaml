@@ -13,6 +13,45 @@ produces:
   - application/json
   - text/plain
 paths:
+  /service/fetchAll:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of serviceManager
+      operationId: serviceManagerList
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: page
+          in: query
+          type: integer
+          description: Page number of the request
+        - name: count
+          in: query
+          type: integer
+          description: Number of records per page
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: sort
+          in: query
+          type: string
+          description: sort parameter
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
   /{app}/service:
     x-swagger-router-controller: controller
     get:
