@@ -7,8 +7,8 @@ const trimUtils = require('./auth.trim');
 const logger = global.logger;
 
 const permittedUrls = [
-	'/sm/health/live',
-	'/sm/health/ready',
+	'/sm/internal/health/live',
+	'/sm/internal/health/ready',
 	'/sm/service/{id}/checkUnique',
 	'/sm/service/verifyHook'
 ];
@@ -20,7 +20,7 @@ const onlyAuthUrls = [
 ];
 
 const internalUrls = [
-	'/sm/app/{app}',
+	'/sm/internal/app/{app}',
 	'/sm/validateUserDeletion/{app}/{userId}',
 	'/sm/userDeletion/{app}/{userId}',
 	'/sm/service/{id}/statusChange',
