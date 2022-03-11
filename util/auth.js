@@ -8,58 +8,57 @@ const logger = global.logger;
 
 const permittedUrls = [
 	'/sm/internal/health/live',
-	'/sm/internal/health/ready',
-	'/sm/service/{id}/checkUnique',
-	'/sm/service/verifyHook'
+	'/sm/internal/health/ready'
 ];
 
 const onlyAuthUrls = [
-	'/sm/service/verifyHook',
-	'/sm/{id}/lockDocument/count',
-	'/sm/service/{id}/swagger'
+	'/sm/{app}/service/verifyHook',
+	'/sm/{app}/{id}/lockDocument/count',
+	'/sm/{app}/service/{id}/swagger',
+	'/sm/{app}/service/{id}/checkUnique',
+	'/sm/{app}/service/verifyHook'
 ];
 
 const internalUrls = [
-	'/sm/internal/app/{app}',
-	'/sm/validateUserDeletion/{app}/{userId}',
-	'/sm/userDeletion/{app}/{userId}',
-	'/sm/service/{id}/statusChange',
-	'/sm/service/{id}/statusChangeFromMaintenance',
+	'/sm/{app}/internal/app',
+	'/sm/{app}/validateUserDeletion/{app}/{userId}',
+	'/sm/{app}/userDeletion/{app}/{userId}',
+	'/sm/{app}/service/{id}/statusChange',
+	'/sm/{app}/service/{id}/statusChangeFromMaintenance',
 ];
 
 const adminOnlyUrls = [
-	'/sm/calendar/enable',
-	'/sm/calendar/disable',
-	'/sm/{app}/service/stop ',
-	'/sm/{app}/service/start ',
-	'/sm/{app}/service/repair',
-	'/sm/service/status/count',
+	'/sm/service/fetchAll'
 ];
 
 const commonUrls = [
-	'/sm/service',
-	'/sm/service/{id}',
-	'/sm/service/utils/{app}/{name}',
-	'/sm/service/count',
-	'/sm/service/audit',
-	'/sm/service/audit/count',
-	'/sm/{id}/draftDelete',
-	'/sm/{id}/purge/all',
-	'/sm/{id}/purge/{type}',
-	'/sm/service/{id}/checkUnique',
-	'/sm/globalSchema',
-	'/sm/globalSchema/{id}',
-	'/sm/globalSchema/count',
-	'/sm/globalSchema/audit',
-	'/sm/globalSchema/audit/count',
-	'/sm/{id}/start',
-	'/sm/{id}/stop',
-	'/sm/{id}/deploy',
-	'/sm/{id}/repair',
-	'/sm/{id}/count',
-	'/sm/{id}/{app}/idCount',
-	'/sm/logs',
-	'/sm/tags'
+	'/sm/{app}/calendar/enable',
+	'/sm/{app}/calendar/disable',
+	'/sm/{app}/service',
+	'/sm/{app}/service/{id}',
+	'/sm/{app}/service/utils/{name}',
+	'/sm/{app}/service/utils/count',
+	'/sm/{app}/service/utils/audit',
+	'/sm/{app}/service/utils/audit/count',
+	'/sm/{app}/service/utils/stopAll ',
+	'/sm/{app}/service/utils/startAll ',
+	'/sm/{app}/service/utils/repairAll',
+	'/sm/{app}/service/utils/status/count',
+	'/sm/{app}/service/utils/{id}/draftDelete',
+	'/sm/{app}/service/utils/{id}/purge/all',
+	'/sm/{app}/service/utils/{id}/purge/{type}',
+	'/sm/{app}/service/utils/{id}/checkUnique',
+	'/sm/{app}/service/utils/{id}/start',
+	'/sm/{app}/service/utils/{id}/stop',
+	'/sm/{app}/service/utils/{id}/deploy',
+	'/sm/{app}/service/utils/{id}/repair',
+	'/sm/{app}/service/utils/{id}/count',
+	'/sm/{app}/service/utils/{id}/idCount',
+	'/sm/{app}/globalSchema',
+	'/sm/{app}/globalSchema/{id}',
+	'/sm/{app}/globalSchema/count',
+	'/sm/{app}/globalSchema/audit',
+	'/sm/{app}/globalSchema/audit/count',
 ];
 
 
