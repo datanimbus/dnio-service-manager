@@ -397,7 +397,7 @@ schema.pre('save', async function (next) {
 			logger.info(`Updating existing records with initial state in state model for service ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj});
+			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
 			logger.debug('Initial states updated - ', status);
 		}
 		next();
@@ -969,13 +969,13 @@ e.updateDoc = (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	let ID = _req.swagger.params.id.value;
 	logger.info(`[${txnId}] Update service request received for ${ID}`);
-	
+
 	delete _req.body.collectionName;
 	delete _req.body.version;
 	_req.body._id = ID;
-	
+
 	logger.trace(`[${txnId}] Payload received :: ${JSON.stringify(_req.body)}`);
-	
+
 	let promise = Promise.resolve();
 
 	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers || []);
@@ -1235,7 +1235,7 @@ e.deployAPIHandler = (_req, _res) => {
 	let isAuditIndexDeleteRequired = false;
 	let isApiEndpointChanged = false;
 	let removeSoftDeletedRecords = false;
-	
+
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
 			if (!_d) {
@@ -1244,7 +1244,7 @@ e.deployAPIHandler = (_req, _res) => {
 			} else {
 				logger.debug(`[${txnId}] Old data found in DB for service ${ID}`);
 				logger.trace(`[${txnId}] Old Data from DB :: ${JSON.stringify(_d)}`);
-				
+
 				let oldData = JSON.parse(JSON.stringify(_d));
 				if (_d.status != 'Draft' && !_d.draftVersion) {
 					logger.error(`[${txnId}] No draft data found for service ${ID}`);
@@ -1266,7 +1266,7 @@ e.deployAPIHandler = (_req, _res) => {
 					}
 
 					let promise = Promise.resolve();
-					
+
 					return promise
 						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req); })
 						.then(() => {
@@ -1336,7 +1336,7 @@ e.deployAPIHandler = (_req, _res) => {
 								logger.trace(`[${txnId}] Wizard Updated for service ${ID}`);
 								isWizardUpdateRequired = true;
 							}
-							
+
 							if (newData.versionValidity && oldData.versionValidity.validityType != newData.versionValidity.validityType) {
 								logger.trace(`[${txnId}] Verson validity type changed for service ${ID}`);
 								isReDeploymentRequired = true;
@@ -1369,7 +1369,7 @@ e.deployAPIHandler = (_req, _res) => {
 								oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
 								newIdElement = newData.definition ? newData.definition.find(d => d.key == '_id') : {};
 								padding = newIdElement ? newIdElement.padding : null;
-	
+
 								if (newData.schemaFree && oldData.definition) {
 									isReDeploymentRequired = true;
 								} else if (!definitionComparison) {
@@ -1387,7 +1387,7 @@ e.deployAPIHandler = (_req, _res) => {
 									isReDeploymentRequired = true;
 								}
 							}
-							
+
 							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) newData.version = _d.version + 1;
 
 							logger.info(`[${txnId}] Redeployment required for service ${ID}? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
@@ -2659,7 +2659,7 @@ async function showByName(req, res) {
 }
 
 function customIndex(req, res) {
-	let draft = req.swagger.params.draft.value;
+	let draft = req.swagger.params.draft ? req.swagger.params.draft.value : false;
 	if (draft)
 		draftCrudder.index(req, res);
 	else
