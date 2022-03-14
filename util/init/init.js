@@ -43,7 +43,7 @@ function fixServiceinNewRelease(successIds) {
 	if (!release) return Promise.resolve();
 	return mongoose.model('services').find({$and: [{'_metadata.version.release': { $ne: release }},{'definition': { $exists: true }}] })
 		.then(data => {
-			logger.info('Services to fix - ', data && data.length)
+			logger.info('Services to fix - ', data && data.length);
 			logger.trace(`Services details - ${JSON.stringify(data)}`);
 			var count = 0;
 			var promises = data.map(doc => {

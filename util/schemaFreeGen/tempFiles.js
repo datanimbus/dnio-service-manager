@@ -30,7 +30,7 @@ ENV ID_SUFFIX ${serviceDetails.idDetails && serviceDetails.idDetails.suffix ? se
 ENV ID_COUNTER ${serviceDetails.idDetails && serviceDetails.idDetails.counter ? serviceDetails.idDetails.counter : '""'}
 ENV PERMANENT_DELETE ${serviceDetails.permanentDeleteData}
 ENV DATA_STACK_ALLOWED_FILE_TYPE ${serviceDetails.allowedFileTypes}
-ENV STORAGE_ENGINE ${process.env.STORAGE_ENGINE}
+ENV STORAGE_ENGINE ${process.env.STORAGE_ENGINE || 'GRIDFS'}
 ENV STORAGE_AZURE_CONNECTION_STRING ${process.env.STORAGE_AZURE_CONNECTION_STRING}
 ENV STORAGE_AZURE_CONTAINER ${process.env.STORAGE_AZURE_CONTAINER}
 ENV STORAGE_AZURE_SHARED_KEY ${process.env.STORAGE_AZURE_SHARED_KEY}
@@ -63,7 +63,7 @@ DATA_STACK_APP_NS="appveen-${serviceDetails.app}"
 DATA_STACK_NAMESPACE="appveen"
 DATA_STACK_APP="${serviceDetails.app}"
 DATA_STACK_ALLOWED_FILE_TYPE="${serviceDetails.allowedFileTypes}"
-STORAGE_ENGINE="${process.env.STORAGE_ENGINE}"
+STORAGE_ENGINE="${process.env.STORAGE_ENGINE || 'GRIDFS'}"
 STORAGE_AZURE_CONNECTION_STRING="${process.env.STORAGE_AZURE_CONNECTION_STRING}"
 STORAGE_AZURE_CONTAINER="${process.env.STORAGE_AZURE_CONTAINER}"
 STORAGE_AZURE_SHARED_KEY="${process.env.STORAGE_AZURE_SHARED_KEY}"
