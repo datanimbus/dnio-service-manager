@@ -56,9 +56,9 @@ const commonUrls = [
 	'/sm/{app}/service/utils/{id}/idCount',
 	'/sm/{app}/globalSchema',
 	'/sm/{app}/globalSchema/{id}',
-	'/sm/{app}/globalSchema/count',
-	'/sm/{app}/globalSchema/audit',
-	'/sm/{app}/globalSchema/audit/count',
+	'/sm/{app}/globalSchema/utils/count',
+	'/sm/{app}/globalSchema/utils/audit',
+	'/sm/{app}/globalSchema/utils/audit/count',
 ];
 
 
