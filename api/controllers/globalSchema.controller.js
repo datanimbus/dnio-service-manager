@@ -97,16 +97,17 @@ function validateDefinition(schema) {
 	// });
 }
 
-function updateInusrMgmt(srvcObj, definition, _req) {
-	let permObj = {
-		app: srvcObj.app,
-		entity: srvcObj._id,
-		entityName: srvcObj.name,
-		// to check => converted to array
-		definition: definition
-	};
-	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
-}
+// function updateInusrMgmt(srvcObj, definition, _req) {
+// 	let permObj = {
+// 		app: srvcObj.app,
+// 		entity: srvcObj._id,
+// 		entityName: srvcObj.name,
+// 		// to check => converted to array
+// 		definition: definition
+// 	};
+// 	return permObj;
+// 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
+// }
 
 schema.pre('save', function (next) {
 	let self = this;
@@ -198,7 +199,7 @@ function deployService(serv, socket, _req) {
 			return serv.save(_req);
 		})
 		.then(() => {
-			updateInusrMgmt(newServ, newServ.definition, _req).then(() => { });
+			// updateInusrMgmt(newServ, newServ.definition, _req).then(() => { });
 			return deployUtil.deployService(JSON.parse(JSON.stringify(newServ)), socket, _req, true, false);
 		});
 	// .then(() => {
