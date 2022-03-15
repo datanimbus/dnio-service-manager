@@ -13,18 +13,18 @@ const permittedUrls = [
 
 const onlyAuthUrls = [
 	'/sm/{app}/service/verifyHook',
-	'/sm/{app}/{id}/lockDocument/count',
-	'/sm/{app}/service/{id}/swagger',
-	'/sm/{app}/service/{id}/checkUnique',
-	'/sm/{app}/service/verifyHook'
+	'/sm/{app}/service/utils/{id}/lockDocument/count',
+	'/sm/{app}/service/utils/{id}/swagger',
+	'/sm/{app}/service/utils/{id}/checkUnique',
+	'/sm/{app}/service/utils/verifyHook'
 ];
 
 const internalUrls = [
 	'/sm/{app}/internal/app',
 	'/sm/{app}/validateUserDeletion/{app}/{userId}',
 	'/sm/{app}/userDeletion/{app}/{userId}',
-	'/sm/{app}/service/{id}/statusChange',
-	'/sm/{app}/service/{id}/statusChangeFromMaintenance',
+	'/sm/{app}/service/utils/{id}/statusChange',
+	'/sm/{app}/service/utils/{id}/statusChangeFromMaintenance',
 ];
 
 const adminOnlyUrls = [

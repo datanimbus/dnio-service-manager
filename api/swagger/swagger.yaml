@@ -541,6 +541,33 @@ paths:
           description: No records to list with the given parameter set.
         "500":
           description: Internal server error
+  /{app}/service/utils/{id}/lockDocument/count:
+    x-swagger-router-controller: controller
+    get:
+      description: returns the count of globalSchemas
+      operationId: lockDocumentCount
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: Id of the serviceManager to be updated
+      responses:
+        "200":
+          description: count of services
+        "400":
+          description: Bad parameters
+        "500":
+          description: Internal server error
   /{app}/service/utils/{id}/statusChange:
     x-swagger-router-controller: controller
     put:
@@ -1233,33 +1260,6 @@ paths:
           in: query
           type: string
           description: Sort parameters
-  /{app}/{id}/lockDocument/count:
-    x-swagger-router-controller: controller
-    get:
-      description: returns the count of globalSchemas
-      operationId: lockDocumentCount
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: The App of data stack
-        - name: id
-          in: path
-          type: string
-          required: true
-          description: Id of the serviceManager to be updated
-      responses:
-        "200":
-          description: count of services
-        "400":
-          description: Bad parameters
-        "500":
-          description: Internal server error
   /{app}/tags:
     x-swagger-router-controller: controller
     get:
