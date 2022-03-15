@@ -307,7 +307,7 @@ e.deployService = (schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) =>
 
 e.updateInPM = function (id, req) {
 	var options = {
-		url: envConfig.baseUrlPM + '/dataservice/' + id,
+		url: envConfig.baseUrlBM + '/dataservice/' + id,
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -340,7 +340,7 @@ e.updateInPM = function (id, req) {
 
 e.updatePMForCalendar = function (req, body) {
 	var options = {
-		url: envConfig.baseUrlPM + '/flow/update/timebound',
+		url: envConfig.baseUrlBM + '/flow/update/timebound',
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',

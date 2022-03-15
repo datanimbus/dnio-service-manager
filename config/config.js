@@ -30,7 +30,7 @@ function get(_service) {
 		if (_service == 'dm') return `http://dm.${dataStackNS}`;
 		if (_service == 'ne') return `http://ne.${dataStackNS}`;
 		if (_service == 'sm') return `http://sm.${dataStackNS}`;
-		if (_service == 'pm') return `http://pm.${dataStackNS}`;
+		if (_service == 'bm') return `http://bm.${dataStackNS}`;
 		if (_service == 'user') return `http://user.${dataStackNS}`;
 		if (_service == 'gw') return `http://gw.${dataStackNS}`;
 		if (_service == 'wf') return `http://wf.${dataStackNS}`;
@@ -41,7 +41,7 @@ function get(_service) {
 		if (_service == 'dm') return 'http://localhost:10709';
 		if (_service == 'ne') return 'http://localhost:10010';
 		if (_service == 'sm') return 'http://localhost:10003';
-		if (_service == 'pm') return 'http://localhost:10011';
+		if (_service == 'bm') return 'http://localhost:10011';
 		if (_service == 'user') return 'http://localhost:10004';
 		if (_service == 'gw') return 'http://localhost:9080';
 		if (_service == 'wf') return 'http://localhost:10006';
@@ -73,7 +73,7 @@ module.exports = {
 	baseUrlWF: get('wf') + '/workflow',
 	baseUrlSEC: get('sec') + '/sec',
 	baseUrlDM: get('dm') + '/dm',
-	baseUrlPM: get('pm') + '/pm',
+	baseUrlBM: get('bm') + '/bm',
 	baseUrlGW: get('gw') + '/gw',
 	debugDB: debugDB,
 	mongoAppcenterUrl: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017',

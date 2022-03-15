@@ -1424,9 +1424,9 @@ e.deployAPIHandler = (_req, _res) => {
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
 								.then(() => {
-									if (!definitionComparison) {
-										return deployUtil.updateInPM(srvcObj._id, _req);
-									}
+									// if (!definitionComparison) {
+									// 	return deployUtil.updateInPM(srvcObj._id, _req);
+									// }
 								})
 								.then(() => {
 									return newData.remove(_req);
@@ -1771,17 +1771,17 @@ e.destroyService = (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	logger.info(`[${txnId}] Deleting the service : ${id}`);
 	logger.debug(`[${txnId}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
-	return smhelper.getFlows(id, _req)
-		.then(_flows => {
-			logger.debug(`[${txnId}] ${JSON.stringify({ _flows })}`);
-			if (_flows.length > 0) {
-				_res.status(400).json({ message: 'Data service is in use by flow ' + _flows.map(_f => _f.name) });
-				logger.info(`[${txnId}] Data service in use by flows`);
-				throw new Error('Data service in use by flows');
-			} else {
-				return checkIncomingRelation(id);
-			}
-		})
+	// return smhelper.getFlows(id, _req)
+	return Promise.resolve([]).then(_flows => {
+		logger.debug(`[${txnId}] ${JSON.stringify({ _flows })}`);
+		if (_flows.length > 0) {
+			_res.status(400).json({ message: 'Data service is in use by flow ' + _flows.map(_f => _f.name) });
+			logger.info(`[${txnId}] Data service in use by flows`);
+			throw new Error('Data service in use by flows');
+		} else {
+			return checkIncomingRelation(id);
+		}
+	})
 		.then((doc) => {
 			logger.debug(`[${txnId}] Delete data service ${id} has 0 incoming relationships`);
 			logger.debug(`[${txnId}] Delete data service :: ID :: ${doc._id}`);
@@ -2903,7 +2903,9 @@ function disableCalendar(req, res) {
 			}, {
 				status: 'Undeployed'
 			}, req))
-				.then(() => deployUtil.updatePMForCalendar(req, { status: 'Undeployed', app: app }))
+				.then(() => {
+					// deployUtil.updatePMForCalendar(req, { status: 'Undeployed', app: app })
+				})
 				.catch((err) => { throw err; });
 		} else {
 			logger.debug('Calendar DS not found for ' + app);
