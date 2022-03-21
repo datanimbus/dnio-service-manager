@@ -177,8 +177,7 @@ e.serviceStart = (_schema) => {
 };
 
 e.serviceDelete = (_txnId, _schema) => {
-	// (_namespace, _name)
-	logger.info(`[${_txnId}] Kubernetes delete service ${_schema._id}`);
+	logger.info(`[${_txnId}] Kubernetes delete service ${_schema && _schema._id}`);
 	logger.trace(`[${_txnId}] ${JSON.stringify(_schema)}`);
 	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	logger.debug(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: ns :: ${ns}`);

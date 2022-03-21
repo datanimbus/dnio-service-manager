@@ -39,10 +39,12 @@ function checkDependency() {
 }
 
 function fixServiceinNewRelease(successIds) {
+	logger.info('Fixing services in new release.');
 	if (!release) return Promise.resolve();
 	return mongoose.model('services').find({$and: [{'_metadata.version.release': { $ne: release }},{'definition': { $exists: true }}] })
 		.then(data => {
-			logger.info('data is',JSON.stringify(data));
+			logger.info('Services to fix - ', data && data.length);
+			logger.trace(`Services details - ${JSON.stringify(data)}`);
 			var count = 0;
 			var promises = data.map(doc => {
 				// let definitionObject = JSON.parse(doc.definition);
