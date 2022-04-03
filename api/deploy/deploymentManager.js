@@ -66,7 +66,8 @@ e.deployService = (txnId, schema, _isUpdate, _oldData) => {
 					'STORAGE_AZURE_CONNECTION_STRING',
 					'STORAGE_AZURE_CONTAINER',
 					'STORAGE_AZURE_SHARED_KEY',
-					'STORAGE_AZURE_TIMEOUT'
+					'STORAGE_AZURE_TIMEOUT',
+					'API_LOGS_METHODS'
 				];
 
 				for (var i in envKeys) {

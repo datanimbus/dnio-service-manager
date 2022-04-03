@@ -214,6 +214,10 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 
 	logger.info(`[${txnId}] Deploying service :: ${schema._id}`);
 
+	let idDetails = schema['definition'].find(attr => attr.key == '_id');
+	if (idDetails.counter && isNaN(idDetails.counter)) throw new Error('Counter is not valid');
+	if (idDetails.padding && isNaN(idDetails.padding)) throw new Error('Padding is not valid');
+
 	try {
 		await e.updateDocument(mongoose.model('services'), { _id: schema._id }, { status: 'Pending' }, req);
 		logger.debug(`[${txnId}] Service moved to pending status ${schema._id}`);
