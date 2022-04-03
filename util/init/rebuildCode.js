@@ -8,15 +8,15 @@ const BATCH = 5;
 function redeploy(services, successIds, i) {
 	let reqObject = {
 		headers: {
-			'txnId': `SM-Redeploy-${i+1}`
+			'txnId': `SM-Redeploy-${i + 1}`
 		}
 	};
-	let txnId = `SM-Redeploy-${i+1}`; 
+	let txnId = `SM-Redeploy-${i + 1}`;
 	logger.info(`[${txnId}] Redeploying services :: Running batch ${(i + 1)}`);
 	let promises = services.map(_srvc => {
 		logger.debug(`[${txnId}] Redeploying service ${_srvc._id}`);
 		let srvcDoc = _srvc;
-		if(!srvcDoc.definition) {
+		if (!srvcDoc.definition) {
 			logger.info(`[${txnId}] Redeploying service :: ${srvcDoc._id} :: No definition found. Ignoring`);
 			return Promise.resolve();
 		}
@@ -52,7 +52,7 @@ function redeploy(services, successIds, i) {
 	return Promise.all(promises);
 }
 
-function init() {
+async function init() {
 	let successIds = [];
 	if (process.env.RELEASE && envConfig.isK8sEnv()) {
 		return mongoose.model('services').find({ '_metadata.version.release': { '$ne': process.env.RELEASE } })
@@ -77,6 +77,7 @@ function init() {
 				logger.error(err.message);
 			});
 	}
+	return successIds;
 }
 
 module.exports = { init };

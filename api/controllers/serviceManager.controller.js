@@ -824,31 +824,8 @@ e.createDoc = (_req, _res) => {
 			.then(_d => {
 				serviceObj = _d;
 				serviceObj.headers = smhelper.generateHeadersForProperties(txnId, serviceObj.headers || []);
-				// To check => if definition is string of array
-				// let permObj = {
-				// 	_id: serviceObj._id,
-				// 	app: serviceObj.app,
-				// 	entity: serviceObj._id,
-				// 	entityName: serviceObj.name,
-				// 	roles: role ? role.roles : null,
-				// 	type: 'appcenter',
-				// 	fields: role && role.fields ? JSON.stringify(role.fields) : null,
-				// 	definition: _req.body.definition ? _req.body.definition : null
-				// };
-				// return deployUtil.postRolesUserMgmt(permObj, _req);
 				return serviceObj;
 			})
-			.then(() => {
-				// if (serviceObj.definition) {
-				// 	return smHooks.updateServicesInGlobalSchema(serviceObj, _req);
-				// }
-			})
-			.then(() =>{}
-				// deployUtil.createServiceInUserMgmt(serviceObj._id, _req, {
-				// 	app: serviceObj.app,
-				// 	name: serviceObj.name
-				// })
-			)
 			.then(() => {
 				return smHooks.createDSinMON(serviceObj, _req);
 			})
@@ -1102,18 +1079,6 @@ e.updateDoc = (_req, _res) => {
 							.then(_n => _d.save(_req).then(() => _n));
 					}
 				})
-				// .then(_data => {
-				// 	srvcObj = _data;
-				// 	let permObj = {
-				// 		app: srvcObj.app,
-				// 		entity: srvcObj._id,
-				// 		entityName: srvcObj.name,
-				// 		roles: role ? role.roles : null,
-				// 		fields: role && role.fields ? JSON.stringify(role.fields) : null,
-				// 		definition: _req.body.definition ? (typeof _req.body.definition == 'string' ? _req.body.definition : JSON.stringify(_req.body.definition)) : null
-				// 	};
-				// 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
-				// })
 				.then((_data) => {
 					srvcObj = _data;
 					_res.status(200).json(srvcObj);
@@ -1819,8 +1784,6 @@ e.destroyService = (_req, _res) => {
 		.then(() => {
 			deployUtil.sendToSocket(socket, 'serviceStatus', { _id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
 			logger.debug(`[${txnId}] Socket updated :: serviceStatus :: Entity has been stopped.`);
-			// deployUtil.deleteServiceInUserMgmt(id, _req);
-			// deployUtil.deleteServiceInWorkflow(id, _req);
 			return removeIncomingRelation(id, _req);
 		})
 		.then(() => {
@@ -1948,8 +1911,6 @@ e.deleteApp = function (_req, _res) {
 						app: doc.app,
 						message: 'Undeployed'
 					});
-					// deployUtil.deleteServiceInUserMgmt(doc._id, _req);
-					// deployUtil.deleteServiceInWorkflow(doc._id, _req);
 					dropCollections(doc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${doc.app}`, _req.get('TxnId'));
 					deployUtil.sendToSocket(socket, 'deleteService', {
 						_id: doc._id,
@@ -2375,23 +2336,10 @@ e.getCounter = (_req, _res) => {
 let initDone = false;
 e.readiness = function (req, res) {
 	if (!initDone) {
-		return require('../../util/init/init')()
-			.then(() => {
-				initDone = true;
-				return res.status(200).json();
-			});
+		require('../../util/init/init')();
+		initDone = true;
 	}
 	return res.status(200).json();
-	/*
-	updateService()
-		.then(() => {
-			
-		})
-		.catch(err => {
-			logger.error(err.message);
-			return res.status(500).json();
-		});
-		*/
 
 };
 
@@ -2838,17 +2786,10 @@ function createDSWithDefinition(req, dsDefinition) {
 
 		};
 		doc.role = permObj;
-		// return deployUtil.postRolesUserMgmt(permObj, req);
 		return serviceObj;
 	})
 		.then(() => doc.save(req))
-		.then((_d) => {
-			doc = _d;
-			// return deployUtil.createServiceInUserMgmt(doc._id, req, {
-			// 	app: doc.app,
-			// 	name: doc.name
-			// });
-		})
+		.then((_d) => doc = _d)
 		.then(() => smHooks.createDSinMON(doc, req))
 		.then(() => Promise.resolve(doc))
 		.catch(err => {

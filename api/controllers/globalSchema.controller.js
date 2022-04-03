@@ -83,31 +83,7 @@ function validateDefinition(schema) {
 			validateDefinition(sch['definition']);
 		}
 	});
-
-	// Object.keys(schema).forEach(_k => {
-	// 	if (!schema[_k][`type`] || !schema[_k][`properties`]) {
-	// 		throw new Error(`Library definition is invalid`);
-	// 	}
-	// 	if (schema[_k][`type`] === `object` || schema[_k][`type`] === `Array`) {
-	// 		if (!schema[_k][`definition`] || typeof schema[_k][`definition`] != `object`) {
-	// 			throw new Error(`Library definition is invalid`);
-	// 		}
-	// 		validateDefinition(schema[_k][`definition`]);
-	// 	}
-	// });
 }
-
-// function updateInusrMgmt(srvcObj, definition, _req) {
-// 	let permObj = {
-// 		app: srvcObj.app,
-// 		entity: srvcObj._id,
-// 		entityName: srvcObj.name,
-// 		// to check => converted to array
-// 		definition: definition
-// 	};
-// 	return permObj;
-// 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
-// }
 
 schema.pre('save', function (next) {
 	let self = this;
