@@ -1,7 +1,7 @@
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 const logger = global.logger;
 const envConfig = require('../config/config');
-let release = process.env.RELEASE ;
+let release = process.env.RELEASE;
 let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : '';
 if (dockerReg.length > 0 && !dockerReg.endsWith('/')) dockerReg += '/';
 logger.info('Docker registry configured:: ' + dockerReg);
@@ -156,15 +156,11 @@ e.serviceStart = (_schema) => {
 	// (_namespace, _name, _port)
 	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
 	logger.info('Creating service ' + ns + ' ' + _schema.api.split('/')[1].toLowerCase() + ' ' + _schema.port);
-	return kubeutil.service.createService(
-		ns,
-		_schema.api.split('/')[1].toLowerCase(),
-		_schema.port,
-		release)
+	return kubeutil.service.createService(ns, _schema.api.split('/')[1].toLowerCase(), _schema.port, release)
 		.then(_ => {
 			logger.info('Create service return ' + _.statusCode);
-			logger.debug(JSON.stringify(_));
-			if (_.statusCode > 202) {
+			logger.trace(`Service start response : ${JSON.stringify(_)}`);
+			if (!envConfig.isAcceptableK8sStatusCodes(_.statusCode)) {
 				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + _.statusCode;
 				logger.error(errorMsg);
 				return Error(errorMsg);

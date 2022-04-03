@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 const request = require('request');
 const _ = require('lodash');
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
-const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
-const envConfig = require('../../config/config.js');
-const dm = require('../deploy/deploymentManager');
-const fileIO = require('../../util/codegen/lib/fileIO.js');
+const config = require('../../config/config.js');
+const k8s = require('../../util/k8s.js');
 
 const logger = global.logger;
 let e = {};
@@ -39,7 +38,7 @@ e.postRolesUserMgmt = function (data, _req) {
 	let txnId = _req.get('TxnId') || _req.headers.txnId;
 	let id = data._id;
 	var options = {
-		url: envConfig.baseUrlUSR + '/role',
+		url: config.baseUrlUSR + '/role',
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -77,7 +76,7 @@ e.updateRolesUserMgmt = function (serviceId, data, _req) {
 	let txnId = _req.get('TxnId') || _req.headers.txnId;
 	let id = serviceId;
 	var options = {
-		url: envConfig.baseUrlUSR + '/role/' + serviceId,
+		url: config.baseUrlUSR + '/role/' + serviceId,
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -114,7 +113,7 @@ e.updateRolesUserMgmt = function (serviceId, data, _req) {
 e.deleteServiceInUserMgmt = function (_id, _req) {
 	let txnId = _req.get('TxnId');
 	var options = {
-		url: envConfig.baseUrlUSR + '/service/' + _id,
+		url: config.baseUrlUSR + '/service/' + _id,
 		method: 'Delete',
 		headers: {
 			'Content-Type': 'application/json',
@@ -134,7 +133,7 @@ e.deleteServiceInUserMgmt = function (_id, _req) {
 e.createServiceInUserMgmt = function (_id, _req, body) {
 	let txnId = _req.get('TxnId');
 	var options = {
-		url: envConfig.baseUrlUSR + '/service/' + _id,
+		url: config.baseUrlUSR + '/service/' + _id,
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -155,7 +154,7 @@ e.createServiceInUserMgmt = function (_id, _req, body) {
 e.deleteServiceInWorkflow = function (_id, _req) {
 	let txnId = _req.get('TxnId');
 	var options = {
-		url: envConfig.baseUrlWF + '/service/' + _id,
+		url: config.baseUrlWF + '/service/' + _id,
 		method: 'Delete',
 		headers: {
 			'Content-Type': 'application/json',
@@ -210,104 +209,90 @@ e.updateDocument = (model, query, updateObj, req) => {
 		});
 };
 
-e.deployService = (schemaDetails, socket, req, _isUpdate, _isDeleteAndCreate) => {
-	let id = schemaDetails._id;
+e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 	let txnId = req.get('TxnId') || req.headers.txnId;
 
-	logger.info(`[${txnId}] Deployment utils deploy service :: ${id}`);
-	logger.debug(`[${txnId}] Schema free service? - ${schemaDetails.schemaFree}`);
+	logger.info(`[${txnId}] Deploying service :: ${schema._id}`);
 
-	if (schemaDetails.schemaFree) {
-		return e.updateDocument(mongoose.model('services'), { _id: id }, { status: 'Pending' }, req)
-			.then(doc => {
-				logger.debug(`[${txnId}] Service moved to pending status ${id}`);
-				logger.trace(`[${txnId}] Service details :: ${JSON.stringify(doc)}`);
-				return dm.deployService(txnId, schemaDetails, _isUpdate, _isDeleteAndCreate);
-			})
-			.catch(e => {
-				logger.error(`[${txnId}] Deployment failed for service ${id} :: ${e}`);
-				logger.debug(`[${txnId}] Cleaning up deployment changes for service ${id}`);
+	try {
+		await e.updateDocument(mongoose.model('services'), { _id: schema._id }, { status: 'Pending' }, req);
+		logger.debug(`[${txnId}] Service moved to pending status ${schema._id}`);
 
-				var startPromise = new Promise.resolve();
-				startPromise
-					.then(() => {
-						fileIO.deleteFolderRecursive('./generatedServices/' + id);
-					})
-					.then(() => {
-						logger.debug(`[${txnId}] Cleanup :: Generated service folder deleted ${id}`);
-						if (socket) {
-							e.sendToSocket(socket, 'serviceStatus', {
-								_id: id,
-								message: 'Undeployed',
-								app: schemaDetails.app
-							});
-						}
-					})
-					.then(() => {
-						logger.debug(`[${txnId}] Updating document status in db ${id} :: Errored`);
-						return e.updateDocument(mongoose.model('services'), {
-							_id: id
-						}, {
-							status: 'Errored',
-							comment: e.message
-						}, req);
-					})
-					.catch(err => logger.error(`[${txnId}] Error cleaning deployment changes for service ${id} :: ${err.message}`));
-			});
-	} else {
-		let systemFields = {
-			'File': [],
-			'Geojson': []
+		let envVars = {};
+		config.envkeysForDataService.forEach(key => envVars[key] = process.env[key]);
+		envVars['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + schema.app).toLowerCase();
+		envVars['NODE_OPTIONS'] = `--max-old-space-size=${config.maxHeapSize}`;
+		envVars['NODE_ENV'] = 'production';
+		envVars['SERVICE_ID'] = `${schema._id}`;
+
+		let deploymentEnvVars = [];
+		Object.keys(envVars).forEach(key => deploymentEnvVars.push({ name: key, value: envVars[key] }));
+
+		logger.trace(`[${txnId}] Environment variables to send to DM ${schema._id} :: ${JSON.stringify(deploymentEnvVars)}`);
+
+		let namespace = envVars['DATA_STACK_APP_NS'];
+		let port = schema.port;
+		let name = (schema.api).substring(1).toLowerCase();
+		let version = schema.version;
+		let volumeMounts = {
+			'file-export': {
+				containerPath: '/app/output',
+				hostPath: `${config.fsMount}/${schema._id}`
+			}
 		};
-		e.getSystemFields(systemFields, '', schemaDetails.definition, ['File', 'Geojson']);
-		schemaDetails.geoJSONFields = systemFields.Geojson;
-		schemaDetails.fileFields = systemFields.File;
-		return globalDefHelper.expandSchemaWithGlobalDef(schemaDetails.app, schemaDetails.definition)
-			.then(def => {
-				logger.trace(`[${txnId}] Deploy service :: ${id} :: Updated definition :: ${JSON.stringify(def)}`);
-				logger.trace(`[${txnId}] Deploy service :: ${id} :: Schema details obj :: ${JSON.stringify(schemaDetails)}`);
-				schemaDetails.definition = def;
-				schemaDetails.definition = globalDefHelper.expandSchemaWithSystemGlobalDef(schemaDetails.definition);
-				return e.updateDocument(mongoose.model('services'), { _id: id }, { status: 'Pending' }, req);
-			})
-			.then((_d) => {
-				logger.debug(`[${txnId}] Deploy service :: ${id} :: Service moved to pending status`);
-				logger.trace(`[${txnId}] Deploy service :: ${id} :: ${JSON.stringify(_d)}`);
-				return dm.deployService(txnId, schemaDetails, _isUpdate, _isDeleteAndCreate);
-			})
-			.catch(e => {
-				logger.error(`[${txnId}] Deploy service :: ${id} :: Deployment failed :: ${e}`);
-				
-				var startPromise = new Promise.resolve();
-				startPromise.then(() => {
-					fileIO.deleteFolderRecursive('./generatedServices/' + id);
-				})
-					.then(() => {
-						if (socket) {
-							e.sendToSocket(socket, 'serviceStatus', {
-								_id: id,
-								message: 'Undeployed',
-								app: schemaDetails.app
-							});
-						}
-					})
-					.then(() => {
-						return e.updateDocument(mongoose.model('services'), {
-							_id: id
-						}, {
-							status: 'Errored',
-							comment: e.message
-						}, req);
-					})
-					.catch(err => logger.error(`[${txnId}] Deploy service :: ${id} :: ${err.message}`));
-				logger.error(`[${txnId}] Deploy service :: ${id} :: ${e.message}`);
-			});
+		logger.trace(`[${txnId}] [${schema._id}] Volume mount data : ${JSON.stringify(volumeMounts)}`);
+
+		let options = {
+			livenessProbe: {
+				httpGet: {
+					path: `/${schema.app}${schema.api}/utils/health/live`,
+					port: schema.port,
+					scheme: 'HTTP'
+				},
+				initialDelaySeconds: 5,
+				timeoutSeconds: config.healthTimeout
+			},
+			readinessProbe: {
+				httpGet: {
+					path: `/${schema.app}${schema.api}/utils/health/ready`,
+					port: schema.port,
+					scheme: 'HTTP'
+				},
+				initialDelaySeconds: 5,
+				timeoutSeconds: config.healthTimeout
+			}
+		};
+		logger.trace(`[${txnId}] [${schema._id}] Probes : ${JSON.stringify(options)}`);
+
+		if (_isDeleteAndCreate) {
+			await k8s.deploymentDelete(txnId, schema);
+			logger.info(`[${txnId}] Deployment delete request queued for ${schema._id}`);
+			await k8s.serviceDelete(txnId, schema);
+			logger.info(`[${txnId}] Service delete request queued for ${schema._id}`);
+		}
+
+		let k8sServiceResponse = await kubeutil.service.createService(namespace, name, port, version);
+		if (!config.isAcceptableK8sStatusCodes(k8sServiceResponse.statusCode)) throw new Error(`Service creation failed for service ${schema._id}/${schema.name}`);
+		logger.trace(`[${txnId}] [${schema._id}] Service creation response: ${JSON.stringify(k8sServiceResponse)}`);
+
+		let k8sDeploymentResponse = await kubeutil.deployment.createDeployment(namespace, name, config.baseImage, port, deploymentEnvVars, options, version, volumeMounts);
+		if (!config.isAcceptableK8sStatusCodes(k8sDeploymentResponse.statusCode)) throw new Error(`Deployment creation failed for service ${schema._id}/${schema.name}`);
+		logger.trace(`[${txnId}] [${schema._id}] Deployment creation response: ${JSON.stringify(k8sDeploymentResponse)}`);
+
+	} catch (err) {
+		logger.error(`[${txnId}] Deployment failed for service ${schema._id} :: ${err.message}`);
+		logger.debug(`[${txnId}] Cleaning up deployment changes for service ${schema._id}`);
+
+		if (socket) e.sendToSocket(socket, 'serviceStatus', { _id: schema._id, message: 'Undeployed', app: schema.app });
+
+		logger.debug(`[${txnId}] Updating document status in db ${schema._id} :: Undeployed`);
+		e.updateDocument(mongoose.model('services'), { _id: schema._id }, { status: 'Undeployed', comment: err.message }, req);
 	}
 };
 
 e.updateInPM = function (id, req) {
 	var options = {
-		url: envConfig.baseUrlBM + '/dataservice/' + id,
+		url: config.baseUrlPM + '/dataservice/' + id,
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -340,7 +325,7 @@ e.updateInPM = function (id, req) {
 
 e.updatePMForCalendar = function (req, body) {
 	var options = {
-		url: envConfig.baseUrlBM + '/flow/update/timebound',
+		url: config.baseUrlPM + '/flow/update/timebound',
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',

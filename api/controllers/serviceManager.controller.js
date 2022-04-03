@@ -14,7 +14,6 @@ const envConfig = require('../../config/config.js');
 const relationManager = require('../helpers/relationManager.js');
 const deployUtil = require('../deploy/deploymentUtil');
 const k8s = require('../../util/k8s.js');
-const fileIO = require('../../util/codegen/lib/fileIO.js');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 const net = require('net');
@@ -1279,7 +1278,7 @@ e.deployAPIHandler = (_req, _res) => {
 							};
 							return updateWebHook(ID, newHooks, _req);
 						})
-						.then(() => deployUtil.deployService(svcObject, socket, _req, false, false))
+						.then(() => deployUtil.deployService(svcObject, socket, _req, false))
 						.then(() => {
 							logger.info(`[${txnId}] Deployment process started for service ${ID} status ${svcObject.status}`);
 							dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
@@ -1496,7 +1495,7 @@ e.deployAPIHandler = (_req, _res) => {
 											})
 											.then(_d => {
 												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Result of reindexing: ${JSON.stringify(_d)}`);
-												return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
+												return deployUtil.deployService(data, socket, _req, oldData ? isReDeploymentRequired : false);
 											})
 											.then(_d => {
 												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Response from deployService :: ${JSON.stringify(_d)}`);
@@ -1554,10 +1553,10 @@ e.startAPIHandler = (_req, _res) => {
 							logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
 							return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
 								.then(_d => {
-									logger.debug(_d);
+									logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
 									if (_d.statusCode == 404) {
 										return k8s.serviceStart(doc)
-											.then(() => deployUtil.deployService(doc, socket, _req, false, false))
+											.then(() => deployUtil.deployService(doc, socket, _req, false))
 											.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
 									} else {
 										dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
@@ -1567,7 +1566,7 @@ e.startAPIHandler = (_req, _res) => {
 									logger.error(err);
 								});
 						}
-						return deployUtil.deployService(doc, socket, _req, false, false)
+						return deployUtil.deployService(doc, socket, _req, false)
 							.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
 					}, (data) => {
 						let serviceMsg = '';
@@ -1595,13 +1594,14 @@ e.startAPIHandler = (_req, _res) => {
 };
 
 e.stopAPIHandler = (_req, _res) => {
+	let txnId = _req.get('TxnId');
 	let id = _req.swagger.params.id.value;
 	let socket = _req.app.get('socket');
 	let instances = null;
 	checkIncomingRelation(id)
 		.then(() => {
 			_res.status(202).json({
-				message: 'Deployment termination request accepted!'
+				message: `Deployment termination request accepted for service ${id}.`
 			});
 		}, (data) => {
 			let serviceMsg = '';
@@ -1620,7 +1620,7 @@ e.stopAPIHandler = (_req, _res) => {
 		})
 		.then(() => {
 			if (process.env.SM_ENV == 'K8s') {
-				logger.info('Scaling down to 0');
+				logger.info(`[${txnId}][${id}] Scaling down k8s deployment to 0.`);
 				return crudder.model.findOne({
 					_id: id,
 					'type': { '$nin': ['internal'] }
@@ -1648,8 +1648,7 @@ e.stopAPIHandler = (_req, _res) => {
 					.catch(err => {
 						logger.error(err);
 					});
-			}
-			return destroyDeployment(id, 0, _req);
+			} else logger.info(`[${txnId}][${id}] Can't stop service. Not running on kubernetes.`);
 		})
 		.then(() => {
 			return deployUtil.updateDocument(crudder.model, {
@@ -1673,16 +1672,10 @@ e.stopAPIHandler = (_req, _res) => {
 		});
 };
 
-function destroyServiceFolder(_id) {
-	return fileIO.deleteFolderRecursive('./generatedServices/' + _id);
-}
-
 function destroyDeployment(id, count, _req) {
 	logger.info(`[${_req.get('TxnId')}] Destroy attempt no: ${count}`);
-	let doc = null;
 	return deployUtil.updateDocument(crudder.model, { _id: id }, { status: 'Pending' }, _req)
 		.then(_d => {
-			doc = _d;
 			if (envConfig.isK8sEnv()) {
 				return k8s.deploymentDelete(_req.get('TxnId'), _d)
 					.then(() => logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${_d._id}`))
@@ -1693,8 +1686,6 @@ function destroyDeployment(id, count, _req) {
 				logger.info(`[${_req.get('TxnId')}] PM2 not supported`);
 			}
 		})
-		.then(() => destroyServiceFolder(id))
-		.then(() => doc)
 		.catch(err => {
 			deployUtil.updateDocument(crudder.model, { _id: id }, { comment: err.message }, _req)
 				.then(() => {
@@ -2186,14 +2177,14 @@ e.startAllServices = (_req, _res) => {
 						return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
 							.then(_d => {
 								if (_d.statusCode == 404) {
-									return deployUtil.deployService(doc, socket, _req, false, false);
+									return deployUtil.deployService(doc, socket, _req, false);
 								}
 							})
 							.catch(err => {
 								logger.error(err);
 							});
 					}
-					return deployUtil.deployService(doc, socket, _req, false, false);
+					return deployUtil.deployService(doc, socket, _req, false);
 
 				});
 				_res.status(202).json({
@@ -2336,19 +2327,19 @@ function updateDeployment(req, res, ds) {
 	return k8s.deploymentDelete(req.get('TxnId'), ds)
 		.then(_d => {
 			logger.info('Deployment deleted');
-			logger.debug(_d);
+			logger.trace(_d);
 			return k8s.serviceDelete(req.get('TxnId'), srvcDoc);
 		})
 		.then(_d => {
 			logger.info('Service deleted');
-			logger.debug(_d);
+			logger.trace(_d);
 			// srvcDoc.definition = JSON.parse(srvcDoc.definition);
 			return k8s.serviceStart(srvcDoc);
 		})
 		.then(_d => {
 			logger.info('Service started');
-			logger.debug(_d);
-			return deployUtil.deployService(srvcDoc, socket, req, false, false);
+			logger.trace(_d);
+			return deployUtil.deployService(srvcDoc, socket, req, false);
 		})
 		.catch(err => {
 			logger.error(err.message);

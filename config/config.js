@@ -5,10 +5,9 @@ if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debu
 
 let logger = global.logger;
 
-function mongoUrl() {
-	let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
-	return mongoUrl;
-}
+const dataStackNS = process.env.DATA_STACK_NAMESPACE;
+if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
+
 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
 	dataStackutils.kubeutil.check()
 		.then(
@@ -18,11 +17,22 @@ if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) 
 				logger.log(_e.message);
 			});
 }
+
+let dockerRegistryType = process.env.DOCKER_REGISTRY_TYPE ? process.env.DOCKER_REGISTRY_TYPE : '';
+if (dockerRegistryType.length > 0) dockerRegistryType = dockerRegistryType.toUpperCase();
+
+let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : '';
+if (dockerReg.length > 0 && !dockerReg.endsWith('/') && dockerRegistryType != 'ECR') dockerReg += '/';
+
+// TO DO
+function mongoUrl() {
+	let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
+	return mongoUrl;
+}
+
 function isK8sEnv() {
 	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT;
 }
-const dataStackNS = process.env.DATA_STACK_NAMESPACE;
-if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
 
 
 function get(_service) {
@@ -110,5 +120,47 @@ module.exports = {
 	maxHeapSize: process.env.NODE_MAX_HEAP_SIZE || '4096',
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60,
 	verifyDeploymentUser: (process.env.VERIFY_DEPLOYMENT_USER && process.env.VERIFY_DEPLOYMENT_USER.toLowerCase() === 'true') || false,
-	TOKEN_SECRET: process.env.TOKEN_SECRET || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn'
+	TOKEN_SECRET: process.env.TOKEN_SECRET || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
+	envkeysForDataService: [
+		'FQDN',
+		'GOOGLE_API_KEY',
+		'HOOK_CONNECTION_TIMEOUT',
+		'HOOK_RETRY',
+		'LOG_LEVEL',
+		'MODE',
+		'MONGO_APPCENTER_URL',
+		'MONGO_AUTHOR_DBNAME',
+		'MONGO_AUTHOR_URL',
+		'MONGO_LOGS_DBNAME',
+		'MONGO_LOGS_URL',
+		'MONGO_RECONN_TIME_MILLI',
+		'MONGO_RECONN_TRIES',
+		'MONGO_CONNECTION_POOL_SIZE',
+		'STREAMING_CHANNEL',
+		'STREAMING_HOST',
+		'STREAMING_PASS',
+		'STREAMING_RECONN_ATTEMPTS',
+		'STREAMING_RECONN_TIMEWAIT_MILLI',
+		'STREAMING_USER',
+		'DATA_STACK_NAMESPACE',
+		'CACHE_CLUSTER',
+		'CACHE_HOST',
+		'CACHE_PORT',
+		'RELEASE',
+		'TLS_REJECT_UNAUTHORIZED',
+		'API_REQUEST_TIMEOUT',
+		'TZ_DEFAULT',
+		'MAX_JSON_SIZE',
+		'STORAGE_ENGINE',
+		'STORAGE_AZURE_CONNECTION_STRING',
+		'STORAGE_AZURE_CONTAINER',
+		'STORAGE_AZURE_SHARED_KEY',
+		'STORAGE_AZURE_TIMEOUT'
+	],
+	baseImage: `${dockerReg}data.stack:base.${process.env.IMAGE_TAG}`,
+	isAcceptableK8sStatusCodes: statusCode => {
+		if (statusCode < 400) return true;
+		if (statusCode == 409) return true; // 409 means the k8s resource already exists.
+		return false;
+	}
 };
