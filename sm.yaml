@@ -7,7 +7,6 @@ spec:
   type: ClusterIP
   selector:
     app: sm
-    release: __release_tag__
   ports:
     - protocol: TCP
       port: 80
@@ -23,12 +22,10 @@ spec:
   selector:
     matchLabels:
       app: sm
-      release: __release_tag__
   template:
     metadata:
       labels:
         app: sm
-        release: __release_tag__
     spec:
       serviceAccountName: odp-admin
       containers:
