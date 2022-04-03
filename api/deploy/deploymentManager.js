@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const request = require('request');
-const archiver = require('archiver');
 
 const schemaFreeGen = require('../../util/schemaFreeGen');
 const codeGen = require('../../util/codegen/v2');
@@ -13,24 +12,6 @@ const deploymentUrlCreate = config.baseUrlDM + '/deployment';
 const deploymentUrlUpdate = config.baseUrlDM + '/updateDeployment';
 const deploymentApiChange = config.baseUrlDM + '/apiChange';
 const logger = global.logger;
-
-function __zip(txnId, _path, _dest) {
-	logger.debug(`[${txnId}] Creating archive :: ${_dest}`);
-
-	return new Promise((_resolve, _reject) => {
-		let output = fs.createWriteStream(_dest);
-		var archive = archiver('zip');
-
-		output.on('close', () => _resolve('Done'));
-		archive.on('error', (_err) => {
-			logger.error(`[${txnId}] Error creating archive :: ${_dest} :: ${_err.message}`);
-			_reject(_err);
-		});
-		archive.pipe(output);
-		archive.directory(_path, false);
-		archive.finalize();
-	});
-}
 
 function generateFiles(txnId, schema) {
 	if (schema.schemaFree) {
@@ -47,7 +28,7 @@ e.deployService = (txnId, schema, _isUpdate, _oldData) => {
 
 	var deploymentUrl;
 	var envObj = {};
-	
+
 	return new Promise((resolve, reject) => {
 		generateFiles(txnId, schema)
 			.then(() => {
@@ -95,30 +76,18 @@ e.deployService = (txnId, schema, _isUpdate, _oldData) => {
 
 				envObj['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + schema.app).toLowerCase();
 				envObj['NODE_OPTIONS'] = `--max-old-space-size=${config.maxHeapSize}`;
+				envObj['NODE_ENV'] = 'production';
 				envObj['SERVICE_ID'] = `${schema._id}`;
-				envObj['SERVICE_PORT'] = `${schema.port}`;
-				schema.api = (schema.api).substring(1);
 
 				logger.trace(`[${txnId}] Environment variables to send to DM ${id} :: ${JSON.stringify(envObj)}`);
-			})
-			.then(() => {
-				logger.debug(`[${txnId}] Generating zip file ${id}`);
 
-				if (!fs.existsSync('./generatedServices/' + id)) {
-					logger.error(`[${txnId}] Error :: ./generatedServices/${id} directory doesn't exist`);
-					return new Error(`Missing directory :: ./generatedServices/${id}`);
-				}
-			})
-			.then(() => __zip(txnId, `./generatedServices/${id}`, `./generatedServices/${id}_${schema.version}.zip`))
-			.then(() => logger.debug(`[${txnId}] Zip file generated for service ${id} :: ./generatedServices/${id}_${schema.version}.zip`))
-			.then(() => {
 				var formData = {
 					deployment: JSON.stringify({
 						image: id,
 						imagePullPolicy: 'Always',
 						namespace: config.dataStackNS + '-' + schema.app,
 						port: schema.port,
-						name: schema.api,
+						name: (schema.api).substring(1),
 						version: schema.version,
 						envVars: envObj,
 						volumeMounts: {
@@ -152,11 +121,11 @@ e.deployService = (txnId, schema, _isUpdate, _oldData) => {
 					file: fs.createReadStream(`./generatedServices/${id}_${schema.version}.zip`),
 				};
 				logger.debug(`[${txnId}] Uploading service to DM :: ${id}`);
-				
+
 				if (_oldData) deploymentUrl = deploymentApiChange;
 				else if (_isUpdate) deploymentUrl = deploymentUrlUpdate;
 				else deploymentUrl = deploymentUrlCreate;
-				
+
 				logger.debug(`[${txnId}] DM deployment URL :: ${deploymentUrl}`);
 
 				return request.post({ url: deploymentUrl, formData: formData }, function (err, httpResponse, body) {
