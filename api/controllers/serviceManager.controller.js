@@ -1984,6 +1984,7 @@ function makePurgeApiCall(url) {
 }
 
 e.changeStatus = function (req, res) {
+	let app = req.swagger.params.app.value;
 	let id = req.swagger.params.id.value;
 	let status = req.swagger.params.status.value;
 	let socket = req.app.get('socket');
@@ -2008,7 +2009,7 @@ e.changeStatus = function (req, res) {
 				let outgoingAPIs;
 				return crudder.model.find({ _id: { $in: outRelationIds } }, { app: 1, api: 1, _id: 1, port: 1, relatedSchemas: 1 }).lean(true)
 					.then((inSrvc => {
-						outgoingAPIs = { 'USER': { url: `${envConfig.baseUrlUSR}/usr` } };
+						outgoingAPIs = { 'USER': { url: `${envConfig.baseUrlUSR}/${app}/usr` } };
 						inSrvc.forEach(_d => {
 							outgoingAPIs[_d._id] = _d;
 							outgoingAPIs[_d._id].url = `/api/c/${_d.app}${_d.api}`;
