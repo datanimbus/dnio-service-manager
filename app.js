@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const jsyaml = require('js-yaml');
 const swaggerTools = require('swagger-tools');
-const app = require('express')();
+const express = require('express');
 const cuti = require('@appveen/utils');
 const log4js = cuti.logger.getLogger;
 let version = require('./package.json').version;
@@ -19,8 +19,10 @@ global.Promise = bluebird;
 global.logger = logger;
 const envConfig = require('./config/config.js');
 let mongoAppcenterUrl = envConfig.mongoAppcenterUrl;
-var bodyParser = require('body-parser');
-app.use(bodyParser.json({
+
+const app = express();
+
+app.use(express.json({
 	limit: '5mb'
 }));
 // let init = require('./util/init/init');
