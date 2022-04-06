@@ -225,6 +225,32 @@ paths:
           description: No records to list with the given parameter set.
         "500":
           description: Internal server error
+  /{app}/service/utils/verifyHook:
+    x-swagger-router-controller: controller
+    get:
+      description: Verify hook existence
+      operationId: serviceManagerVerifyHook
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: url
+          in: query
+          type: string
+          description: Payload to verify hook
+      responses:
+        "200":
+          description: isVerified true or false
+        "400":
+          description: Bad parameters
+        "500":
+          description: Internal server error
   /{app}/service/utils/{name}:
     x-swagger-router-controller: controller
     get:
@@ -384,32 +410,6 @@ paths:
           description: Bad parameters
         "404":
           description: No records to list with the given parameter set.
-        "500":
-          description: Internal server error
-  /{app}/service/utils/verifyHook:
-    x-swagger-router-controller: controller
-    get:
-      description: Verify hook existence
-      operationId: serviceManagerVerifyHook
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: The App of data stack
-        - name: url
-          in: query
-          type: string
-          description: Payload to verify hook
-      responses:
-        "200":
-          description: isVerified true or false
-        "400":
-          description: Bad parameters
         "500":
           description: Internal server error
   /{app}/service/utils/{id}/draftDelete:
