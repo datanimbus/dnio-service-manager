@@ -34,7 +34,7 @@
         "log4js": "^6.3.0",
         "mkdirp": "^1.0.4",
         "mongodb": "^3.0.4",
-        "mongoose": "^5.11.14",
+        "mongoose": "^5.13.14",
         "node-cron": "^1.2.1",
         "request": "^2.88.0",
         "request-promise": "^4.2.2",
