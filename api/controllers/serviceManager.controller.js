@@ -1210,7 +1210,8 @@ e.deployAPIHandler = (_req, _res) => {
 				_res.status(404).json({ message: 'Not found' });
 			} else {
 				logger.debug(`[${txnId}] Old data found in DB for service ${ID}`);
-				logger.trace(`[${txnId}] Old Data from DB :: ${JSON.stringify(_d)}`);
+				logger.trace(`[${txnId}] Old data from DB :: ${JSON.stringify(_d)}`);
+				logger.debug(`[${txnId}] Service status ${ID} :: ${_d.status}`);
 
 				let oldData = JSON.parse(JSON.stringify(_d));
 				if (_d.status != 'Draft' && !_d.draftVersion) {
@@ -1942,17 +1943,16 @@ e.deleteApp = function (_req, _res) {
 };
 // change the status of service
 
-function deleteLogs(srvcId, action) {
-	logger.info('service id is', srvcId);
-	logger.info('action is ', action);
-	logger.info('url is', envConfig.baseUrlMON + `/appCenter/${srvcId}/${action}/purge`);
-	let URL = envConfig.baseUrlMON + `/appCenter/${srvcId}/${action}/purge`;
+function deleteLogs(srvcId, app, action) {
+	logger.info(`Deleting Logs for service ID :: ${srvcId} :: Action :: ${action}`);
+	logger.info(`URL :: ${envConfig.baseUrlMON}/${app}/appCenter/${srvcId}/${action}/purge`);
+	let URL = envConfig.baseUrlMON + `/${app}/appCenter/${srvcId}/${action}/purge`;
 	if (action === 'author-audit') {
-		URL = envConfig.baseUrlMON + `/author/${srvcId}/audit/purge`;
+		URL = envConfig.baseUrlMON + `/${app}/author/${srvcId}/audit/purge`;
 	}
 	if (action == 'audit') {
 		// making two api calls to clear appcenter and author audits individually
-		let URL2 = envConfig.baseUrlMON + `/author/${srvcId}/audit/purge`;
+		let URL2 = envConfig.baseUrlMON + `/${app}/author/${srvcId}/audit/purge`;
 		return Promise.all([makePurgeApiCall(URL), makePurgeApiCall(URL2)]);
 	} else {
 		return makePurgeApiCall(URL);
@@ -2033,9 +2033,13 @@ e.changeStatus = function (req, res) {
 };
 
 e.StatusChangeFromMaintenance = function (req, res) {
-	let relatedService = [];
 	let id = req.swagger.params.id.value;
+	let app = req.swagger.params.app.value;
 	let socket = req.app.get('socket');
+	
+	logger.info(`Status Change from Maintenence for Service :: ${id} :: App :: ${app}`)
+	
+	let relatedService = [];
 	let _sd = {};
 	let outgoingAPIs;
 	return findCollectionData(id)
@@ -2076,12 +2080,12 @@ e.StatusChangeFromMaintenance = function (req, res) {
 					// })
 					.then(() => {
 						if (_sd._id) {
-							return deleteLogs(_sd._id, 'log');
+							return deleteLogs(_sd._id, app, 'log');
 						}
 					})
 					.then(() => {
 						if (_sd._id) {
-							return deleteLogs(_sd._id, 'audit');
+							return deleteLogs(_sd._id, app, 'audit');
 						}
 					})
 					.then(() => {
@@ -2378,6 +2382,7 @@ function changeStatusToMaintenance(req, ids, srvcId, status, message) {
 }
 
 function scaleDeployments(req, socket, ids, srvcId, instance) {
+	logger.info(`Scaling Deployments for Services :: ${ids}`)
 	if (!ids.includes(srvcId)) ids.push(srvcId);
 	let promises = ids.map(id => {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
@@ -2447,8 +2452,9 @@ function scaleDeploymentsToOriginal(req, socket, ids, srvcId) {
 
 e.purgeLogsService = function (req, res) {
 	let id = req.swagger.params.id.value;
+	let app = req.swagger.params.app.value;
 	let type = req.swagger.params.type.value;
-	deleteLogs(id, type)
+	deleteLogs(id, app, type)
 		.then(() => {
 			res.status(200).json({});
 		})
@@ -2460,9 +2466,11 @@ e.purgeLogsService = function (req, res) {
 
 e.purge = function (req, res) {
 	let id = req.swagger.params.id.value;
+	let socket = req.app.get('socket');
+	logger.info(`Purge All Data request received for Service :: ${id}`);
+
 	let _sd = {};
 	let relatedService = [];
-	let socket = req.app.get('socket');
 	return findCollectionData(id)
 		.then(data => {
 			if (data) {
