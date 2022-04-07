@@ -33,7 +33,7 @@
         "lodash": "^4.17.20",
         "log4js": "^6.3.0",
         "mkdirp": "^1.0.4",
-        "mongodb": "^3.0.4",
+        "mongodb": "^3.7.3",
         "mongoose": "^5.11.14",
         "node-cron": "^1.2.1",
         "request": "^2.88.0",
