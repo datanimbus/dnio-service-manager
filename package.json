@@ -1,6 +1,6 @@
 {
     "name": "ds-service-manager",
-    "version": "2.0.0",
+    "version": "2.2.0",
     "description": "",
     "main": "app.js",
     "scripts": {
@@ -17,7 +17,7 @@
     "author": "Shobhit Agarwal <shobhit@appveen.com>",
     "license": "ISC",
     "dependencies": {
-        "@appveen/data.stack-utils": "^1.0.17",
+        "@appveen/data.stack-utils": "^1.0.18",
         "@appveen/ds-auth-cache": "^1.0.1",
         "@appveen/swagger-mongoose-crud": "1.1.2",
         "@appveen/utils": "^2.1.3",
