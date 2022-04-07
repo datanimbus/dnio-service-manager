@@ -2037,7 +2037,7 @@ e.StatusChangeFromMaintenance = function (req, res) {
 	let app = req.swagger.params.app.value;
 	let socket = req.app.get('socket');
 	
-	logger.info(`Status Change from Maintenence for Service :: ${id} :: App :: ${app}`)
+	logger.info(`Status Change from Maintenence for Service :: ${id} :: App :: ${app}`);
 	
 	let relatedService = [];
 	let _sd = {};
@@ -2382,7 +2382,7 @@ function changeStatusToMaintenance(req, ids, srvcId, status, message) {
 }
 
 function scaleDeployments(req, socket, ids, srvcId, instance) {
-	logger.info(`Scaling Deployments for Services :: ${ids}`)
+	logger.info(`Scaling Deployments for Services :: ${ids}`);
 	if (!ids.includes(srvcId)) ids.push(srvcId);
 	let promises = ids.map(id => {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
