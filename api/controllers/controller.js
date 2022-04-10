@@ -7,6 +7,7 @@ const tagsController = require('./tags.controller.js');
 const swaggerDocController = require('./swaggerDoc.controller.js');
 const serviceAuditController = require('./service.audit.controller.js');
 const globalSchemaAuditController = require('./globalSchema.audit.controller.js');
+const internalController = require('./internal.controller.js');
 
 //exports
 var exports = {};
@@ -46,7 +47,8 @@ exports.startService = serviceManagerController.startService;
 exports.stopService = serviceManagerController.stopService;
 exports.deployService = serviceManagerController.deployService;
 exports.repairService = serviceManagerController.repairService;
-exports.deleteApp = serviceManagerController.deleteApp;
+
+exports.deleteApp = internalController.deleteApp;
 
 exports.logsControllerList = logsController.index;
 exports.logsControllerCount = logsController.count;

@@ -1286,7 +1286,7 @@ paths:
           description: Bad parameters
         "500":
           description: Internal server error
-  /{app}/internal/services:
+  /{app}/internal/app:
     x-swagger-router-controller: controller
     delete:
       description: delete all the services of give app
