@@ -90,7 +90,7 @@ e.deleteApp = async function (req, res) {
         logger.info("Deleting App details from SM :: ", app);
 
         let socket = req.app.get('socket');
-        let services = await mongoose.model('services').find({ 'app': app }, '_id');
+        let services = await mongoose.model('services').find({ 'app': app }, '_id,app,collectionName');
         let draftServices = await mongoose.model('services.draft').find({ 'app': app }, '_id');
         let globalSchemas = await mongoose.model('globalSchema').find({ 'app': app }, '_id');
 
