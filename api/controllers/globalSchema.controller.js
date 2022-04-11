@@ -54,9 +54,9 @@ let deleteGSInUserMgmt = function (_id, _req) {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req.headers['txnid'],
-			'Authorization': _req.headers['authorization'],
-			'User': _req.headers['user']
+			'TxnId': _req.headers && _req.headers['txnid'],
+			'Authorization': _req.headers && _req.headers['authorization'],
+			'User': _req.headers && _req.headers['user']
 		},
 		json: true
 	};
