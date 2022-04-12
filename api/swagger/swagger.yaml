@@ -251,43 +251,6 @@ paths:
           description: Bad parameters
         "500":
           description: Internal server error
-  /{app}/service/utils/{name}:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieves a serviceManager
-      operationId: serviceManagerShowByName
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: The App of data stack
-        - name: select
-          in: query
-          type: string
-          description: Comma seperated fields to be displayed
-        - name: draft
-          in: query
-          type: boolean
-          description: return draft document if true
-        - name: name
-          in: path
-          type: string
-          required: true
-          description: Id of the object to be updated
-      responses:
-        "200":
-          description: List of the entites
-        "400":
-          description: Bad parameters
-        "404":
-          description: No records to list with the given parameter set.
-        "500":
-          description: Internal server error
   /{app}/service/utils/count:
     x-swagger-router-controller: controller
     get:
@@ -888,6 +851,43 @@ paths:
           type: string
           required: true
           description: repair all service
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{name}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieves a serviceManager
+      operationId: serviceManagerShowByName
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: draft
+          in: query
+          type: boolean
+          description: return draft document if true
+        - name: name
+          in: path
+          type: string
+          required: true
+          description: Id of the object to be updated
       responses:
         "200":
           description: List of the entites
