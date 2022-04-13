@@ -2112,7 +2112,7 @@ e.startAllServices = (_req, _res) => {
 				logger.trace(`[${txnId}] Services found :: ${JSON.stringify(docs)}`);
 
 				let promises = docs.map(doc => {
-					// if (doc.definition.length == 1) return;
+					if (doc.definition.length == 1 && !doc.schemaFree) return;
 					doc = doc.toObject();
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 
