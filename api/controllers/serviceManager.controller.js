@@ -1,30 +1,38 @@
 'use strict';
 
+const net = require('net');
 const mongoose = require('mongoose');
-const definition = require('../helpers/serviceManager.definition.js').definition;
-const draftDefinition = JSON.parse(JSON.stringify(definition));
+const request = require('request');
+const _ = require('lodash');
+
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
-const request = require('request');
-const smhelper = require('../helpers/util/smhelper');
-const _ = require('lodash');
-const smHooks = require('../helpers/serviceManagerHooks.js');
-const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
-const envConfig = require('../../config/config.js');
-const relationManager = require('../helpers/relationManager.js');
-const deployUtil = require('../deploy/deploymentUtil');
-const k8s = require('../../util/k8s.js');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
-const kubeutil = require('@appveen/data.stack-utils').kubeutil;
-const net = require('net');
-let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
-let queueMgmt = require('../../util/queueMgmt');
+
+const k8s = require('../../util/k8s.js');
 let rolesUtil = require('../helpers/roles');
-//const fs = require('fs');
-var client = queueMgmt.client;
+let queueMgmt = require('../../util/queueMgmt');
+const envConfig = require('../../config/config.js');
+const smhelper = require('../helpers/util/smhelper');
+const deployUtil = require('../deploy/deploymentUtil');
+const smHooks = require('../helpers/serviceManagerHooks.js');
+const relationManager = require('../helpers/relationManager.js');
+const expandRelationHelper = require('../helpers/util/expandRelations');
+const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
+
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
 const schemaValidate = require('../helpers/util/smhelper.js').schemaValidate;
+const definition = require('../helpers/serviceManager.definition.js').definition;
+let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
 const schemaValidateDefault = require('../helpers/util/smhelper.js').schemaValidateDefault;
+
+const startPort = 20010;
+const logger = global.logger;
+var client = queueMgmt.client;
+const destroyDeploymentRetry = 5;
+const draftDefinition = JSON.parse(JSON.stringify(definition));
+
 
 const schema = new mongoose.Schema(definition, {
 	usePushEach: true
@@ -33,26 +41,24 @@ const draftSchema = new mongoose.Schema(draftDefinition, {
 	usePushEach: true
 });
 
-const logger = global.logger;
-const destroyDeploymentRetry = 5;
-const startPort = 20010;
-const expandRelationHelper = require('../helpers/util/expandRelations');
-
 var options = {
 	logger: logger,
 	collectionName: 'services'
 };
-
 var draftOptions = {
 	logger: logger,
 	collectionName: 'services.draft'
 };
 
+
 schema.pre('validate', function (next) {
 	var self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
+	
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
-	// if (self.definition) self.definition = self.definition.trim();
+
 	if (self.name && _.isEmpty(self.name)) next(new Error('name is empty'));
 	if (self.definition && _.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
 	if (!_.isEmpty(self.preHooks)) {
@@ -66,9 +72,12 @@ schema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	var self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
+
 	self.name = self.name.trim();
 	self.api = self.api.trim();
-	// self.definition = self.definition.trim();
+
 	if (_.isEmpty(self.name)) next(new Error('name is empty'));
 	if (_.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
 	if (!_.isEmpty(self.preHooks)) {
@@ -102,6 +111,8 @@ schema.post('save', function (error, doc, next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
+	let req = self._req
+	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -122,6 +133,8 @@ draftSchema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -145,6 +158,9 @@ draftSchema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	let self = this;
 	let app = self.app;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
+	
 	let dsCalendarDetails = getCalendarDSDetails(app);
 	if (self.isNew && self.type != 'internal') {
 		if (self.name == dsCalendarDetails.name) return next(new Error('Cannot use this name.'));
@@ -156,6 +172,9 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
+
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
@@ -169,6 +188,9 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
+
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
@@ -179,6 +201,8 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
 	try {
 		if (self.definition) schemaValidate(self.definition);
 		next();
@@ -189,6 +213,8 @@ schema.pre('save', function (next) {
 
 draftSchema.pre('save', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
 	try {
 		schemaValidate(self.definition);
 		next();
@@ -206,21 +232,12 @@ function reserved(def) {
 			return reserved(ele.definition);
 	});
 	return Promise.all(promise);
-	// var promise = Object.keys(def).map(function (key) {
-	// 	for (var i = 0; i < keywords.length; i++) {
-	// 		if (key.toLowerCase() == keywords[i]) {
-	// 			throw new Error(keywords[i] + ` cannot be used as an attribute name`);
-	// 		}
-	// 	}
-	// 	if (def[key].type == `Object` || def[key].type == `Array`) {
-	// 		return reserved(def[key].definition);
-	// 	}
-
-	// });
-	// return Promise.all(promise);
 }
+
 schema.pre('save', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
 	try {
 		if (self.definition) reserved(self.definition);
 		next();
@@ -231,6 +248,8 @@ schema.pre('save', function (next) {
 
 draftSchema.pre('save', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
 	try {
 		reserved(self.definition);
 		next();
@@ -241,6 +260,8 @@ draftSchema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
 	if (self.definition) {
 		schemaValidateDefault(self.definition, self.app)
 			.then(() => {
@@ -257,6 +278,8 @@ schema.pre('save', function (next) {
 
 draftSchema.pre('save', function (next) {
 	let self = this;
+	let req = self._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
 	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
 			next();
@@ -311,6 +334,8 @@ function nameUniqueCheck(name, app, srvcId) {
 }
 
 schema.pre('save', function (next) {
+	let req = this._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -319,6 +344,8 @@ schema.pre('save', function (next) {
 });
 
 draftSchema.pre('save', function (next) {
+	let req = this._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -327,6 +354,8 @@ draftSchema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
+	let req = this._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -335,6 +364,8 @@ schema.pre('save', function (next) {
 });
 
 draftSchema.pre('save', function (next) {
+	let req = this._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -345,6 +376,8 @@ draftSchema.pre('save', function (next) {
 schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2000));
 
 schema.pre('save', function (next) {
+	let req = this._req;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -359,6 +392,8 @@ schema.pre('save', function (next) {
 });
 
 draftSchema.pre('save', function (next) {
+	let req = this._req;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -408,16 +443,6 @@ schema.pre('save', async function (next) {
 
 function countAttr(def) {
 	let count = 0;
-	// if (def && typeof def === `object`) {
-	// 	Object.keys(def).forEach(_d => {
-	// 		if (def[_d] && def[_d].type === `Object`) {
-	// 			count += countAttr(def[_d].definition);
-	// 		} else {
-	// 			count++;
-	// 		}
-	// 	});
-	// 	return count;
-	// } 
 	if (def && typeof def === 'object') {
 		def.forEach(_d => {
 			if (_d && _d.type === 'Object') {
@@ -435,25 +460,12 @@ function countAttr(def) {
 schema.pre('save', function (next) {
 	let self = this;
 	if (!self.definition) next();
-	// To check if _id ele need to be removed as +1 is there
-	// let def = self.definition.filter(ele => ele.key != '_id');
-	// let count = countAttr(def);
-	// this.attributeCount = count + 1;
 	this.attributeCount = countAttr(self.definition);
 	next();
 });
 
 draftSchema.pre('save', function (next) {
 	let self = this;
-	// let def = JSON.parse(self.definition);
-	// delete def._id;
-	// let count = countAttr(def);
-	// this.attributeCount = count + 1;
-
-	// To check if _id ele need to be removed as =1 is there
-	// let def = self.definition.filter(ele => ele.key != '_id');
-	// let count = countAttr(def);
-	// this.attributeCount = count + 1;
 	this.attributeCount = countAttr(self.definition);
 	next();
 });
@@ -638,43 +650,7 @@ function createWebHooks(data, _req) {
 		}
 	});
 }
-// To verify whether given webHook or preHook is exist or not
-/*
-e.verifyHook = (_req, _res) => {
-	let url = _req.swagger.params.url && _req.swagger.params.url.value ? _req.swagger.params.url.value : null;
-	if (!url) {
-		return _res.status(400).json({ 'message': 'url invalid' });
-	}
-	let isVerified = false;
-	var options = {
-		url: url,
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		json: true
-	};
-	if (typeof process.env.TLS_REJECT_UNAUTHORIZED === 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
-		options.insecure = true;
-		options.rejectUnauthorized = false;
-	}
-	request.post(options, function (err, res) {
-		if (err) {
-			logger.error(err.message);
-		} else if (!res) {
-			logger.error(url + ' ' + 'is down');
-		}
-		else if (res.statusCode === 404 || res.statusCode === 504 || res.statusCode === 405) {
-			logger.info(url + ' ' + ' not exist');
-		}
-		else {
-			logger.info(url + ' ' + 'exist');
-			isVerified = true;
-		}
-		_res.status(200).json({ isVerified });
-	});
-};
-*/
+
 e.verifyHook = (_req, _res) => {
 	let URL = require('url');
 	let url = _req.swagger.params.url && _req.swagger.params.url.value ? _req.swagger.params.url.value : null;
@@ -2036,9 +2012,9 @@ e.StatusChangeFromMaintenance = function (req, res) {
 	let id = req.swagger.params.id.value;
 	let app = req.swagger.params.app.value;
 	let socket = req.app.get('socket');
-	
+
 	logger.info(`Status Change from Maintenence for Service :: ${id} :: App :: ${app}`);
-	
+
 	let relatedService = [];
 	let _sd = {};
 	let outgoingAPIs;
@@ -2124,22 +2100,26 @@ function getIdCounter(serviceId, app) {
 
 
 e.startAllServices = (_req, _res) => {
+	let txnId = _req.get('TxnId');
 	var app = _req.swagger.params.app.value;
 	let socket = _req.app.get('socket');
-	crudder.model.find({
-		'app': app,
-		'status': 'Undeployed'
-	})
+	logger.info(`[${txnId}] Start all services request received for app :: ${app}`);
+
+	crudder.model.find({ 'app': app, 'status': 'Undeployed' })
 		.then(docs => {
 			if (docs) {
+				logger.info(`[${txnId}] Services found :: ${docs.length}`);
+				logger.trace(`[${txnId}] Services found :: ${JSON.stringify(docs)}`);
+
 				let promises = docs.map(doc => {
-					if (doc.definition.length == 1) return;
+					// if (doc.definition.length == 1) return;
 					doc = doc.toObject();
-					// doc.definition = JSON.parse(doc.definition);
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+
 					if (process.env.SM_ENV == 'K8s') {
 						let instances = doc.instances ? doc.instances : 1;
-						logger.info('Scaling to ' + instances);
+						logger.info(`[${txnId}] Scaling ${doc._id}::${doc.name} to ${instances}`);
+
 						return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
 							.then(_d => {
 								if (_d.statusCode == 404) {
@@ -2158,6 +2138,7 @@ e.startAllServices = (_req, _res) => {
 				});
 				return Promise.all(promises);
 			} else {
+				logger.debug(`[${txnId}] No Services found`);
 				_res.status(400).json({
 					message: 'No entity found'
 				});
@@ -2173,21 +2154,26 @@ e.startAllServices = (_req, _res) => {
 
 
 e.stopAllServices = (_req, _res) => {
+	let txnId = _req.get('TxnId');
 	let app = _req.swagger.params.app.value;
 	let socket = _req.app.get('socket');
-	crudder.model.find({
-		'app': app,
-		status: 'Active'
-	})
+	logger.info(`[${txnId}] Stop all services request received for app :: ${app}`);
+
+	crudder.model.find({ 'app': app, status: 'Active' })
 		.then(_services => {
+			logger.info(`[${txnId}] Services found :: ${_services.length}`);
+			logger.trace(`[${txnId}] Services found :: ${JSON.stringify(_services)}`);
+
 			let promises = _services.map(doc => {
 				if (process.env.SM_ENV == 'K8s') {
-					logger.info('Scaling down to 0');
+					logger.info(`[${txnId}] Scaling ${doc._id}::${doc.name} to 0`);
+
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), 0)
 						.then(_d => {
 							let instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
-							logger.info('Instances at time of undeploying ' + instances);
+
+							logger.debug(`[${txnId}] Instances of ${doc.name} at time of undeploying ${instances}`);
 							if (doc && instances) {
 								doc.instances = instances;
 								return doc.save(_req);
@@ -2205,6 +2191,8 @@ e.stopAllServices = (_req, _res) => {
 		})
 		.then(docs => {
 			let ids = docs.map(doc => doc._id);
+			logger.debug(`[${txnId}] Updating status of services :: ${ids} :: to Undeployed`);
+
 			docs.forEach(doc => {
 				deployUtil.sendToSocket(socket, 'serviceStatus', {
 					_id: doc._id,
