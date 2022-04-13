@@ -172,7 +172,6 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
@@ -188,7 +187,6 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
