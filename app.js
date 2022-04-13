@@ -124,7 +124,7 @@ var logToQueue = dataStackutils.logToQueue('sm', queueMgmt.client, envConfig.log
 app.use(logToQueue);
 app.use(require('./util/auth'));
 
-app.use(require('./api/controllers/controller'));
+app.use('/sm', require('./api/controllers/controller'));
 
 // // swaggerRouter configuration
 // var options = {
