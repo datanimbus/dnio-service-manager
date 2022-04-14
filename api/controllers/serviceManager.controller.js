@@ -51,11 +51,10 @@ var draftOptions = {
 };
 
 
-schema.pre('validate', function (next) {
+schema.pre('validate', function (next, req) {
 	var self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
-	
+
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
 
@@ -70,9 +69,8 @@ schema.pre('validate', function (next) {
 	next();
 });
 
-draftSchema.pre('validate', function (next) {
+draftSchema.pre('validate', function (next, req) {
 	var self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
@@ -109,9 +107,8 @@ schema.post('save', function (error, doc, next) {
 	}
 });
 
-draftSchema.pre('validate', function (next) {
+draftSchema.pre('validate', function (next, req) {
 	let self = this;
-	let req = self._req
 	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
@@ -131,9 +128,8 @@ draftSchema.pre('validate', function (next) {
 		});
 });
 
-draftSchema.pre('validate', function (next) {
+draftSchema.pre('validate', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
@@ -155,12 +151,11 @@ draftSchema.pre('validate', function (next) {
 		});
 });
 
-schema.pre('validate', function (next) {
+schema.pre('validate', function (next, req) {
 	let self = this;
 	let app = self.app;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
-	
+
 	let dsCalendarDetails = getCalendarDSDetails(app);
 	if (self.isNew && self.type != 'internal') {
 		if (self.name == dsCalendarDetails.name) return next(new Error('Cannot use this name.'));
@@ -172,7 +167,6 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
@@ -188,7 +182,6 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
@@ -199,9 +192,8 @@ draftSchema.pre('save', function (next, req) {
 	next();
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
 	try {
 		if (self.definition) schemaValidate(self.definition);
@@ -211,9 +203,8 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
 	try {
 		schemaValidate(self.definition);
@@ -234,9 +225,8 @@ function reserved(def) {
 	return Promise.all(promise);
 }
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
 	try {
 		if (self.definition) reserved(self.definition);
@@ -246,9 +236,8 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
 	try {
 		reserved(self.definition);
@@ -258,9 +247,8 @@ draftSchema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
 	if (self.definition) {
 		schemaValidateDefault(self.definition, self.app)
@@ -276,9 +264,8 @@ schema.pre('save', function (next) {
 
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
-	let req = self._req;
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
 	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
