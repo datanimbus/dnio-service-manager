@@ -51,9 +51,9 @@ var draftOptions = {
 };
 
 
-schema.pre('validate', function (next, req) {
+schema.pre('validate', function (next) {
 	var self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
+	// logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
@@ -69,9 +69,9 @@ schema.pre('validate', function (next, req) {
 	next();
 });
 
-draftSchema.pre('validate', function (next, req) {
+draftSchema.pre('validate', function (next) {
 	var self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api = self.api.trim();
@@ -107,9 +107,9 @@ schema.post('save', function (error, doc, next) {
 	}
 });
 
-draftSchema.pre('validate', function (next, req) {
+draftSchema.pre('validate', function (next) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -128,9 +128,9 @@ draftSchema.pre('validate', function (next, req) {
 		});
 });
 
-draftSchema.pre('validate', function (next, req) {
+draftSchema.pre('validate', function (next) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -151,10 +151,10 @@ draftSchema.pre('validate', function (next, req) {
 		});
 });
 
-schema.pre('validate', function (next, req) {
+schema.pre('validate', function (next) {
 	let self = this;
 	let app = self.app;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
 
 	let dsCalendarDetails = getCalendarDSDetails(app);
 	if (self.isNew && self.type != 'internal') {
@@ -320,8 +320,7 @@ function nameUniqueCheck(name, app, srvcId) {
 		});
 }
 
-schema.pre('save', function (next) {
-	let req = this._req;
+schema.pre('save', function (next, req) {
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
@@ -330,8 +329,7 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
-	let req = this._req;
+draftSchema.pre('save', function (next, req) {
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
@@ -340,8 +338,7 @@ draftSchema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function (next) {
-	let req = this._req;
+schema.pre('save', function (next, req) {
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
@@ -350,8 +347,7 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
-	let req = this._req;
+draftSchema.pre('save', function (next, req) {
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
@@ -362,8 +358,7 @@ draftSchema.pre('save', function (next) {
 
 schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2000));
 
-schema.pre('save', function (next) {
-	let req = this._req;
+schema.pre('save', function (next, req) {
 	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
@@ -378,8 +373,7 @@ schema.pre('save', function (next) {
 	next();
 });
 
-draftSchema.pre('save', function (next) {
-	let req = this._req;
+draftSchema.pre('save', function (next, req) {
 	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
