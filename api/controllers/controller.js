@@ -1,5 +1,3 @@
-const _ = require('lodash');
-
 
 'use strict';
 //controllers
@@ -69,65 +67,49 @@ const globalSchemaAuditController = require('./globalSchema.audit.controller.js'
 
 
 const router = require('express').Router();
-router.get('/service', mapSwaggerParams, serviceManagerController.index);
-router.post('/service', mapSwaggerParams, serviceManagerController.create);
-router.get('/service/verifyHook', mapSwaggerParams, serviceManagerController.verifyHook);
-router.get('/service/:id', mapSwaggerParams, serviceManagerController.show);
-router.put('/service/:id', mapSwaggerParams, serviceManagerController.update);
-router.delete('/service/:id', mapSwaggerParams, serviceManagerController.destroy);
-router.get('/service/utils/:app/:name', mapSwaggerParams, serviceManagerController.showByName);
-router.get('/service/count', mapSwaggerParams, serviceManagerController.count);
-router.get('/service/status/count', mapSwaggerParams, serviceManagerController.countByStatus);
-router.get('/service/audit', mapSwaggerParams, serviceAuditController.index);
-router.get('/service/audit/count', mapSwaggerParams, serviceAuditController.count);
-router.delete('/:id/draftDelete', mapSwaggerParams, serviceManagerController.draftDelete);
-router.delete('/:id/purge/all', mapSwaggerParams, serviceManagerController.purge);
-router.put('/validateUserDeletion/:app/:userId', mapSwaggerParams, serviceManagerController.validateUserDeletion);
-router.put('/userDeletion/:app/:userId', mapSwaggerParams, serviceManagerController.userDeletion);
-router.delete('/:id/purge/:type', mapSwaggerParams, serviceManagerController.purgeLogsService);
-router.get('/service/:id/swagger', mapSwaggerParams, swaggerDocController.show);
-router.put('/service/:id/statusChange', mapSwaggerParams, serviceManagerController.changeStatus);
-router.put('/service/:id/statusChangeFromMaintenance', mapSwaggerParams, serviceManagerController.StatusChangeFromMaintenance);
-router.get('/service/:id/checkUnique', mapSwaggerParams, serviceManagerController.checkUnique);
-router.delete('/app/:app', mapSwaggerParams, serviceManagerController.deleteApp);
-router.put('/:app/service/stop', mapSwaggerParams, serviceManagerController.stopAllServices);
-router.put('/:app/service/start', mapSwaggerParams, serviceManagerController.startAllServices);
-router.put('/:app/service/repair', mapSwaggerParams, serviceManagerController.repairAllServices);
-router.get('/globalSchema', mapSwaggerParams, globalSchemaController.index);
-router.post('/globalSchema', mapSwaggerParams, globalSchemaController.create);
-router.get('/globalSchema/:id', mapSwaggerParams, globalSchemaController.show);
-router.put('/globalSchema/:id', mapSwaggerParams, globalSchemaController.update);
-router.delete('/globalSchema/:id', mapSwaggerParams, globalSchemaController.destroy);
-router.get('/globalSchema/count', mapSwaggerParams, globalSchemaController.count);
-router.get('/globalSchema/audit', mapSwaggerParams, globalSchemaAuditController.index);
-router.get('/globalSchema/audit/count', mapSwaggerParams, globalSchemaAuditController.count);
-router.put('/:id/start', mapSwaggerParams, serviceManagerController.startService);
-router.put('/:id/stop', mapSwaggerParams, serviceManagerController.stopService);
-router.put('/:id/deploy', mapSwaggerParams, serviceManagerController.deployService);
-router.put('/:id/repair', mapSwaggerParams, serviceManagerController.repairService);
-router.get('/:id/count', mapSwaggerParams, serviceManagerController.documentCount);
-router.get('/:id/:app/idCount', mapSwaggerParams, serviceManagerController.getCounter);
-router.put('/calendar/enable', mapSwaggerParams, serviceManagerController.enableCalendar);
-router.put('/calendar/disable', mapSwaggerParams, serviceManagerController.disableCalendar);
-router.get('/logs', mapSwaggerParams, logsController.index);
-router.get('/:id/lockDocument/count', mapSwaggerParams, serviceManagerController.lockDocumentCount);
-router.get('/tags', mapSwaggerParams, tagsController.tags);
-router.get('/health/live', mapSwaggerParams, serviceManagerController.health);
-router.get('/health/ready', mapSwaggerParams, serviceManagerController.readiness);
+router.get('/service', serviceManagerController.index);
+router.post('/service', serviceManagerController.create);
+router.get('/service/verifyHook', serviceManagerController.verifyHook);
+router.get('/service/:id', serviceManagerController.show);
+router.put('/service/:id', serviceManagerController.update);
+router.delete('/service/:id', serviceManagerController.destroy);
+router.get('/service/utils/:app/:name', serviceManagerController.showByName);
+router.get('/service/count', serviceManagerController.count);
+router.get('/service/status/count', serviceManagerController.countByStatus);
+router.get('/service/audit', serviceAuditController.index);
+router.get('/service/audit/count', serviceAuditController.count);
+router.delete('/:id/draftDelete', serviceManagerController.draftDelete);
+router.delete('/:id/purge/all', serviceManagerController.purge);
+router.put('/validateUserDeletion/:app/:userId', serviceManagerController.validateUserDeletion);
+router.put('/userDeletion/:app/:userId', serviceManagerController.userDeletion);
+router.delete('/:id/purge/:type', serviceManagerController.purgeLogsService);
+router.get('/service/:id/swagger', swaggerDocController.show);
+router.put('/service/:id/statusChange', serviceManagerController.changeStatus);
+router.put('/service/:id/statusChangeFromMaintenance', serviceManagerController.StatusChangeFromMaintenance);
+router.get('/service/:id/checkUnique', serviceManagerController.checkUnique);
+router.delete('/app/:app', serviceManagerController.deleteApp);
+router.put('/:app/service/stop', serviceManagerController.stopAllServices);
+router.put('/:app/service/start', serviceManagerController.startAllServices);
+router.put('/:app/service/repair', serviceManagerController.repairAllServices);
+router.get('/globalSchema', globalSchemaController.index);
+router.post('/globalSchema', globalSchemaController.create);
+router.get('/globalSchema/:id', globalSchemaController.show);
+router.put('/globalSchema/:id', globalSchemaController.update);
+router.delete('/globalSchema/:id', globalSchemaController.destroy);
+router.get('/globalSchema/count', globalSchemaController.count);
+router.get('/globalSchema/audit', globalSchemaAuditController.index);
+router.get('/globalSchema/audit/count', globalSchemaAuditController.count);
+router.put('/:id/start', serviceManagerController.startService);
+router.put('/:id/stop', serviceManagerController.stopService);
+router.put('/:id/deploy', serviceManagerController.deployService);
+router.put('/:id/repair', serviceManagerController.repairService);
+router.get('/:id/count', serviceManagerController.documentCount);
+router.get('/:id/:app/idCount', serviceManagerController.getCounter);
+router.put('/calendar/enable', serviceManagerController.enableCalendar);
+router.put('/calendar/disable', serviceManagerController.disableCalendar);
+router.get('/logs', logsController.index);
+router.get('/:id/lockDocument/count', serviceManagerController.lockDocumentCount);
+router.get('/tags', tagsController.tags);
+router.get('/health/live', serviceManagerController.health);
+router.get('/health/ready', serviceManagerController.readiness);
 module.exports = router;
-
-
-function mapSwaggerParams(req, res, next) {
-	const temp = {};
-	_.merge(temp, req.params, req.query);
-	const params = {};
-	// Object.assign(params, req.params, req.query);
-	Object.keys(temp).forEach(key => {
-		params[key] = { value: temp[key] };
-	});
-	// logger.debug(req.params, req.query, params);
-	req.swagger = {
-		params
-	};
-	next();
-}

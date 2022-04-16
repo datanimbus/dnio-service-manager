@@ -309,7 +309,7 @@ function preHooksController() {
     }
     let e = {};
     e.triggerHook = (req, res)=>{
-        let url = req.swagger.params.url.value;
+        let url = req.params.url;
         sendRequest(req.body, url)
             .then(data=>{
                 res.send(data)
@@ -669,7 +669,7 @@ function crudderHelper() {
     let e = {};
     e.index = function(req, model){
         let reqParams = Object.keys(req.swagger.params).reduce((prev, curr) => {
-            prev[curr] = req.swagger.params[curr].value;
+            prev[curr] = req.params.curr];
             return prev;
         }, {});
         var filter = reqParams['filter'] ? reqParams.filter : {};
@@ -709,7 +709,7 @@ function crudderHelper() {
     }
     e.count = function(req, model){
         let reqParams = Object.keys(req.swagger.params).reduce((prev, curr) => {
-            prev[curr] = req.swagger.params[curr].value;
+            prev[curr] = req.params.curr];
             return prev;
         }, {});
         var filter = reqParams['filter'] ? reqParams.filter : {};
@@ -732,7 +732,7 @@ function crudderHelper() {
     }
     e.cursor = function(req, model){
         let reqParams = Object.keys(req.swagger.params).reduce((prev, curr) => {
-            prev[curr] = req.swagger.params[curr].value;
+            prev[curr] = req.params.curr];
             return prev;
         }, {});
         var filter = reqParams['filter'] ? reqParams.filter : {};

@@ -44,8 +44,8 @@ let createOnlyFields = '${config.createOnlyFields}'.split(',');
 let dateFields = ${JSON.stringify((config.dateFields || []))};
 
 function modifyFilterForBulkCreate(req) {
-    let filter = req.swagger.params.filter.value;
-    let fileId = req.swagger.params.fileId.value;
+    let filter = req.params.filter;
+    let fileId = req.params.fileId;
     if (filter && typeof filter === 'string') {
         filter = JSON.parse(filter);
     }
@@ -56,7 +56,7 @@ function modifyFilterForBulkCreate(req) {
             fileId
         };
     }
-    req.swagger.params.filter.value = JSON.stringify(filter);
+    req.params.filter = JSON.stringify(filter);
 }
 
 e.fileMapperList = (req, res) => {
@@ -665,8 +665,8 @@ e.validateData = (_req, _res) => {
     let errorData = [];
     let conflictDataArrNew = [];
     let model = mongoose.model('${config.collectionName}');
-    let fileId = _req.swagger.params.fileId.value;
-	let timezone = _req.swagger.params.timezone.value;
+    let fileId = _req.params.fileId;
+	let timezone = _req.params.timezone;
 	if (!timezone) {
         timezone = -330;
     }
@@ -915,12 +915,12 @@ function castType(rawDoc){
 }
 
 e.enrichDataForWF = function (_req, _res) {
-    let page = _req.swagger.params.page.value
-    let count = _req.swagger.params.count.value;
-    let fileId = _req.swagger.params.fileId.value;
-    let filter = _req.swagger.params.filter.value;
+    let page = _req.params.page
+    let count = _req.params.count;
+    let fileId = _req.params.fileId;
+    let filter = _req.params.filter;
     filter = filter ? JSON.parse(filter) : {fileId};
-    let operation = _req.swagger.params.operation.value;
+    let operation = _req.params.operation;
     page = (page === 1) ? page = 0 : page = page * count;
     if ( !count || count == -1) count = 0;
     return crudder.model.find(filter).skip(page).limit(count)
@@ -1015,7 +1015,7 @@ e.bulkCreate = (_req, _res) => {
     let update = data.update ? data.update : [];
     let create = data.create ? data.create : [];
     let fileName = data.fileName;
-    let fileId = _req.swagger.params.fileId.value;
+    let fileId = _req.params.fileId;
     let model = mongoose.model('${config.collectionName}');
     let updatePromise = [];
     let errors = [];
@@ -1101,7 +1101,7 @@ e.bulkCreate = (_req, _res) => {
 }
 
 e.updateFileStatus = (req, res) => {
-    let fileId = req.swagger.params.fileId.value;
+    let fileId = req.params.fileId;
     let update = req.body; 
     update['_metadata.lastUpdated'] = new Date();
     mongoose.connection.db.collection('${config.collectionName}.fileTransfers').update({ fileId: fileId }, { $set: update })

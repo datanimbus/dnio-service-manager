@@ -1199,7 +1199,7 @@ e.fileUpload = (_req, _res) => {
 }
 
 e.fileView = (_req, _res) => {
-    var id = _req.swagger.params.id.value;
+    var id = _req.params.id;
     global.gfsBucket.find({
         filename : id
       }).toArray(function (err, file) {
@@ -1218,7 +1218,7 @@ e.fileView = (_req, _res) => {
 }
 
 e.fileDownload = (_req, _res) => {
-    var id = _req.swagger.params.id.value;
+    var id = _req.params.id;
     global.gfsBucket.find({ filename: id },{limit: 1}).toArray(function (err, file) {
         if (err) {
             return _res.status(400).send(err.message);
@@ -1241,7 +1241,7 @@ e.fileDownload = (_req, _res) => {
 }
 
 e.exportedFileDownload = (_req, _res) => {
-    var id = _req.swagger.params.id.value;
+    var id = _req.params.id;
     global.gfsBucketExport.find({ "metadata.uuid": id }, { limit: 1 }).toArray(function (err, file) {
         if (err) {
             return _res.status(400).send(err.message);
@@ -1251,7 +1251,7 @@ e.exportedFileDownload = (_req, _res) => {
         }
         file = file[0];
         _res.set('Content-Type', file.contentType);
-        var fileName = _req.swagger.params.filename.value? _req.swagger.params.filename.value+'.zip':file.metadata.filename
+        var fileName = _req.params.filename.value? _req.swagger.params.filename+'.zip':file.metadata.filename
         
         _res.set('Content-Disposition', 'attachment; filename="' + fileName + '"');
 
@@ -1283,7 +1283,7 @@ function customShow(_req, _res) {
     if (!version && version !== 0) {
         return crudder.show(_req, _res);
     }
-    let id = _req.swagger.params.id.value;
+    let id = _req.params.id;
     let latestDoc = null;
     crudder.model.findOne({ _id: id })
         .then(_d => {
@@ -1813,8 +1813,8 @@ function getUserIds(filter, req) {
 
 
 function expandedShow(req, res, expand) {
-    let id = req.swagger.params.id.value;
-    let select = req.swagger.params.select.value;
+    let id = req.params.id;
+    let select = req.params.select;
     select = select ? select.split(',') : []
     let document = null;
     let selectionObject = null;
@@ -1935,7 +1935,7 @@ function getIdList(filterArr, req){
 
 function expandedIndex(req, res, expand) {
     let returnDocuments = [];
-    let select = req.swagger.params.select.value;
+    let select = req.params.select;
     select = select ? select.split(',') : [];
     let selectionObject = null;
     let intFilter = null;
@@ -1947,9 +1947,9 @@ function expandedIndex(req, res, expand) {
             sdd = _sd;
             selectionObject = getSelectionObject(_sd, select);
             if (selectionObject.querySelect.length > 0) {
-                req.swagger.params.select.value = selectionObject.querySelect.join(",");
+                req.params.select = selectionObject.querySelect.join(",");
             }
-            let filter = req.swagger.params.filter.value;
+            let filter = req.params.filter;
             if (filter) {
                 filter = typeof filter === 'string' ? JSON.parse(filter) : filter;
                 intFilter = JSON.parse(JSON.stringify(filter));
@@ -1960,7 +1960,7 @@ function expandedIndex(req, res, expand) {
             }
         })
         .then(_o => {
-            let filter = req.swagger.params.filter.value;
+            let filter = req.params.filter;
             if (filter) {
                 return createFilterForUser(sdd, _o, req);
             }
@@ -1971,7 +1971,7 @@ function expandedIndex(req, res, expand) {
         .then(_o => {
             if (_o) {
                 logger.debug(_o);
-                req.swagger.params.filter.value = JSON.stringify(_o);
+                req.params.filter = JSON.stringify(_o);
             }
             return crudderHelper.index(req, crudder.model);
         })
@@ -2000,7 +2000,7 @@ function expandedCount(req, res, expand) {
     helperUtil.getServiceDetail(serviceId, req)
         .then(_sd => {
             sdd = _sd;
-            let filter = req.swagger.params.filter.value;
+            let filter = req.params.filter;
             if (filter) {
                 filter = typeof filter === 'string' ? JSON.parse(filter) : filter;
                 intFilter = JSON.parse(JSON.stringify(filter));
@@ -2011,7 +2011,7 @@ function expandedCount(req, res, expand) {
             }
         })
         .then(_o => {
-            let filter = req.swagger.params.filter.value;
+            let filter = req.params.filter;
             if (filter) {
                 return createFilterForUser(sdd, _o, req);
             }
@@ -2022,7 +2022,7 @@ function expandedCount(req, res, expand) {
         .then(_o => {
             if (_o) {
                 logger.debug(_o);
-                req.swagger.params.filter.value = JSON.stringify(_o);
+                req.params.filter = JSON.stringify(_o);
             }
             return crudder.count(req, res);
         })
@@ -2228,8 +2228,8 @@ function expandedExport(req, res, expand) {
     let returnDocuments = [];
     let finalObject = [];
     let uuids = uuid();
-    let totalRecords = req.swagger.params.totalRecords.value;
-    let timezone = req.swagger.params.timezone.value;
+    let totalRecords = req.params.totalRecords;
+    let timezone = req.params.timezone;
     if (!timezone) {
         timezone = -330;
     }
@@ -2241,7 +2241,7 @@ function expandedExport(req, res, expand) {
         logger.error(e);
         timezone = -330;
     }
-    let select = req.swagger.params.select.value;
+    let select = req.params.select;
     let d = new Date();
     Number.prototype.padLeft = function(base,chr){
         var  len = (String(base || 10).length - String(this).length)+1;
@@ -2312,9 +2312,9 @@ function expandedExport(req, res, expand) {
             }
             selectionObject = getSelectionObject(_sd, select);
             if (selectionObject.querySelect.length > 0) {
-                req.swagger.params.select.value = selectionObject.querySelect.join(",");
+                req.params.select = selectionObject.querySelect.join(",");
             }
-            let filter = req.swagger.params.filter.value;
+            let filter = req.params.filter;
             if (filter) {
                 filter = typeof filter === 'string' ? JSON.parse(filter) : filter;
                 intFilter = JSON.parse(JSON.stringify(filter));
@@ -2327,7 +2327,7 @@ function expandedExport(req, res, expand) {
         .then(_o => {
             if (_o) {
                 logger.debug(_o);
-                req.swagger.params.filter.value = JSON.stringify(_o);
+                req.params.filter = JSON.stringify(_o);
             }
             return crudderHelper.count(req, crudder.model);
         })
@@ -2337,7 +2337,7 @@ function expandedExport(req, res, expand) {
             for (let i = 0; i < totalBatches; i++) {
                 arr.push(i);
             }
-            req.swagger.params.batchSize.value = BATCH;
+            req.params.batchSize = BATCH;
             cursor = crudderHelper.cursor(req, crudder.model);
             let promise = arr.reduce((_p, curr, i) => {
                 return _p
@@ -2595,7 +2595,7 @@ function modifySecureFieldsFilter(filter, secureFields, secureFlag) {
 }
 
 function customShow(req, res){
-    let expand = req.swagger.params.expand.value;
+    let expand = req.params.expand;
     if(expand){
         return expandedShow(req, res, true);
     }else{
@@ -2604,10 +2604,10 @@ function customShow(req, res){
 }
 
 function customIndex(req, res){
-    let expand = req.swagger.params.expand.value;
-    let filter = req.swagger.params.filter.value;
+    let expand = req.params.expand;
+    let filter = req.params.filter;
     if(filter)
-        req.swagger.params.filter.value = JSON.stringify(modifySecureFieldsFilter(JSON.parse(filter), secureFields, false));
+        req.params.filter = JSON.stringify(modifySecureFieldsFilter(JSON.parse(filter), secureFields, false));
     
     if(expand){
         return expandedIndex(req, res, false);
@@ -2617,10 +2617,10 @@ function customIndex(req, res){
 }
 
 function customCount(req, res){
-    let expand = req.swagger.params.expand.value;
-    let filter = req.swagger.params.filter.value;
+    let expand = req.params.expand;
+    let filter = req.params.filter;
     if(filter)
-        req.swagger.params.filter.value = JSON.stringify(modifySecureFieldsFilter(JSON.parse(filter), secureFields, false));
+        req.params.filter = JSON.stringify(modifySecureFieldsFilter(JSON.parse(filter), secureFields, false));
     
     if(expand){
         return expandedCount(req, res, true);
@@ -2630,9 +2630,9 @@ function customCount(req, res){
 }
 
 function customExport(req, res){
-    let filter = req.swagger.params.filter.value;
+    let filter = req.params.filter;
     if(filter)
-        req.swagger.params.filter.value = JSON.stringify(modifySecureFieldsFilter(JSON.parse(filter), secureFields, false));
+        req.params.filter = JSON.stringify(modifySecureFieldsFilter(JSON.parse(filter), secureFields, false));
     return expandedExport(req, res, false);
 }
 
@@ -2684,7 +2684,7 @@ function math(req, res) {
 function processMathRequest(obj, cb) {
     obj.req.simulateFlag = false;
     let webHookData = null;
-    let id = obj.req.swagger.params.id.value;
+    let id = obj.req.params.id;
     let resData = null;
     obj.req.query.source = 'presave';
     obj.req.simulate = false;
@@ -2731,7 +2731,7 @@ function getUpdatedDoc(doc, updateObj) {
 }
 
 function doRoundMathAPI(req) {
-    let id = req.swagger.params.id.value;
+    let id = req.params.id;
     let body = req.body;
     let updateBody = { '$inc': { '_metadata.version.document': 1 } };
     let session = null;
@@ -2834,7 +2834,7 @@ function doRoundMathAPI(req) {
 
 /*
 function math(req, res) {
-    let id = req.swagger.params.id.value;
+    let id = req.params.id;
     let body = req.body;
     if(!body["$inc"]) body["$inc"] = {};
     body["$inc"]["_metadata.version.document"] = 1;
@@ -2861,14 +2861,14 @@ function math(req, res) {
 
 function addExpireAt(req){
     let expireAt = null;
-    if (req.swagger.params.expireAt && req.swagger.params.expireAt.value) {
-        expireAt = req.swagger.params.expireAt.value;
+    if (req.params.expireAt && req.swagger.params.expireAt) {
+        expireAt = req.params.expireAt;
         if (!isNaN(expireAt)) {
-            expireAt = parseInt(req.swagger.params.expireAt.value)
+            expireAt = parseInt(req.params.expireAt)
         }
         expireAt = new Date(expireAt);
-    } else if (req.swagger.params.expireAfter && req.swagger.params.expireAfter.value) {
-        let expireAfter = req.swagger.params.expireAfter.value;
+    } else if (req.params.expireAfter && req.swagger.params.expireAfter) {
+        let expireAfter = req.params.expireAfter;
             let addTime = 0;
             let time = {
                 s: 1000,
@@ -3052,11 +3052,11 @@ function simulateExpand(document, select, req){
 }
 
 function simulateDoc(req, res){
-    let generateId = req.swagger.params.generateId.value;
-    let operation = req.swagger.params.operation.value;
-    let docId = req.swagger.params.docId.value;
+    let generateId = req.params.generateId;
+    let operation = req.params.operation;
+    let docId = req.params.docId;
     if(operation=='GET'){
-        let select = req.swagger.params.select.value;
+        let select = req.params.select;
         return simulateExpand(req.body, select, req)
             .then(docs=>{
                 res.json(docs);
@@ -3111,7 +3111,7 @@ function lockDocument(req, res){
 }
 
 function experienceHookData(req,res){
-    let name=req.swagger.params.name.value;
+    let name=req.params.name;
     let hookUrl=helperUtil.getExperienceHook(name);
     if(!hookUrl){
         return res.status(400).json({message: 'Invalid Id'});
@@ -3235,19 +3235,19 @@ function customCreate(req, res){
 
     e.exportDetails = (req,res) =>{
         let filter = {};
-        if(req.swagger.params.filter.value) filter = JSON.parse(req.swagger.params.filter.value);
+        if(req.params.filter.value) filter = JSON.parse(req.swagger.params.filter);
         let user = req.headers ? req.headers.user : 'AUTO';
         filter['user'] = user
-        req.swagger.params.filter.value =  JSON.stringify(filter);   
+        req.params.filter =  JSON.stringify(filter);   
         exportCrudder.index(req,res);
     }
 
     e.exportDetailsCount = (req,res) => {
         let filter = {};
-        if(req.swagger.params.filter.value) filter = JSON.parse(req.swagger.params.filter.value);
+        if(req.params.filter.value) filter = JSON.parse(req.swagger.params.filter);
         let user = req.headers ? req.headers.user : 'AUTO';
         filter['user'] = user
-        req.swagger.params.filter.value =  JSON.stringify(filter);   
+        req.params.filter =  JSON.stringify(filter);   
         exportCrudder.count(req,res);
     }
 
@@ -3256,7 +3256,7 @@ function customCreate(req, res){
     }
 
     e.exportUpdateReadStatus = (req, res) => {
-        let fileId = req.swagger.params.fileId.value;
+        let fileId = req.params.fileId;
         let user = req.headers ? req.headers.user : 'AUTO'
         let isRead = req.body.isRead;
         exportCrudder.model.findById(fileId).then(fileData => {
