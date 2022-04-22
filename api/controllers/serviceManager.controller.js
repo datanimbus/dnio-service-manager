@@ -631,10 +631,46 @@ function createWebHooks(data, _req) {
 		}
 	});
 }
-
+// To verify whether given webHook or preHook is exist or not
+/*
+e.verifyHook = (_req, _res) => {
+	let url = _req.params.url && _req.swagger.params.url.value ? _req.swagger.params.url : null;
+	if (!url) {
+		return _res.status(400).json({ 'message': 'url invalid' });
+	}
+	let isVerified = false;
+	var options = {
+		url: url,
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		json: true
+	};
+	if (typeof process.env.TLS_REJECT_UNAUTHORIZED === 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
+		options.insecure = true;
+		options.rejectUnauthorized = false;
+	}
+	request.post(options, function (err, res) {
+		if (err) {
+			logger.error(err.message);
+		} else if (!res) {
+			logger.error(url + ' ' + 'is down');
+		}
+		else if (res.statusCode === 404 || res.statusCode === 504 || res.statusCode === 405) {
+			logger.info(url + ' ' + ' not exist');
+		}
+		else {
+			logger.info(url + ' ' + 'exist');
+			isVerified = true;
+		}
+		_res.status(200).json({ isVerified });
+	});
+};
+*/
 e.verifyHook = (_req, _res) => {
 	let URL = require('url');
-	let url = _req.swagger.params.url && _req.swagger.params.url.value ? _req.swagger.params.url.value : null;
+	let url = _req.params.url && _req.swagger.params.url.value ? _req.swagger.params.url : null;
 	if (!url) {
 		return _res.status(400).json({
 			'message': 'url invalid'
@@ -903,7 +939,7 @@ function validateCounterChange(isCounterChangeRequired, id, counter, app) {
 
 e.updateDoc = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	let ID = _req.swagger.params.id.value;
+	let ID = _req.params.id;
 	logger.info(`[${txnId}] Update service request received for ${ID}`);
 
 	delete _req.body.collectionName;
@@ -1145,7 +1181,7 @@ function rollBackDeploy(id, req) {
 
 e.deployAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	let ID = _req.swagger.params.id.value;
+	let ID = _req.params.id;
 	logger.info(`[${txnId}] Service deploy request received for service ${ID}`);
 
 	let user = _req.get('User');
@@ -1458,7 +1494,7 @@ e.deployAPIHandler = (_req, _res) => {
 
 e.startAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	var id = _req.swagger.params.id.value;
+	var id = _req.params.id;
 	let socket = _req.app.get('socket');
 	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
 		.then(doc => {
@@ -1518,7 +1554,7 @@ e.startAPIHandler = (_req, _res) => {
 
 e.stopAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	let socket = _req.app.get('socket');
 	let instances = null;
 	checkIncomingRelation(id)
@@ -1682,7 +1718,7 @@ function dropCollections(collectionName, app, txnId) {
 }
 
 e.destroyService = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	let socket = _req.app.get('socket');
 	let originalDoc = {};
 	let txnId = _req.get('TxnId');
@@ -1799,7 +1835,7 @@ e.destroyService = (_req, _res) => {
 };
 
 e.documentCount = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	const ids = _req.query.serviceIds ? _req.query.serviceIds.split(',') : [];
 	const filter = {
 		'_metadata.deleted': false
@@ -1849,7 +1885,7 @@ e.documentCount = (_req, _res) => {
 };
 
 e.deleteApp = function (_req, _res) {
-	let app = _req.swagger.params.app.value;
+	let app = _req.params.app;
 	let socket = _req.app.get('socket');
 	crudder.model.find({
 		'app': app
@@ -1941,9 +1977,9 @@ function makePurgeApiCall(url) {
 }
 
 e.changeStatus = function (req, res) {
-	let app = req.swagger.params.app.value;
-	let id = req.swagger.params.id.value;
-	let status = req.swagger.params.status.value;
+	let app = req.params.app;
+	let id = req.params.id;
+	let status = req.query.status;
 	let socket = req.app.get('socket');
 	let relatedService = [];
 	logger.debug(`[${req.get('TxnId')}] Status change :: ${id} :: ${status}`);
@@ -1990,8 +2026,8 @@ e.changeStatus = function (req, res) {
 };
 
 e.StatusChangeFromMaintenance = function (req, res) {
-	let id = req.swagger.params.id.value;
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
+	let id = req.params.id;
 	let socket = req.app.get('socket');
 
 	logger.info(`Status Change from Maintenence for Service :: ${id} :: App :: ${app}`);
@@ -2082,7 +2118,7 @@ function getIdCounter(serviceId, app) {
 
 e.startAllServices = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	var app = _req.swagger.params.app.value;
+	var app = _req.params.app;
 	let socket = _req.app.get('socket');
 	logger.info(`[${txnId}] Start all services request received for app :: ${app}`);
 
@@ -2136,7 +2172,7 @@ e.startAllServices = (_req, _res) => {
 
 e.stopAllServices = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	let app = _req.swagger.params.app.value;
+	let app = _req.params.app;
 	let socket = _req.app.get('socket');
 	logger.info(`[${txnId}] Stop all services request received for app :: ${app}`);
 
@@ -2201,7 +2237,7 @@ e.stopAllServices = (_req, _res) => {
 };
 
 e.repairAllServices = (_req, _res) => {
-	var app = _req.swagger.params.app.value;
+	var app = _req.params.app;
 	crudder.model.find({
 		'app': app,
 	})
@@ -2231,7 +2267,7 @@ e.repairAllServices = (_req, _res) => {
 
 
 e.repairService = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	return crudder.model.findOne({
 		_id: id
 	})
@@ -2287,8 +2323,8 @@ function updateDeployment(req, res, ds) {
 }
 
 e.getCounter = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
-	let app = _req.swagger.params.app.value;
+	let id = _req.params.id;
+	let app = _req.params.app;
 	return getIdCounter(id, app)
 		.then(_c => {
 			if (_c) {
@@ -2420,9 +2456,9 @@ function scaleDeploymentsToOriginal(req, socket, ids, srvcId) {
 }
 
 e.purgeLogsService = function (req, res) {
-	let id = req.swagger.params.id.value;
-	let app = req.swagger.params.app.value;
-	let type = req.swagger.params.type.value;
+	let id = req.params.id;
+	let type = req.params.type;
+	let app = req.params.app;
 	deleteLogs(id, app, type)
 		.then(() => {
 			res.status(200).json({});
@@ -2434,7 +2470,7 @@ e.purgeLogsService = function (req, res) {
 };
 
 e.purge = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let socket = req.app.get('socket');
 	logger.info(`Purge All Data request received for Service :: ${id}`);
 
@@ -2488,7 +2524,7 @@ e.purge = function (req, res) {
 };
 
 e.lockDocumentCount = (req, res) => {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let _sd = {};
 	let collectionName = null;
 	let app = null;
@@ -2527,8 +2563,8 @@ function findCollectionData(Id) {
 }
 
 function customShow(req, res) {
-	let draft = req.swagger.params.draft.value;
-	let id = req.swagger.params.id.value;
+	let draft = req.query.draft;
+	let id = req.params.id;
 	if (draft) {
 		draftCrudder.model.findOne({ _id: id })
 			.then(_d => {
@@ -2545,10 +2581,10 @@ function customShow(req, res) {
 
 async function showByName(req, res) {
 	try {
-		const draft = req.swagger.params.draft.value;
-		const name = req.swagger.params.name.value;
-		const app = req.swagger.params.app.value;
-		let select = req.swagger.params.select.value;
+		const draft = req.query.draft;
+		const name = req.params.name;
+		const app = req.params.app;
+		let select = req.query.select;
 		select = select ? select.split(',') : [];
 		const filter = { name: name, app: app, '_metadata.deleted': false };
 		let query;
@@ -2579,7 +2615,7 @@ async function showByName(req, res) {
 }
 
 function customIndex(req, res) {
-	let draft = req.swagger.params.draft ? req.swagger.params.draft.value : false;
+	let draft = req.query.draft;
 	if (draft)
 		draftCrudder.index(req, res);
 	else
@@ -2587,7 +2623,7 @@ function customIndex(req, res) {
 }
 
 function draftDelete(req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	draftCrudder.model.findOne({ _id: id })
 		.then(_d => {
 			if (_d)
@@ -2610,8 +2646,8 @@ function draftDelete(req, res) {
 }
 
 function validateUserDeletion(req, res) {
-	let id = req.swagger.params.userId.value;
-	let app = req.swagger.params.app.value;
+	let id = req.params.userId;
+	let app = req.params.app;
 	let promise = [];
 	let pr = [];
 	let flag = false;
@@ -2645,8 +2681,8 @@ function validateUserDeletion(req, res) {
 }
 
 function userDeletion(req, res) {
-	let id = req.swagger.params.userId.value;
-	let app = req.swagger.params.app.value;
+	let id = req.params.userId;
+	let app = req.params.app;
 	let promise = [];
 	let pr = [];
 	crudder.model.find({ 'relatedSchemas.internal.users.0': { $exists: true }, app: app })
@@ -2903,8 +2939,8 @@ function checkUniqueField(app, collectionName, field) {
  */
 
 function checkUnique(req, res) {
-	let serviceId = req.swagger.params.id.value;
-	let fields = req.swagger.params.fields.value;
+	let serviceId = req.params.id;
+	let fields = req.query.fields;
 	fields = fields.split(',');
 	getServiceDetailsById(serviceId, { app: 1, collectionName: 1 })
 		.then(srvcDetails => {
@@ -2930,7 +2966,7 @@ function checkUnique(req, res) {
  * Returns the map of status and count of DS for the status
  */
 function countByStatus(req, res) {
-	let filter = req.swagger.params.filter.value;
+	let filter = req.query.filter;
 	if (filter) {
 		if (typeof filter == 'string')
 			filter = JSON.parse(filter);

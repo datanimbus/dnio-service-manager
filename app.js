@@ -1,8 +1,8 @@
 'use strict';
-const fs = require('fs');
-const path = require('path');
-const jsyaml = require('js-yaml');
-const swaggerTools = require('swagger-tools');
+// const fs = require('fs');
+// const path = require('path');
+// const jsyaml = require('js-yaml');
+// const swaggerTools = require('swagger-tools');
 const express = require('express');
 const cuti = require('@appveen/utils');
 const log4js = cuti.logger.getLogger;
@@ -21,7 +21,6 @@ const envConfig = require('./config/config.js');
 let mongoAppcenterUrl = envConfig.mongoAppcenterUrl;
 
 const app = express();
-
 app.use(express.json({
 	limit: '5mb'
 }));
@@ -125,39 +124,51 @@ var logToQueue = dataStackutils.logToQueue('sm', queueMgmt.client, envConfig.log
 app.use(logToQueue);
 app.use(require('./util/auth'));
 
-// swaggerRouter configuration
-var options = {
-	swaggerUi: path.join(__dirname, '/swagger.json'),
-	controllers: path.join(__dirname, './api/controllers'),
-	useStubs: process.env.NODE_ENV === 'development' // Conditionally turn on stubs (mock mode)
-};
+app.use('/sm', require('./api/controllers/controller'));
 
-// The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
-var spec = fs.readFileSync(path.join(__dirname, 'api/swagger/swagger.yaml'), 'utf8');
-var swaggerDoc = jsyaml.load(spec);
+// // swaggerRouter configuration
+// var options = {
+// 	swaggerUi: path.join(__dirname, '/swagger.json'),
+// 	controllers: path.join(__dirname, './api/controllers'),
+// 	useStubs: process.env.NODE_ENV === 'development' // Conditionally turn on stubs (mock mode)
+// };
 
-swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
+// // The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
+// var spec = fs.readFileSync(path.join(__dirname, 'api/swagger/swagger.yaml'), 'utf8');
+// var swaggerDoc = jsyaml.safeLoad(spec);
 
-	// Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
-	app.use(middleware.swaggerMetadata());
+// swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
 
-	// Validate Swagger requests
-	app.use(middleware.swaggerValidator());
+// 	// Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
+// 	app.use(middleware.swaggerMetadata());
 
-	// Route validated requests to appropriate controller
-	app.use(middleware.swaggerRouter(options));
+// 	// Validate Swagger requests
+// 	app.use(middleware.swaggerValidator());
 
-	// Serve the Swagger documents and Swagger UI
-	// app.use(middleware.swaggerUi());
+// 	// Route validated requests to appropriate controller
+// 	app.use(middleware.swaggerRouter(options));
 
-	// Start the server
-	var port = process.env.PORT || 10003;
-	var server = app.listen(port, (err) => {
-		if (!err) {
-			logger.info('Server started on port ' + port);
-		} else
-			logger.error(err);
-	});
-	server.setTimeout(parseInt(timeOut) * 1000);
-	initSocket(server);
+// 	// Serve the Swagger documents and Swagger UI
+// 	// app.use(middleware.swaggerUi());
+
+// 	// Start the server
+// 	var port = process.env.PORT || 10003;
+// 	var server = app.listen(port, (err) => {
+// 		if (!err) {
+// 			logger.info('Server started on port ' + port);
+// 		} else
+// 			logger.error(err);
+// 	});
+// 	server.setTimeout(parseInt(timeOut) * 1000);
+// 	initSocket(server);
+// });
+
+const port = process.env.PORT || 10003;
+const server = app.listen(port, (err) => {
+	if (!err) {
+		logger.info('Server started on port ' + port);
+	} else
+		logger.error(err);
 });
+server.setTimeout(parseInt(timeOut) * 1000);
+initSocket(server);

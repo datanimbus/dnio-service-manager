@@ -18,7 +18,7 @@ function addAuthHeader(paths, jwt) {
 
 function show(req, res) {
 	let txnId = req.get('TxnId');
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	logger.debug(`[${txnId}] Fetching Swagger API documentation for service :: ${id}`);
 	mongoose.model('services').findOne({ '_id': id, '_metadata.deleted': false })
 		.then(_d => {
