@@ -670,7 +670,7 @@ e.verifyHook = (_req, _res) => {
 */
 e.verifyHook = (_req, _res) => {
 	let URL = require('url');
-	let url = _req.params.url && _req.swagger.params.url.value ? _req.swagger.params.url : null;
+	let url = _req.query.url ? _req.query.url : null;
 	if (!url) {
 		return _res.status(400).json({
 			'message': 'url invalid'
