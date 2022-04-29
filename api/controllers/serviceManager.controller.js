@@ -406,18 +406,39 @@ draftSchema.pre('save', function (next) {
 	next();
 });
 
-schema.pre('save', async function (next) {
+schema.pre('save', async function (next, req) {
 	try {
 		if (!this.isNew && this.stateModel && this.stateModel.enabled) {
-			logger.info(`Updating existing records with initial state in state model for service ${this._id}`);
+			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
 			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
-			logger.debug('Initial states updated - ', status);
+			logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
 	} catch (err) {
-		logger.error('Error updating initial state of existing records');
+		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		next(err);
+	}
+});
+
+schema.pre('save', async function (next, req) {
+	try {
+		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
+			logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
+			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
+			let workItems = await collection.find({ status: "Pending", app: this.app, serviceId: this._id });
+			workItems.forEach(item => {
+				let obj = {}
+				obj.checkerStep = this.workflowConfig.makerCheckers[0].steps[0].name;
+				obj.respondedBy = null;
+				obj.audit = [item.audit[0]];
+				collection.findOneAndUpdate({ _id: item._id }, { $set: obj });
+			});
+		}
+		next();
+	} catch (err) {
+		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
@@ -1195,6 +1216,7 @@ e.deployAPIHandler = (_req, _res) => {
 	let isAuditIndexDeleteRequired = false;
 	let isApiEndpointChanged = false;
 	let removeSoftDeletedRecords = false;
+	let isWorkflowChanged = false;
 
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
@@ -1349,6 +1371,12 @@ e.deployAPIHandler = (_req, _res) => {
 								}
 							}
 
+							let workflowComparison = deepEqual(oldData.workflowConfig, newData.workflowConfig);
+							if (!workflowComparison) {
+								isWorkflowChanged = true;
+								isReDeploymentRequired = true;
+							}
+
 							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) newData.version = _d.version + 1;
 
 							logger.info(`[${txnId}] Redeployment required for service ${ID}? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
@@ -1360,6 +1388,7 @@ e.deployAPIHandler = (_req, _res) => {
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
+							_d.isWorkflowChanged = isWorkflowChanged;
 							if (!definitionComparison) _d.definition = newDefinition;
 
 							let promise = Promise.resolve();
