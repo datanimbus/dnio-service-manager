@@ -4,7 +4,7 @@ const net = require('net');
 const mongoose = require('mongoose');
 const request = require('request');
 const _ = require('lodash');
-const yamljs = require('yamljs');
+const yamljs = require('json-to-pretty-yaml');
 
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
@@ -3076,6 +3076,8 @@ async function getYamls(req, res) {
 		};
 
 		const deployData = {
+			apiVersion: 'v1',
+			kind: 'Deployment',
 			metadata: {
 				name: name,
 				namespace: namespace
@@ -3130,6 +3132,8 @@ async function getYamls(req, res) {
 		}
 
 		const serviceData = {
+			apiVersion: 'v1',
+			kind: 'Service',
 			metadata: {
 				name: name,
 				namespace: namespace
@@ -3149,8 +3153,8 @@ async function getYamls(req, res) {
 			}
 		};
 
-		const serviceText = yamljs.stringify(serviceData, 10, 2);
-		const deploymentText = yamljs.stringify(deployData, 10, 2);
+		const serviceText = yamljs.stringify(serviceData);
+		const deploymentText = yamljs.stringify(deployData);
 		res.status(200).json({ service: serviceText, deployment: deploymentText });
 
 	} catch (err) {
