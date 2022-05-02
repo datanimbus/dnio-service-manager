@@ -4,6 +4,7 @@ const net = require('net');
 const mongoose = require('mongoose');
 const request = require('request');
 const _ = require('lodash');
+const yamljs = require('yamljs');
 
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
@@ -427,9 +428,9 @@ schema.pre('save', async function (next, req) {
 		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
 			logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
 			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
-			let workItems = await collection.find({ status: "Pending", app: this.app, serviceId: this._id });
+			let workItems = await collection.find({ status: 'Pending', app: this.app, serviceId: this._id });
 			workItems.forEach(item => {
-				let obj = {}
+				let obj = {};
 				obj.checkerStep = this.workflowConfig.makerCheckers[0].steps[0].name;
 				obj.respondedBy = null;
 				obj.audit = [item.audit[0]];
@@ -3027,6 +3028,137 @@ function countByStatus(req, res) {
 	});
 }
 
+
+async function getYamls(req, res) {
+	try {
+		const txnId = req.get('txnId');
+		const doc = await crudder.model.findOne({ _id: req.params.id }).lean();
+
+		const namespace = (envConfig.dataStackNS + '-' + doc.app).toLowerCase();
+		const port = doc.port;
+		const name = (doc.api).substring(1).toLowerCase();
+		const envVars = [];
+		envConfig.envkeysForDataService.forEach(key => {
+			envVars.push({ name: key, value: process.env[key] });
+		});
+		envVars.push({ name: 'DATA_STACK_APP_NS', value: namespace });
+		envVars.push({ name: 'NODE_OPTIONS', value: `--max-old-space-size=${envConfig.maxHeapSize}` });
+		envVars.push({ name: 'NODE_ENV', value: 'production' });
+		envVars.push({ name: 'SERVICE_ID', value: `${doc._id}` });
+
+		const volumeMounts = {
+			'file-export': {
+				containerPath: '/app/output',
+				hostPath: `${envConfig.fsMount}/${doc._id}`
+			}
+		};
+		logger.trace(`[${txnId}] [${doc._id}] Volume mount data : ${JSON.stringify(volumeMounts)}`);
+
+		const options = {
+			livenessProbe: {
+				httpGet: {
+					path: `/${doc.app}${doc.api}/utils/health/live`,
+					port: doc.port,
+					scheme: 'HTTP'
+				},
+				initialDelaySeconds: 5,
+				timeoutSeconds: envConfig.healthTimeout
+			},
+			readinessProbe: {
+				httpGet: {
+					path: `/${doc.app}${doc.api}/utils/health/ready`,
+					port: doc.port,
+					scheme: 'HTTP'
+				},
+				initialDelaySeconds: 5,
+				timeoutSeconds: envConfig.healthTimeout
+			}
+		};
+
+		const deployData = {
+			metadata: {
+				name: name,
+				namespace: namespace
+			},
+			spec: {
+				replicas: 1,
+				selector: {
+					matchLabels: {
+						app: name
+					}
+				},
+				template: {
+					metadata: {
+						labels: {
+							app: name
+						}
+					},
+					spec: {
+						containers: [
+							{
+								name: name,
+								image: envConfig.baseImage,
+								ports: [
+									{
+										containerPort: port
+									}
+								],
+								env: envVars
+							}
+						]
+					}
+				}
+			}
+		};
+		if (options.livenessProbe) deployData.spec.template.spec.containers[0]['livenessProbe'] = options.livenessProbe;
+		if (options.readinessProbe) deployData.spec.template.spec.containers[0]['readinessProbe'] = options.readinessProbe;
+		if (volumeMounts) {
+			deployData.spec.template.spec.containers[0]['volumeMounts'] = [];
+			deployData.spec.template.spec['volumes'] = [];
+			for (var mount in volumeMounts) {
+				deployData.spec.template.spec.containers[0]['volumeMounts'].push({
+					'name': mount,
+					'mountPath': volumeMounts[mount]['containerPath']
+				});
+				deployData.spec.template.spec['volumes'].push({
+					'name': mount,
+					'hostPath': {
+						'path': volumeMounts[mount]['hostPath']
+					}
+				});
+			}
+		}
+
+		const serviceData = {
+			metadata: {
+				name: name,
+				namespace: namespace
+			},
+			spec: {
+				type: 'ClusterIP',
+				selector: {
+					app: name
+				},
+				ports: [
+					{
+						protocol: 'TCP',
+						port: 80,
+						targetPort: port
+					}
+				]
+			}
+		};
+
+		const serviceText = yamljs.stringify(serviceData);
+		const deploymentText = yamljs.stringify(deployData);
+		res.status(200).json({ service: serviceText, deployment: deploymentText });
+
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
 module.exports = {
 	create: e.createDoc,
 	index: customIndex,
@@ -3046,6 +3178,7 @@ module.exports = {
 	StatusChangeFromMaintenance: e.StatusChangeFromMaintenance,
 	verifyHook: e.verifyHook,
 	getCounter: e.getCounter,
+	getYamls,
 	stopAllServices: e.stopAllServices,
 	startAllServices: e.startAllServices,
 	repairAllServices: e.repairAllServices,

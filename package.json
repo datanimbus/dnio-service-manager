@@ -36,7 +36,8 @@
         "request": "^2.88.0",
         "request-promise": "^4.2.2",
         "socket.io": "^4.4.1",
-        "uuid": "^3.2.1"
+        "uuid": "^3.2.1",
+        "yamljs": "^0.3.0"
     },
     "devDependencies": {
         "eslint": "^8.12.0",

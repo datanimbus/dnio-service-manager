@@ -99,6 +99,7 @@ router.put('/:app/service/utils/:id/deploy', serviceManagerController.deployServ
 router.put('/:app/service/utils/:id/repair', serviceManagerController.repairService);
 router.get('/:app/service/utils/:id/count', serviceManagerController.documentCount);
 router.get('/:app/service/utils/:id/idCount', serviceManagerController.getCounter);
+router.get('/:app/service/utils/:id/yamls', serviceManagerController.getYamls);
 router.put('/:app/service/utils/stopAll', serviceManagerController.stopAllServices);
 router.put('/:app/service/utils/startAll', serviceManagerController.startAllServices);
 router.put('/:app/service/utils/repairAll', serviceManagerController.repairAllServices);

@@ -16,7 +16,8 @@ const onlyAuthUrls = [
 	'/sm/{app}/service/utils/{id}/lockDocument/count',
 	'/sm/{app}/service/utils/{id}/swagger',
 	'/sm/{app}/service/utils/{id}/checkUnique',
-	'/sm/{app}/service/utils/verifyHook'
+	'/sm/{app}/service/utils/verifyHook',
+	'/sm/{app}/service/utils/{id}/yamls'
 ];
 
 const internalUrls = [
