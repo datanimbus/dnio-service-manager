@@ -3149,8 +3149,8 @@ async function getYamls(req, res) {
 			}
 		};
 
-		const serviceText = yamljs.stringify(serviceData);
-		const deploymentText = yamljs.stringify(deployData);
+		const serviceText = yamljs.stringify(serviceData, 10, 2);
+		const deploymentText = yamljs.stringify(deployData, 10, 2);
 		res.status(200).json({ service: serviceText, deployment: deploymentText });
 
 	} catch (err) {
