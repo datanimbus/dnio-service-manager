@@ -1669,10 +1669,14 @@ function destroyDeployment(id, count, _req) {
 				return k8s.deploymentDelete(_req.get('TxnId'), _d)
 					.then(() => logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${_d._id}`))
 					.then(() => k8s.serviceDelete(_req.get('TxnId'), _d))
-					.then(() => logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${_d._id}`))
+					.then(() => {
+						logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${_d._id}`);
+						return _d;
+					})
 					.catch(_e => logger.error(`[${_req.get('TxnId')}] ${_e.message}`));
 			} else {
 				logger.info(`[${_req.get('TxnId')}] PM2 not supported`);
+				return _d;
 			}
 		})
 		.catch(err => {
