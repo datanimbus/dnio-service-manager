@@ -1,6 +1,7 @@
 pipeline {
     agent any
 
+
     parameters{
         string(name: 'tag', defaultValue: 'dev', description: 'Image Tag')
         booleanParam(name: 'dockerHub', defaultValue: false, description: 'Push to Docker Hub')
@@ -11,13 +12,19 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo 'Building..'
+                sh "docker build -t data.stack.sm:${params.tag} ."
+            }
+        }
+        stage('Push to Local Registry') {
+            steps {
+                sh "docker tag data.stack.sm:${params.tag} ${env.LOCAL_REGISTRY}/data.stack.sm:${params.tag}"
+                sh "docker push ${env.LOCAL_REGISTRY}/data.stack.sm:${params.tag}"
             }
         }
         stage('Deploy') {
             when {
                 expression {
-                    params.deploy
+                    params.deploy == true
                 }
             }
             steps {
@@ -27,31 +34,34 @@ pipeline {
         stage('Push to Docker Hub') {
             when {
                 expression {
-                    params.dockerHub
+                    params.dockerHub  == true
                 }
             }
             steps {
-                echo 'Pushing to Docker HUB....'
+                sh "docker tag data.stack.sm:${params.tag}appveen/data.stack.sm:${params.tag}"
+                sh "docker push appveen/data.stack.sm:${params.tag}"
             }
         }
         stage('Push to ECR') {
             when {
                 expression {
-                    params.ecr
+                    params.ecr  == true
                 }
             }
             steps {
-                echo 'Pushing to ECR....'
+                sh "docker tag data.stack.sm:${params.tag} ${env.ECR_URL}/data.stack.sm:${params.tag}"
+                sh "docker push ${env.ECR_URL}/data.stack.sm:${params.tag}"
             }
         }
         stage('Push to GCR') {
             when {
                 expression {
-                    params.gcr
+                    params.gcr  == true
                 }
             }
             steps {
-                echo 'Pushing to GCR....'
+                sh "docker tag data.stack.sm:${params.tag} ${env.GCR_URL}/data.stack.sm:${params.tag}"
+                sh "docker push ${env.GCR_URL}/data.stack.sm:${params.tag}"
             }
         }
     }
