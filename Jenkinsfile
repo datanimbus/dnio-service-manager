@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh "./scripts/echi.sh"
+                sh "./scripts/echo.sh"
             }
         }
         // stage('Build') {

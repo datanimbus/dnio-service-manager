@@ -8,9 +8,8 @@ echo $gcr
 echo $deploy
 
 
-echo ${params.branch}
-echo ${params.tag}
-echo ${params.dockerHub}
-echo ${params.ecr}
-echo ${params.gcr}
-echo ${params.deploy}
+echo $NAMESPACE
+echo $LOCAL_REGISTRY
+echo $WORKSPACE
+echo $ECR_URL
+echo $GCR_URL
