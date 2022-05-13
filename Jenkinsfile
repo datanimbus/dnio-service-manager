@@ -15,7 +15,7 @@ pipeline {
             steps {
                 sh "chmod 777 ./scripts/echo.sh"
                 sh "./scripts/echo.sh"
-                sh "new_tag=$tag"_"`date +%Y.%m.%d.%H.%M`"
+                sh "new_tag=${tag}'_'`date +%Y.%m.%d.%H.%M`"
             }
         }
         stage('Tag') {
