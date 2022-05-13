@@ -8,8 +8,11 @@ echo $gcr
 echo $deploy
 
 
-echo $NAMESPACE
-echo $LOCAL_REGISTRY
-echo $WORKSPACE
-echo $ECR_URL
-echo $GCR_URL
+tag=tag"_"`date +%Y.%m.%d.%H.%M`
+
+
+# echo $NAMESPACE
+# echo $LOCAL_REGISTRY
+# echo $WORKSPACE
+# echo $ECR_URL
+# echo $GCR_URL

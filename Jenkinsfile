@@ -13,7 +13,13 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                sh "chmod 777 ./scripts/echo.sh"
                 sh "./scripts/echo.sh"
+            }
+        }
+        stage('Tag') {
+            steps {
+                echo "${params.tag}"
             }
         }
         // stage('Build') {
