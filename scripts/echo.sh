@@ -8,7 +8,7 @@ echo $gcr
 echo $deploy
 
 
-tag=tag"_"`date +%Y.%m.%d.%H.%M`
+tag=$tag"_"`date +%Y.%m.%d.%H.%M`
 
 echo $tag
 
