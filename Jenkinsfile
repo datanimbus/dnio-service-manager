@@ -18,11 +18,6 @@ pipeline {
                 sh "docker build -t data.stack.sm:${params.tag} ."
             }
         }
-        stage('Vulnerability Scan') {
-            steps {
-                sh "docker scan data.stack.sm:${params.tag}"
-            }
-        }
         stage('Push to Local Registry') {
             steps {
                 sh "docker tag data.stack.sm:${params.tag} ${env.LOCAL_REGISTRY}/data.stack.sm:${params.tag}"
@@ -38,7 +33,8 @@ pipeline {
             steps {
                 sh "docker save -o data.stack.sm_${params.tag}.tar data.stack.sm:${params.tag}"
                 sh "bzip2 data.stack.sm_${params.tag}.tar"
-                sh "aws s3 cp data.stack.sm_${params.tag}.tar s3://${env.S3_BUCKET}/stable-builds/data.stack.sm_${params.tag}.tar"
+                sh "aws s3 cp data.stack.sm_${params.tag}.tar.bz2 s3://${env.S3_BUCKET}/stable-builds/data.stack.sm_${params.tag}.tar.bz2"
+                sh "rm data.stack.sm_${params.tag}.tar.bz2"
             }
         }
         stage('Deploy') {
@@ -69,7 +65,7 @@ pipeline {
                 }
             }
             steps {
-                sh "$(aws ecr get-login --no-include-email)"
+                sh "aws ecr get-login --no-include-email"
                 sh "docker tag data.stack.sm:${params.tag} ${env.ECR_URL}/data.stack.sm:${params.tag}"
                 sh "docker push ${env.ECR_URL}/data.stack.sm:${params.tag}"
             }
