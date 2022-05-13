@@ -8,9 +8,11 @@ echo $gcr
 echo $deploy
 
 
-tag=$tag"_"`date +%Y.%m.%d.%H.%M`
+tag=tag"_"`date +%Y.%m.%d.%H.%M`
 
 echo $tag
+
+echo tag=$tag > env.properties
 
 # echo $NAMESPACE
 # echo $LOCAL_REGISTRY
