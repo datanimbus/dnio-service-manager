@@ -22,7 +22,7 @@ pipeline {
             steps {
                 echo "${params.tag}"
                 echo "${tag}"
-                echo "${new_tag}"
+                echo "$new_tag"
             }
         }
         // stage('Build') {
