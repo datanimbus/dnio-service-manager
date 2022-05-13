@@ -20,6 +20,7 @@ pipeline {
         stage('Tag') {
             steps {
                 echo "${params.tag}"
+                echo "${tag}"
             }
         }
         // stage('Build') {
