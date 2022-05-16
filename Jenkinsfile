@@ -5,23 +5,32 @@ pipeline {
     parameters{
         string(name: 'branch', defaultValue: 'dev', description: 'Build from Branch')
         string(name: 'tag', defaultValue: 'dev', description: 'Image Tag')
-        booleanParam(name: 'dockerHub', defaultValue: false, description: 'Push to Docker Hub')
-        booleanParam(name: 'ecr', defaultValue: false, description: 'Push to ECR')
-        booleanParam(name: 'gcr', defaultValue: false, description: 'Push to GCR')
         booleanParam(name: 'deploy', defaultValue: true, description: 'Deploy in machine')
+        booleanParam(name: 'dockerHub', defaultValue: false, description: 'Push to Docker Hub')
     }
     stages {
-        stage('Build') {
+        stage('Checkout SCM') {
             steps {
-                sh "git checkout ${params.branch}"
-                sh "git pull origin ${params.branch}"
-                sh "docker build -t data.stack.sm:${params.tag} ."
+                sh "chmod 777 ./scripts/scm.sh"
+                sh "./scripts/scm.sh"
             }
         }
-        stage('Push to Local Registry') {
+        stage('Build') {
             steps {
-                sh "docker tag data.stack.sm:${params.tag} ${env.LOCAL_REGISTRY}/data.stack.sm:${params.tag}"
-                sh "docker push ${env.LOCAL_REGISTRY}/data.stack.sm:${params.tag}"
+                sh "chmod 777 ./scripts/build.sh"
+                sh "./scripts/build.sh"
+            }
+        }
+        stage('Prepare YAML') {
+            steps {
+                sh "chmod 777 ./scripts/prepare_yaml.sh"
+                sh "./scripts/prepare_yaml.sh"
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                sh "chmod 777 ./scripts/push_ecr.sh"
+                sh "./scripts/push_ecr.sh"
             }
         }
         stage('Save to S3') {
@@ -31,10 +40,8 @@ pipeline {
                 }
             }
             steps {
-                sh "docker save -o data.stack.sm_${params.tag}.tar data.stack.sm:${params.tag}"
-                sh "bzip2 data.stack.sm_${params.tag}.tar"
-                sh "aws s3 cp data.stack.sm_${params.tag}.tar.bz2 s3://${env.S3_BUCKET}/stable-builds/data.stack.sm_${params.tag}.tar.bz2"
-                sh "rm data.stack.sm_${params.tag}.tar.bz2"
+                sh "chmod 777 ./scripts/push_s3.sh"
+                sh "./scripts/push_s3.sh"
             }
         }
         stage('Deploy') {
@@ -44,7 +51,8 @@ pipeline {
                 }
             }
             steps {
-                sh "kubectl set image deployment/sm sm=${env.LOCAL_REGISTRY}/data.stack.sm:${params.tag} -n ${env.NAMESPACE} --record=true"
+                sh "chmod 777 ./scripts/deploy.sh"
+                sh "./scripts/deploy.sh"
             }
         }
         stage('Push to Docker Hub') {
@@ -54,31 +62,8 @@ pipeline {
                 }
             }
             steps {
-                sh "docker tag data.stack.sm:${params.tag}appveen/data.stack.sm:${params.tag}"
-                sh "docker push appveen/data.stack.sm:${params.tag}"
-            }
-        }
-        stage('Push to ECR') {
-            when {
-                expression {
-                    params.ecr  == true
-                }
-            }
-            steps {
-                sh "aws ecr get-login --no-include-email"
-                sh "docker tag data.stack.sm:${params.tag} ${env.ECR_URL}/data.stack.sm:${params.tag}"
-                sh "docker push ${env.ECR_URL}/data.stack.sm:${params.tag}"
-            }
-        }
-        stage('Push to GCR') {
-            when {
-                expression {
-                    params.gcr  == true
-                }
-            }
-            steps {
-                sh "docker tag data.stack.sm:${params.tag} ${env.GCR_URL}/data.stack.sm:${params.tag}"
-                sh "docker push ${env.GCR_URL}/data.stack.sm:${params.tag}"
+                sh "chmod 777 ./scripts/push_hub.sh"
+                sh "./scripts/push_hub.sh"
             }
         }
     }
