@@ -2,6 +2,14 @@
 
 set -e
 
+
+echo "****************************************************"
+echo "data.stack:sm :: SM Clearing Untracked Files"
+echo "****************************************************"
+
+git stash
+git stash clear
+
 echo "****************************************************"
 echo "data.stack:sm :: SM Checking out :: $branch"
 echo "****************************************************"
