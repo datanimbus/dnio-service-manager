@@ -36,7 +36,7 @@ pipeline {
         stage('Save to S3') {
             when {
                 expression {
-                    params.ecr  == true || params.gcr  == true || params.dockerHub  == true
+                    params.dockerHub  == true
                 }
             }
             steps {
