@@ -14,6 +14,12 @@ pipeline {
                 sh "./scripts/create_tag.sh"
             }
         }
+        stage('SCM Base Image') {
+            steps {
+                git branch: "$BRANCH_NAME",
+                url: 'https://github.com/appveen/ds-base.git'
+            }
+        }
         stage('Build') {
             steps {
                 sh "chmod 777 ./scripts/build.sh"
