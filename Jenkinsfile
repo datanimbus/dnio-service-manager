@@ -9,10 +9,16 @@ pipeline {
         booleanParam(name: 'dockerHub', defaultValue: false, description: 'Push to Docker Hub')
     }
     stages {
-        stage('Checkout SCM') {
+        // stage('Checkout SCM') {
+        //     steps {
+        //         sh "chmod 777 ./scripts/scm.sh"
+        //         sh "./scripts/scm.sh"
+        //     }
+        // }
+        stage('Create Tag') {
             steps {
-                sh "chmod 777 ./scripts/scm.sh"
-                sh "./scripts/scm.sh"
+                sh "chmod 777 ./scripts/create_tag.sh"
+                sh "./scripts/create_tag.sh"
             }
         }
         stage('Build') {
