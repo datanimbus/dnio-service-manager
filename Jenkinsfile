@@ -3,18 +3,11 @@ pipeline {
 
 
     parameters{
-        string(name: 'branch', defaultValue: 'dev', description: 'Build from Branch')
         string(name: 'tag', defaultValue: 'dev', description: 'Image Tag')
         booleanParam(name: 'deploy', defaultValue: true, description: 'Deploy in machine')
         booleanParam(name: 'dockerHub', defaultValue: false, description: 'Push to Docker Hub')
     }
     stages {
-        // stage('Checkout SCM') {
-        //     steps {
-        //         sh "chmod 777 ./scripts/scm.sh"
-        //         sh "./scripts/scm.sh"
-        //     }
-        // }
         stage('Create Tag') {
             steps {
                 sh "chmod 777 ./scripts/create_tag.sh"
