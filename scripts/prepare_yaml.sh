@@ -1,22 +1,25 @@
 #!/bin/bash
 
+set -e
+
 echo "****************************************************"
 echo "data.stack:sm :: Copying yaml file "
 echo "****************************************************"
-if [ ! -d $WORKSPACE/../yamlFiles ]; then
-    mkdir $WORKSPACE/../yamlFiles
+if [ ! -d yamlFiles ]; then
+    mkdir yamlFiles
 fi
 
-REL=$1
-if [ $2 ]; then
-    REL=$REL-$2
-fi
+TAG=`cat CURRENT_SM`
 
-rm -rf $WORKSPACE/../yamlFiles/sm.*
-cp $WORKSPACE/sm.yaml $WORKSPACE/../yamlFiles/sm.$REL.yaml
-cd $WORKSPACE/../yamlFiles/
+rm -rf yamlFiles/sm.*
+cp sm.yaml yamlFiles/sm.$TAG.yaml
+cd yamlFiles/
 echo "****************************************************"
 echo "data.stack:sm :: Preparing yaml file "
 echo "****************************************************"
-sed -i.bak s/__release_tag__/"'$1'"/ sm.$REL.yaml
-sed -i.bak s/__release__/$REL/ sm.$REL.yaml
+
+sed -i.bak s/__release__/$TAG/ sm.$TAG.yaml
+
+echo "****************************************************"
+echo "data.stack:sm :: yaml file saved"
+echo "****************************************************"
