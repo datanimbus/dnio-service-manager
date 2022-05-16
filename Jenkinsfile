@@ -16,8 +16,9 @@ pipeline {
         }
         stage('SCM Base Image') {
             steps {
-                git branch: "$BRANCH_NAME",
-                url: 'https://github.com/appveen/ds-base.git'
+                dir('ds-base') {
+                  git branch: "$BRANCH_NAME", url: 'https://github.com/appveen/ds-base.git'
+                }
             }
         }
         stage('Build') {
