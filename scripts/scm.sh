@@ -14,7 +14,10 @@ echo "****************************************************"
 
 git pull origin $branch
 
-LAST_PULL=`cat LAST_PULL_SM`
+if [ -f LAST_PULL_SM ]; then
+    LAST_PULL=`cat LAST_PULL_SM`
+fi
+
 
 
 if [ $LAST_PULL ]; then
