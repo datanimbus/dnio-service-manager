@@ -44,6 +44,6 @@ generatedServices/*
 coverage
 send.sh
 test.js
-scripts/LAST_PULL_SM
-scripts/CURRENT_SM
-scripts/LATEST_SM
+LAST_PULL
+CURRENT_SM
+LATEST_SM
