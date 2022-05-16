@@ -1,6 +1,8 @@
 #!/bin/bash
 
-TAG=`cat $WORKSPACE/CURRENT_SM`
+set -e
+
+TAG=`cat CURRENT_SM`
 
 echo "****************************************************"
 echo "data.stack:sm :: Saving Image to AWS S3 :: $S3_BUCKET/stable-builds"

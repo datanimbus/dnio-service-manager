@@ -1,17 +1,19 @@
 #!/bin/bash
 
+set -e
+
 echo "****************************************************"
 echo "data.stack:sm :: Copying yaml file "
 echo "****************************************************"
-if [ ! -d $WORKSPACE/yamlFiles ]; then
-    mkdir $WORKSPACE/yamlFiles
+if [ ! -d yamlFiles ]; then
+    mkdir yamlFiles
 fi
 
-TAG=`cat $WORKSPACE/CURRENT_SM`
+TAG=`cat CURRENT_SM`
 
-rm -rf $WORKSPACE/yamlFiles/sm.*
-cp $WORKSPACE/sm.yaml $WORKSPACE/yamlFiles/sm.$TAG.yaml
-cd $WORKSPACE/yamlFiles/
+rm -rf yamlFiles/sm.*
+cp sm.yaml yamlFiles/sm.$TAG.yaml
+cd yamlFiles/
 echo "****************************************************"
 echo "data.stack:sm :: Preparing yaml file "
 echo "****************************************************"

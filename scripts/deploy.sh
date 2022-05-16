@@ -1,6 +1,8 @@
 #!/bin/bash
 
-TAG=`cat $WORKSPACE/CURRENT_SM`
+set -e
+
+TAG=`cat CURRENT_SM`
 
 
 echo "****************************************************"
