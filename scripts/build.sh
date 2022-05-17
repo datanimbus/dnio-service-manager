@@ -9,7 +9,11 @@ echo "data.stack:sm :: Building SM using TAG :: $TAG"
 echo "****************************************************"
 
 
-docker build -t data.stack.sm:$TAG .
+if [ $cleanBuild ]; then
+    docker build --no-cache -t data.stack.sm:$TAG .
+else 
+    docker build -t data.stack.sm:$TAG .
+fi
 
 
 echo "****************************************************"
@@ -22,7 +26,11 @@ echo "****************************************************"
 
 cd $WORKSPACE/ds-base
 
-docker build -t data.stack.base:$TAG .
+if [ $cleanBuild ]; then
+    docker build --no-cache -t data.stack.base:$TAG .
+else 
+    docker build -t data.stack.base:$TAG .
+fi
 
 
 echo "****************************************************"
