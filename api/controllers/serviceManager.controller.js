@@ -409,7 +409,7 @@ draftSchema.pre('save', function (next) {
 
 schema.pre('save', async function (next, req) {
 	try {
-		if (!this.isNew && this.stateModel && this.stateModel.enabled) {
+		if (!this.isNew && this.stateModel && this.stateModel.enabled && this.isStateModelChanged) {
 			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
@@ -1218,6 +1218,7 @@ e.deployAPIHandler = (_req, _res) => {
 	let isApiEndpointChanged = false;
 	let removeSoftDeletedRecords = false;
 	let isWorkflowChanged = false;
+	let isStateModelChanged = false;
 
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
@@ -1378,6 +1379,16 @@ e.deployAPIHandler = (_req, _res) => {
 								isReDeploymentRequired = true;
 							}
 
+							let oldModel = JSON.parse(JSON.stringify(oldData.stateModel));
+							let newModel = JSON.parse(JSON.stringify(newData.stateModel));
+							delete oldModel.enabled;
+							delete newModel.enabled;
+							let stateModelComparison = deepEqual(oldModel, newModel);
+							if (!stateModelComparison) {
+								isStateModelChanged = true;
+								isReDeploymentRequired = true;
+							}
+
 							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) newData.version = _d.version + 1;
 
 							logger.info(`[${txnId}] Redeployment required for service ${ID}? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
@@ -1390,6 +1401,7 @@ e.deployAPIHandler = (_req, _res) => {
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
 							_d.isWorkflowChanged = isWorkflowChanged;
+							_d.isStateModelChanged = isStateModelChanged;
 							if (!definitionComparison) _d.definition = newDefinition;
 
 							let promise = Promise.resolve();
