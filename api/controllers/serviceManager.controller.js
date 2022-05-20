@@ -413,7 +413,8 @@ schema.pre('save', async function (next, req) {
 			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
+			let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state });
+			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states}}, { $set: obj });
 			logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
@@ -1402,6 +1403,7 @@ e.deployAPIHandler = (_req, _res) => {
 							_d.draftVersion = null;
 							_d.isWorkflowChanged = isWorkflowChanged;
 							_d.isStateModelChanged = isStateModelChanged;
+							_d.oldModel = oldModel;
 							if (!definitionComparison) _d.definition = newDefinition;
 
 							let promise = Promise.resolve();
