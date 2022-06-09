@@ -174,6 +174,38 @@ schema.pre('validate', function (next) {
 schema.pre('save', function (next, req) {
 	let self = this;
 	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating if service is schemafree`);
+
+	if (self.schemaFree) {
+		if (self.stateModel && self.stateModel.enabled) {
+			next(new Error('Schema Free service can not have state model enabled.'));
+		}
+		if (self.workflowConfig && self.workflowConfig.enabled) {
+			next(new Error('Schema Free service can not have workflow enabled.'));
+		}
+	}
+	next();
+});
+
+draftSchema.pre('save', function (next, req) {
+	let self = this;
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Adding metadata details`);
+
+	if (self.schemaFree) {
+		if (self.stateModel && self.stateModel.enabled) {
+			next(new Error('Schema Free service can not have state model enabled.'));
+		}
+		if (self.workflowConfig && self.workflowConfig.enabled) {
+			next(new Error('Schema Free service can not have workflow enabled.'));
+		}
+	}
+	next();
+});
+
+schema.pre('save', function (next, req) {
+	let self = this;
+	let txnId = req && req.headers && req.headers['TxnId'];
 	logger.debug(`[${txnId}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
