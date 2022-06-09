@@ -54,7 +54,8 @@ var draftOptions = {
 
 schema.pre('validate', function (next) {
 	var self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
+	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
@@ -72,7 +73,8 @@ schema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	var self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
+	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api = self.api.trim();
@@ -110,7 +112,8 @@ schema.post('save', function (error, doc, next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
+	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -131,7 +134,8 @@ draftSchema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
+	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -155,7 +159,8 @@ draftSchema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	let self = this;
 	let app = self.app;
-	// logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
+	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
 
 	let dsCalendarDetails = getCalendarDSDetails(app);
 	if (self.isNew && self.type != 'internal') {
@@ -168,7 +173,40 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating if service is schemafree`);
+
+	if (self.schemaFree) {
+		if (self.stateModel && self.stateModel.enabled) {
+			next(new Error('Schema Free service can not have state model enabled.'));
+		}
+		if (self.workflowConfig && self.workflowConfig.enabled) {
+			next(new Error('Schema Free service can not have workflow enabled.'));
+		}
+	}
+	next();
+});
+
+draftSchema.pre('save', function (next, req) {
+	let self = this;
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Adding metadata details`);
+
+	if (self.schemaFree) {
+		if (self.stateModel && self.stateModel.enabled) {
+			next(new Error('Schema Free service can not have state model enabled.'));
+		}
+		if (self.workflowConfig && self.workflowConfig.enabled) {
+			next(new Error('Schema Free service can not have workflow enabled.'));
+		}
+	}
+	next();
+});
+
+schema.pre('save', function (next, req) {
+	let self = this;
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
@@ -183,7 +221,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
@@ -195,7 +234,8 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating definition`);
 	try {
 		if (self.definition) schemaValidate(self.definition);
 		next();
@@ -206,7 +246,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating definition`);
 	try {
 		schemaValidate(self.definition);
 		next();
@@ -228,7 +269,8 @@ function reserved(def) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Checking attribute names for reserved words`);
 	try {
 		if (self.definition) reserved(self.definition);
 		next();
@@ -239,7 +281,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Checking attribute names for reserved words`);
 	try {
 		reserved(self.definition);
 		next();
@@ -250,7 +293,8 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating schema fields for default value`);
 	if (self.definition) {
 		schemaValidateDefault(self.definition, self.app)
 			.then(() => {
@@ -267,7 +311,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating schema fields for default value`);
 	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
 			next();
@@ -322,7 +367,8 @@ function nameUniqueCheck(name, app, srvcId) {
 }
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -331,7 +377,8 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -340,7 +387,8 @@ draftSchema.pre('save', function (next, req) {
 });
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -349,7 +397,8 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -360,7 +409,8 @@ draftSchema.pre('save', function (next, req) {
 schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2000));
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -375,7 +425,8 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -408,26 +459,28 @@ draftSchema.pre('save', function (next) {
 });
 
 schema.pre('save', async function (next, req) {
+	let txnId = req && req.headers && req.headers['TxnId'];
 	try {
 		if (!this.isNew && this.stateModel && this.stateModel.enabled && this.isStateModelChanged) {
-			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
+			logger.info(`[${txnId}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
 			let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state });
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states}}, { $set: obj });
-			logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
+			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states} }, { $set: obj });
+			logger.debug(`[${txnId}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
 	} catch (err) {
-		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		logger.error(`[${txnId}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
 
 schema.pre('save', async function (next, req) {
+	let txnId = req && req.headers && req.headers['TxnId'];
 	try {
 		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
-			logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
+			logger.info(`[${txnId}] Updating existing work items to first step for service :: ${this._id}`);
 			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
 			let workItems = await collection.find({ status: 'Pending', app: this.app, serviceId: this._id });
 			workItems.forEach(item => {
@@ -440,7 +493,7 @@ schema.pre('save', async function (next, req) {
 		}
 		next();
 	} catch (err) {
-		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		logger.error(`[${txnId}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
@@ -615,11 +668,12 @@ function checkOutGoingRelation(serviceId) {
 }
 //remove incoming relation of the entity 
 function removeIncomingRelation(serviceId, req) {
-	logger.info(`[${req.get('TxnId')}] ${serviceId} : Removing incoming relationships`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.info(`[${txnId}] ${serviceId} : Removing incoming relationships`);
 	let promiseArr = [];
 	return crudder.model.find({ 'relatedSchemas.incoming.service': serviceId })
 		.then(docs => {
-			logger.info(`[${req.get('TxnId')}] ${serviceId} : Found ${docs.length} incoming relationships`);
+			logger.info(`[${txnId}] ${serviceId} : Found ${docs.length} incoming relationships`);
 			docs.forEach(doc => {
 				if (doc && !_.isEmpty(doc.relatedSchemas.incoming)) {
 					doc.relatedSchemas.incoming = doc.relatedSchemas.incoming.filter(obj => obj.service != serviceId);
