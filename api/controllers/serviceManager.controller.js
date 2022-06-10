@@ -465,8 +465,14 @@ schema.pre('save', async function (next, req) {
 			logger.info(`[${txnId}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
-			let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state });
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states} }, { $set: obj });
+			let status;
+			if (this.oldModel.states) {
+				let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state });
+				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states} }, { $set: obj });
+			} else {
+				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
+			}
+			
 			logger.debug(`[${txnId}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
