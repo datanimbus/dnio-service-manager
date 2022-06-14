@@ -74,5 +74,11 @@ pipeline {
                 sh "./scripts/push_hub.sh"
             }
         }
+        stage('Clean Up') {
+            steps {
+                sh "chmod 777 ./scripts/cleanup.sh"
+                sh "./scripts/cleanup.sh"
+            }
+        }
     }
 }
