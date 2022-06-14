@@ -168,7 +168,7 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
@@ -183,7 +183,7 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
@@ -195,7 +195,7 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
 	try {
 		if (self.definition) schemaValidate(self.definition);
 		next();
@@ -206,7 +206,7 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
 	try {
 		schemaValidate(self.definition);
 		next();
@@ -228,7 +228,7 @@ function reserved(def) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
 	try {
 		if (self.definition) reserved(self.definition);
 		next();
@@ -239,7 +239,7 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
 	try {
 		reserved(self.definition);
 		next();
@@ -250,7 +250,7 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
 	if (self.definition) {
 		schemaValidateDefault(self.definition, self.app)
 			.then(() => {
@@ -267,7 +267,7 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
 	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
 			next();
@@ -322,7 +322,7 @@ function nameUniqueCheck(name, app, srvcId) {
 }
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -331,7 +331,7 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -340,7 +340,7 @@ draftSchema.pre('save', function (next, req) {
 });
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -349,7 +349,7 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -360,7 +360,7 @@ draftSchema.pre('save', function (next, req) {
 schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2000));
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -375,7 +375,7 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -410,16 +410,16 @@ draftSchema.pre('save', function (next) {
 schema.pre('save', async function (next, req) {
 	try {
 		if (!this.isNew && this.stateModel && this.stateModel.enabled && this.isStateModelChanged) {
-			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
+			// logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
 			let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state });
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states}}, { $set: obj });
-			logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
+			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: { "$nin": states } }, { $set: obj });
+			// logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
 	} catch (err) {
-		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		// logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
@@ -427,7 +427,7 @@ schema.pre('save', async function (next, req) {
 schema.pre('save', async function (next, req) {
 	try {
 		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
-			logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
+			// logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
 			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
 			let workItems = await collection.find({ status: 'Pending', app: this.app, serviceId: this._id });
 			workItems.forEach(item => {
@@ -440,7 +440,7 @@ schema.pre('save', async function (next, req) {
 		}
 		next();
 	} catch (err) {
-		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		// logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
@@ -865,7 +865,7 @@ e.createDoc = (_req, _res) => {
 				}
 			})
 			.catch(_e => {
-				logger.error(_e.message);
+				logger.error(_e);
 				if (serviceObj && serviceObj._id) {
 					crudder.model.remove({
 						_id: serviceObj._id
@@ -876,10 +876,9 @@ e.createDoc = (_req, _res) => {
 				}
 				if (!_res.headersSent) {
 					_res.status(400).json({
-						message: _e.message
+						message: _e ? _e.message : 'Something Went Wrong'
 					});
 				}
-				logger.error(_e);
 			});
 	} catch (e) {
 		if (!_res.headersSent) {
