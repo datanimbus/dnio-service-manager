@@ -30,7 +30,7 @@
         "fs-extra": "^5.0.0",
         "json-to-pretty-yaml": "^1.2.2",
         "lodash": "^4.17.20",
-        "log4js": "^6.3.0",
+        "log4js": "^6.5.2",
         "mongodb": "^3.7.3",
         "mongoose": "^5.13.14",
         "node-cron": "^3.0.0",
