@@ -230,9 +230,6 @@ draftSchema.pre('save', function (next, req) {
 	let txnId = req && req.headers && req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service Pre :: Adding metadata details`);
 
-	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
-	}
 	let user = req.headers ? req.headers.user : 'AUTO';
 	self._metadata.lastUpdatedBy = user;
 	next();
@@ -931,7 +928,7 @@ e.createDoc = (_req, _res) => {
 				}
 			})
 			.catch(_e => {
-				logger.error(_e.message);
+				logger.error(_e);
 				if (serviceObj && serviceObj._id) {
 					crudder.model.remove({
 						_id: serviceObj._id
@@ -942,10 +939,9 @@ e.createDoc = (_req, _res) => {
 				}
 				if (!_res.headersSent) {
 					_res.status(400).json({
-						message: _e.message
+						message: _e ? _e.message : 'Something Went Wrong'
 					});
 				}
-				logger.error(_e);
 			});
 	} catch (e) {
 		if (!_res.headersSent) {
