@@ -54,7 +54,7 @@ var draftOptions = {
 
 schema.pre('validate', function (next) {
 	var self = this;
-	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
 	logger.debug(`[${txnId}] Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
@@ -73,11 +73,17 @@ schema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	var self = this;
-	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api = self.api.trim();
+
+	if (self.workflowConfig && self.workflowConfig.makerCheckers && self.workflowConfig.makerCheckers[0]) {
+		self.workflowConfig.makerCheckers[0].steps.forEach(item => {
+			item.name = item.name.trim();
+		});
+	}
 
 	if (_.isEmpty(self.name)) next(new Error('name is empty'));
 	if (_.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
@@ -112,7 +118,7 @@ schema.post('save', function (error, doc, next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
-	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
@@ -134,7 +140,7 @@ draftSchema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
-	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
@@ -159,7 +165,7 @@ draftSchema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	let self = this;
 	let app = self.app;
-	let txnId =  self.req && self.req.headers && self.req.headers['TxnId'];
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
 	logger.debug(`[${txnId}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
 
 	let dsCalendarDetails = getCalendarDSDetails(app);
@@ -467,12 +473,12 @@ schema.pre('save', async function (next, req) {
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
 			let status;
 			if (this.oldModel.states) {
-				let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state });
-				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: {"$nin": states} }, { $set: obj });
+				let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state; });
+				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: { '$nin': states } }, { $set: obj });
 			} else {
 				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
 			}
-			
+
 			logger.debug(`[${txnId}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
