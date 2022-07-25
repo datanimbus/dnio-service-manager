@@ -8,6 +8,7 @@ const tagsController = require('./tags.controller.js');
 const swaggerDocController = require('./swaggerDoc.controller.js');
 const serviceAuditController = require('./service.audit.controller.js');
 const globalSchemaAuditController = require('./globalSchema.audit.controller.js');
+const bulkCreateController = require('./bulk-create.controller');
 // const internalController = require('./internal.controller.js');
 
 // //exports
@@ -80,6 +81,10 @@ router.post('/:app/service', serviceManagerController.create);
 router.get('/:app/service/:id', serviceManagerController.show);
 router.put('/:app/service/:id', serviceManagerController.update);
 router.delete('/:app/service/:id', serviceManagerController.destroy);
+router.post('/:app/service/utils/import/upload', serviceManagerController.importFromXLSX);
+router.post('/:app/service/utils/import', bulkCreateController.notificationIndex);
+router.post('/:app/service/utils/import/:id', bulkCreateController.notificationShow);
+router.post('/:app/service/utils/import/count', bulkCreateController.notificationCount);
 router.get('/:app/service/utils/verifyHook', serviceManagerController.verifyHook);
 router.get('/:app/service/utils/count', serviceManagerController.count);
 router.get('/:app/service/utils/status/count', serviceManagerController.countByStatus);

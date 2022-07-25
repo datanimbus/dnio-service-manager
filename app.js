@@ -13,6 +13,7 @@ const bluebird = require('bluebird');
 const mongoose = require('mongoose');
 const socket = require('socket.io');
 const mongo = require('mongodb').MongoClient;
+const upload = require('express-fileupload');
 let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
 global.Promise = bluebird;
@@ -24,6 +25,7 @@ const app = express();
 app.use(express.json({
 	limit: '5mb'
 }));
+app.use(upload({ useTempFiles: true }));
 // let init = require('./util/init/init');
 if (envConfig.isK8sEnv()) {
 	logger.info('*** K8s environment detected ***');

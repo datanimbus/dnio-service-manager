@@ -38,6 +38,7 @@ const commonUrls = [
 	'/sm/{app}/service',
 	'/sm/{app}/service/{id}',
 	'/sm/{app}/service/utils/{name}',
+	'/sm/{app}/service/utils/import/upload',
 	'/sm/{app}/service/utils/count',
 	'/sm/{app}/service/utils/audit',
 	'/sm/{app}/service/utils/audit/count',
@@ -187,6 +188,10 @@ function canAccessPath(req) {
 				return false;
 			}
 		}
+		return true;
+	}
+
+	if (compareURL('/sm/{app}/service/utils/import/upload', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/sm/{app}/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {

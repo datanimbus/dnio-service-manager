@@ -28,6 +28,8 @@ const definition = require('../helpers/serviceManager.definition.js').definition
 let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
 const schemaValidateDefault = require('../helpers/util/smhelper.js').schemaValidateDefault;
 
+const xlsxUtils = require('../helpers/util/xlsx.utils');
+
 const startPort = 20010;
 const logger = global.logger;
 var client = queueMgmt.client;
@@ -1435,11 +1437,12 @@ e.deployAPIHandler = (_req, _res) => {
 									isReDeploymentRequired = true;
 								}
 							}
-
-							let workflowComparison = deepEqual(oldData.workflowConfig, newData.workflowConfig);
-							if (!workflowComparison) {
-								isWorkflowChanged = true;
-								isReDeploymentRequired = true;
+							if(oldData.workflowConfig && newData.workflowConfig){
+								let workflowComparison = deepEqual(oldData.workflowConfig, newData.workflowConfig);
+								if (!workflowComparison) {
+									isWorkflowChanged = true;
+									isReDeploymentRequired = true;
+								}
 							}
 
 							let oldModel = JSON.parse(JSON.stringify(oldData.stateModel));
@@ -3243,6 +3246,30 @@ async function getYamls(req, res) {
 	}
 }
 
+async function importFromXLSX(req, res) {
+	try {
+		let socket = req.app.get('socket');
+		const serviceTransfers = mongoose.model('service-transfers');
+		const transfersDoc = new serviceTransfers({
+			app: req.params.app,
+			fileName: req.files.file.name,
+			status: 'Pending',
+			user: req.user._id
+		});
+		const doc = await transfersDoc.save(req);
+		deployUtil.sendToSocket(socket, 'serviceImport', { message: 'File Import Processing', _id: doc._id, app: doc.app });
+		res.status(200).json({ message: 'Processing File' });
+		const results = await xlsxUtils.readFileForDataService(req);
+		doc.result = results;
+		await doc.save(req);
+		deployUtil.sendToSocket(socket, 'serviceImport', { message: 'File Import Processed', _id: doc._id, app: doc.app });
+	} catch (err) {
+		logger.error(err);
+		res.status(400).json({ message: err.message });
+	}
+
+}
+
 module.exports = {
 	create: e.createDoc,
 	index: customIndex,
@@ -3276,5 +3303,6 @@ module.exports = {
 	enableCalendar: enableCalendar,
 	disableCalendar: disableCalendar,
 	checkUnique: checkUnique,
-	countByStatus: countByStatus
+	countByStatus: countByStatus,
+	importFromXLSX
 };
