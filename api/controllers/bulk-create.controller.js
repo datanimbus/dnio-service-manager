@@ -6,18 +6,27 @@ const cuti = require('@appveen/utils');
 
 const definition = {
     _id: {
-        type: 'Object'
+        type: 'String'
     },
     data: {
         type: 'Object'
     },
+    fileId: {
+        type: 'String'
+    },
     app: {
         type: 'String'
     },
-    serviceId: {
+    name: {
         type: 'String'
     },
     status: {
+        type: 'String'
+    },
+    error: {
+        type: 'String'
+    },
+    message: {
         type: 'String'
     }
 };
@@ -36,6 +45,9 @@ const crudder = new SMCrud(schema, 'service-imports', options);
 
 
 const notificationDefinition = {
+    _id: {
+        type: 'String'
+    },
     app: {
         type: 'String'
     },
@@ -50,6 +62,12 @@ const notificationDefinition = {
     },
     result: {
         type: 'Object'
+    },
+    error: {
+        type: 'String'
+    },
+    message: {
+        type: 'String'
     }
 };
 
@@ -60,6 +78,7 @@ const notificationOptions = {
     collectionName: 'services.fileTransfers'
 };
 
+notificationSchema.pre('save', cuti.counter.getIdGenerator('IMPORT', 'services.fileTransfers', null, null, 1000));
 const notificationCrudder = new SMCrud(notificationSchema, 'service-transfers', notificationOptions);
 
 

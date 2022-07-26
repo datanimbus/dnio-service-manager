@@ -3,42 +3,31 @@ const _ = require('lodash');
 const { ObjectUtils } = require('@appveen/json-utils');
 const mongoose = require('mongoose');
 
-async function readFileForDataService(req) {
-    const servciceModel = mongoose.model('services');
+async function readFileForDataService(req, fileTransferId) {
     const importModel = mongoose.model('service-imports');
-    const app = req.params.app;
     const workBook = XLSX.readFile(req.files.file.tempFilePath);
     let promises = workBook.SheetNames.map(async (sheet) => {
         const result = {};
         try {
             const dataService = {};
             dataService.name = sheet;
-            dataService.app = req.params.app;
-
             const sheetBoook = workBook.Sheets[sheet];
             let records = XLSX.utils.sheet_to_json(sheetBoook, { blankrows: false });
             records = records.map(ObjectUtils.unFlatten);
             const json = records[0];
             dataService.definition = convertToDefinition(json);
+            dataService.fileId = fileTransferId;
 
-            // Creating Data Service Doc
-            const doc = new servciceModel(dataService);
-            const status = await doc.save(req);
-            result.statusCode = 200;
-            result.body = status;
-
-            // Inserting Records into temp collection
             records = records.map(row => {
-                const temp = {};
+                const temp = _.cloneDeep(dataService);
                 temp.data = row;
-                temp.app = app;
-                temp.serviceId = status._id;
                 temp.status = 'Pending';
                 return temp;
             });
             const dataDoc = new importModel(records);
             await dataDoc.save(req);
-
+            result.statusCode = 200;
+            result.body = { name: sheet, count: records.length };
         } catch (err) {
             result.statusCode = 400;
             result.body = err;
