@@ -3248,6 +3248,7 @@ async function getYamls(req, res) {
 
 async function importFromXLSX(req, res) {
 	let doc;
+	let responseSent = false;
 	try {
 		let socket = req.app.get('socket');
 		const serviceTransfers = mongoose.model('service-transfers');
@@ -3259,32 +3260,37 @@ async function importFromXLSX(req, res) {
 		});
 		doc = await transfersDoc.save(req);
 		deployUtil.sendToSocket(socket, 'serviceImport', { message: 'File Import Processing', _id: doc._id, app: doc.app });
-		res.status(200).json({ message: 'Processing File' });
+		res.status(200).json({ message: 'File is Processing' });
+		responseSent = true;
 		const result = await xlsxUtils.readFileForDataService(req, doc._id);
 		if (!result || result.length == 0) {
 			doc.status = 'Error';
 			doc.error = 'Unable to read file';
 			await doc.save(req);
-			return res.status(400).json({ message: 'Something Went Wrong While reading the File' });
+			// res.status(400).json({ message: 'Something Went Wrong While reading the File' });
+			return;
 		}
 		if (result.some(e => e.statusCode != '200')) {
 			doc.status = 'Error';
 			doc.error = 'Errors in File Data';
 			doc.result = result.map(e => e.body);
 			await doc.save(req);
-			return res.status(400).json({ message: 'Errors found in File Data' });
+			// res.status(400).json({ message: 'Errors found in File Data' });
+			return;
 		}
 		doc.result = result.map(e => e.body);
 		doc.status = 'Uploaded';
 		await doc.save(req);
 		deployUtil.sendToSocket(socket, 'serviceImport', { message: 'File Import Processed', _id: doc._id, app: doc.app });
-		res.status(200).json({ result, importId: doc._id });
+		// res.status(200).json({ result, importId: doc._id });
 	} catch (err) {
 		doc.status = 'Error';
 		doc.error = err.message;
 		await doc.save(req);
 		logger.error(err);
-		res.status(400).json({ message: err.message });
+		if (!responseSent) {
+			res.status(400).json({ message: err.message });
+		}
 	}
 
 }

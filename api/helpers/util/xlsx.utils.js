@@ -1,40 +1,38 @@
-const XLSX = require('xlsx');
-const _ = require('lodash');
-const { ObjectUtils } = require('@appveen/json-utils');
+const path = require('path');
+const { Worker } = require('worker_threads');
 const mongoose = require('mongoose');
 
 async function readFileForDataService(req, fileTransferId) {
     const importModel = mongoose.model('service-imports');
-    const workBook = XLSX.readFile(req.files.file.tempFilePath);
-    let promises = workBook.SheetNames.map(async (sheet) => {
-        const result = {};
-        try {
-            const dataService = {};
-            dataService.name = sheet;
-            const sheetBoook = workBook.Sheets[sheet];
-            let records = XLSX.utils.sheet_to_json(sheetBoook, { blankrows: false });
-            records = records.map(ObjectUtils.unFlatten);
-            const json = records[0];
-            dataService.definition = convertToDefinition(json);
-            dataService.fileId = fileTransferId;
 
-            records = records.map(row => {
-                const temp = _.cloneDeep(dataService);
-                temp.data = row;
-                temp.status = 'Pending';
-                return temp;
-            });
-            const dataDoc = new importModel(records);
-            await dataDoc.save(req);
-            result.statusCode = 200;
-            result.body = { name: sheet, count: records.length };
-        } catch (err) {
-            result.statusCode = 400;
-            result.body = err;
-        }
-        return result;
+    const promise = new Promise((resolve, reject) => {
+        const wt = new Worker(path.join(__dirname, '../threads/read-xlsx.js'), {
+            workerData: {
+                fileTransferId,
+                app: req.params.app,
+                tempFilePath: req.files.file.tempFilePath
+            }
+        });
+        wt.on('message', function (data) {
+            resolve(data);
+        });
+        wt.on('error', function (data) {
+            reject(data);
+        });
     });
-    return await Promise.all(promises);
+    const data = await promise;
+    const results = [];
+    await data.reduce(async (prev, result) => {
+        results.push({ statusCode: result.statusCode, body: { name: result.body.name, count: result.body.records.length } });
+        await prev;
+        let p = result.body.records.map(async (row) => {
+            const dataDoc = new importModel(row);
+            return await dataDoc.save(req);
+        });
+        return Promise.all(p);
+    }, Promise.resolve());
+
+    return results;
 }
 
 

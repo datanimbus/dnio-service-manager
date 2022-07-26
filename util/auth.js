@@ -39,6 +39,10 @@ const commonUrls = [
 	'/sm/{app}/service/{id}',
 	'/sm/{app}/service/utils/{name}',
 	'/sm/{app}/service/utils/import/upload',
+	'/sm/{app}/service/utils/import/list',
+	'/sm/{app}/service/utils/import/{id}/show',
+	'/sm/{app}/service/utils/import/{id}/start',
+	'/sm/{app}/service/utils/import/{id}/clean',
 	'/sm/{app}/service/utils/count',
 	'/sm/{app}/service/utils/audit',
 	'/sm/{app}/service/utils/audit/count',
@@ -192,6 +196,18 @@ function canAccessPath(req) {
 	}
 
 	if (compareURL('/sm/{app}/service/utils/import/upload', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/list', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/{id}/show', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/{id}/start', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/{id}/clean', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/sm/{app}/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
