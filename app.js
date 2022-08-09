@@ -47,7 +47,7 @@ function customLogger(coll, op, doc, proj) {
 
 if (envConfig.debugDB) mongoose.set('debug', customLogger);
 
-MongoClient.connect(mongoAppcenterUrl, (error, db) => {
+MongoClient.connect(mongoAppcenterUrl, envConfig.mongoAppcenterOptions, (error, db) => {
 	if (error) logger.error(error.message);
 	if (db) {
 		global.mongoConnection = db;

@@ -2459,7 +2459,7 @@ e.getCounter = (_req, _res) => {
 let initDone = false;
 e.readiness = function (req, res) {
 	if (!initDone) {
-		require('../../util/init/init')();
+		// require('../../util/init/init')();
 		initDone = true;
 	}
 	return res.status(200).json();
