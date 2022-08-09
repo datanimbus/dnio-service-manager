@@ -105,13 +105,15 @@ module.exports = {
 		stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
-		// reconnectTries: process.env.MONGO_RECONN_TRIES,
-		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		reconnectTries: process.env.MONGO_RECONN_TRIES,
+		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
+		useNewUrlParser: true
 	},
 	mongoAppcenterOptions: {
-		// numberOfRetries: process.env.MONGO_RECONN_TRIES,
-		// retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
+		numberOfRetries: process.env.MONGO_RECONN_TRIES,
+		retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
+		useNewUrlParser: true
 	},
 	enableSearchIndex: (process.env.DS_FUZZY_SEARCH && process.env.DS_FUZZY_SEARCH.toLowerCase() === 'true') || false,
 	allowedExt,
