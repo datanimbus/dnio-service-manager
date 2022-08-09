@@ -80,18 +80,30 @@ function initSocket(server) {
 }
 
 let authorDBName = envConfig.mongoOptions.dbName;
-(async () => {
-	try {
-		await mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions);
+// (async () => {
+// 	try {
+// 		await mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions);
+// 		logger.info(`Connected to ${authorDBName} DB`);
+// 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
+// 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
+// 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+// 		require('./util/init/fixDataService')();
+// 	} catch (err) {
+// 		logger.error(err);
+// 	}
+// })();
+mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions, err => {
+	if (err) {
+		logger.error(err.message);
+	} else {
 		logger.info(`Connected to ${authorDBName} DB`);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
 		require('./util/init/fixDataService')();
-	} catch (err) {
-		logger.error(err);
 	}
-})();
+});
+
 
 mongoose.connection.on('connecting', () => {
 	logger.info(authorDBName + ' DB connecting');
