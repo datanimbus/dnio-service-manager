@@ -385,6 +385,10 @@ var definition = {
 	},
 	'_metadata': {
 		'type': {
+			'deleted': {
+				'type': 'Boolean',
+				'default': false
+			},
 			'version': {
 				'release': { 'type': 'String' }
 			},
