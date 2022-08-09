@@ -2469,7 +2469,7 @@ e.readiness = function (req, res) {
 e.health = function (req, res) {
 	logger.trace('Mongo DB State:', mongoose.connection.readyState);
 	logger.trace('NATS State:', client && client.nc ? client.nc.connected : null);
-	if (mongoose.connection.readyState == mongoose.ConnectionStates.connected && client && client.nc && client.nc.connected) {
+	if (mongoose.connection.readyState == 1 && client && client.nc && client.nc.connected) {
 		return res.status(200).json();
 	} else {
 		return res.status(400).json();
