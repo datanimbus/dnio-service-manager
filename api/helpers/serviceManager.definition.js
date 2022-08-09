@@ -386,7 +386,7 @@ var definition = {
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': { 'type': 'Number' }
+				'release': { 'type': 'String' }
 			},
 			'lastUpdatedBy': { 'type': 'String' }
 		}
