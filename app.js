@@ -12,7 +12,7 @@ const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
 const mongoose = require('mongoose');
 const socket = require('socket.io');
-const mongo = require('mongodb').MongoClient;
+const { MongoClient } = require('mongodb');
 const upload = require('express-fileupload');
 let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
@@ -47,10 +47,7 @@ function customLogger(coll, op, doc, proj) {
 
 if (envConfig.debugDB) mongoose.set('debug', customLogger);
 
-mongo.connect(mongoAppcenterUrl, {
-	db: envConfig.mongoAppcenterOptions,
-	useNewUrlParser: true
-}, (error, db) => {
+MongoClient.connect(mongoAppcenterUrl, (error, db) => {
 	if (error) logger.error(error.message);
 	if (db) {
 		global.mongoConnection = db;
@@ -83,17 +80,18 @@ function initSocket(server) {
 }
 
 let authorDBName = envConfig.mongoOptions.dbName;
-mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions, err => {
-	if (err) {
-		logger.error(err.message);
-	} else {
+(async () => {
+	try {
+		await mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions);
 		logger.info(`Connected to ${authorDBName} DB`);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
 		require('./util/init/fixDataService')();
+	} catch (err) {
+		logger.error(err);
 	}
-});
+})();
 
 mongoose.connection.on('connecting', () => {
 	logger.info(authorDBName + ' DB connecting');
