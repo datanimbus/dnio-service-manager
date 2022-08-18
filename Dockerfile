@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apk update
 RUN apk upgrade
 
-RUN set -ex; apk add --no-cache --virtual .fetch-deps curl tar ;
+RUN set -ex; apk add --no-cache --virtual .fetch-deps curl tar git ;
 
 COPY package.json /app
 
