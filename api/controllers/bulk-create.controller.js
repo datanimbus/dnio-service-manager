@@ -1,7 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
 
 const definition = {
@@ -34,7 +34,7 @@ const definition = {
     }
 };
 
-const schema = new mongoose.Schema(definition);
+const schema = MakeSchema(definition);
 const logger = global.logger;
 
 const options = {
@@ -75,7 +75,7 @@ const notificationDefinition = {
     }
 };
 
-const notificationSchema = new mongoose.Schema(notificationDefinition);
+const notificationSchema = MakeSchema(notificationDefinition);
 
 const notificationOptions = {
     logger: logger,

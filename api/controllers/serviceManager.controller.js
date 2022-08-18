@@ -6,7 +6,7 @@ const request = require('request');
 const _ = require('lodash');
 const yamljs = require('json-to-pretty-yaml');
 
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
 
@@ -37,10 +37,10 @@ const destroyDeploymentRetry = 5;
 const draftDefinition = JSON.parse(JSON.stringify(definition));
 
 
-const schema = new mongoose.Schema(definition, {
+const schema = MakeSchema(definition, {
 	usePushEach: true
 });
-const draftSchema = new mongoose.Schema(draftDefinition, {
+const draftSchema = MakeSchema(draftDefinition, {
 	usePushEach: true
 });
 
