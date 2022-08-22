@@ -11,19 +11,24 @@ var definition = {
 		'required': true
 	},
 	'definition': {
-		'type': {
-			'definition': [{
-				'key': 'String',
+		'type': [
+			{
 				'type': 'String',
-				'definition': {
-					'type': 'Object',
-					'required': false
-				},
-				'properties': {
-					'type': 'Object'
-				}
-			}]
-		}
+				'definition': [
+					{
+						'key': 'String',
+						'type': 'String',
+						'definition': {
+							'type': 'Object',
+							'required': false
+						},
+						'properties': {
+							'type': 'Object'
+						}
+					}
+				]
+			}
+		]
 	},
 	'services': {
 		'type': ['String']
