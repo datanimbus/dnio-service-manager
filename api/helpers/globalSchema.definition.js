@@ -13,7 +13,13 @@ var definition = {
 	'definition': {
 		'type': [
 			{
-				'type': 'Object'
+				'type': 'Object',
+				default: function () {
+					return {
+						type: 'Object',
+						definition: []
+					}
+				}
 				// 'definition': [
 				// 	{
 				// 		'key': 'String',
