@@ -52,7 +52,9 @@ var definition = {
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': { 'type': 'String' }
+				'type': {
+					'release': { 'type': 'String' }
+				}
 			}
 		}
 	}

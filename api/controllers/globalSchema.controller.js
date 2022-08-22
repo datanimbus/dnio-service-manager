@@ -89,7 +89,7 @@ schema.pre('save', function (next) {
 	let self = this;
 	if (!self.definition) next();
 	let definition = self.definition;
-	if (definition) {
+	if (definition && definition[0]) {
 		if (!definition[0].definition || !Array.isArray(definition[0].definition)) {
 			next(new Error('Library definition is invalid'));
 		} else {
@@ -113,6 +113,9 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	let self = this;
+	if (self._metadata.version) {
+		self._metadata.version.release = process.env.RELEASE;
+	}
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
