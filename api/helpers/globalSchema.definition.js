@@ -13,20 +13,20 @@ var definition = {
 	'definition': {
 		'type': [
 			{
-				'type': 'String',
-				'definition': [
-					{
-						'key': 'String',
-						'type': 'String',
-						'definition': {
-							'type': 'Object',
-							'required': false
-						},
-						'properties': {
-							'type': 'Object'
-						}
-					}
-				]
+				'type': 'Object'
+				// 'definition': [
+				// 	{
+				// 		'key': 'String',
+				// 		'type': 'String',
+				// 		'definition': {
+				// 			'type': 'Object',
+				// 			'required': false
+				// 		},
+				// 		'properties': {
+				// 			'type': 'Object'
+				// 		}
+				// 	}
+				// ]
 			}
 		]
 	},
