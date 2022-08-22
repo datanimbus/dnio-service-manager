@@ -89,13 +89,15 @@ schema.pre('save', function (next) {
 	let self = this;
 	if (!self.definition) next();
 	let definition = self.definition;
-	if (!definition[0].definition || !Array.isArray(definition[0].definition)) {
-		next(new Error('Library definition is invalid'));
-	} else {
-		try {
-			validateDefinition(definition[0].definition);
-		} catch (err) {
+	if (definition) {
+		if (!definition[0].definition || !Array.isArray(definition[0].definition)) {
 			next(new Error('Library definition is invalid'));
+		} else {
+			try {
+				validateDefinition(definition[0].definition);
+			} catch (err) {
+				next(new Error('Library definition is invalid'));
+			}
 		}
 	}
 	next();
