@@ -1390,7 +1390,7 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
-	// swagger.paths['/utils/health/live'] = {
+	// swagger.paths['/internal/health/live'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'get': {
 	// 		description: 'Healthcheck API for service',
@@ -1406,7 +1406,7 @@ function generateYaml(config) {
 	// 	}
 	// };
 
-	// swagger.paths['/utils/health/ready'] = {
+	// swagger.paths['/internal/health/ready'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'get': {
 	// 		description: 'Healthcheck API for service',

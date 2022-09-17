@@ -73,7 +73,8 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		logger.trace(`[${txnId}] Environment variables to send to DM ${schema._id} :: ${JSON.stringify(deploymentEnvVars)}`);
 
 		let namespace = envVars['DATA_STACK_APP_NS'];
-		let port = schema.port;
+		// let port = schema.port;
+		let port = 80;
 		let name = (schema.api).substring(1).toLowerCase();
 		let version = schema.version;
 		let volumeMounts = {
@@ -87,8 +88,9 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		let options = {
 			livenessProbe: {
 				httpGet: {
-					path: `/${schema.app}${schema.api}/utils/health/live`,
-					port: schema.port,
+					path: `/api/internal/health/live`,
+					// port: schema.port,
+					port: 80,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
@@ -96,8 +98,9 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 			},
 			readinessProbe: {
 				httpGet: {
-					path: `/${schema.app}${schema.api}/utils/health/ready`,
-					port: schema.port,
+					path: `/api/internal/health/ready`,
+					// port: schema.port,
+					port: 80,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,

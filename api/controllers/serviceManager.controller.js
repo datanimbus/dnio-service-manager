@@ -2126,7 +2126,7 @@ e.changeStatus = function (req, res) {
 					.then(doc => {
 						if (doc && doc.status !== 'Active') {
 							logger.info(`[${req.get('TxnId')}] Service status of ${id} changed to ${status}`);
-							deployUtil.sendToSocket(socket, 'serviceStatus', { message: 'Deployed', _id: id, app: doc.app, port: doc.port, api: doc.api });
+							deployUtil.sendToSocket(socket, 'serviceStatus', { message: 'Deployed', _id: id, app: doc.app, port: 80, api: doc.api });
 						}
 						res.json({ message: 'Status changed', outgoingAPIs: outgoingAPIs });
 					})
@@ -2165,7 +2165,8 @@ e.StatusChangeFromMaintenance = function (req, res) {
 										message: 'Undeployed',
 										_id: id,
 										app: doc.app,
-										port: doc.port,
+										// port: doc.port,
+										port: 80,
 										api: doc.api
 									});
 								}
@@ -2488,7 +2489,8 @@ function changeStatusToMaintenance(req, ids, srvcId, status, message) {
 							message: 'Deployed',
 							_id: id,
 							app: doc.app,
-							port: doc.port,
+							// port: doc.port,
+							port: 80,
 							api: doc.api
 						});
 					}
@@ -3120,7 +3122,8 @@ async function getYamls(req, res) {
 		const doc = await crudder.model.findOne({ _id: req.params.id }).lean();
 
 		const namespace = (envConfig.dataStackNS + '-' + doc.app).toLowerCase();
-		const port = doc.port;
+		// const port = doc.port;
+		const port = 80;
 		const name = (doc.api).substring(1).toLowerCase();
 		const envVars = [];
 		envConfig.envkeysForDataService.forEach(key => {
@@ -3143,7 +3146,8 @@ async function getYamls(req, res) {
 			livenessProbe: {
 				httpGet: {
 					path: `/${doc.app}${doc.api}/utils/health/live`,
-					port: doc.port,
+					// port: doc.port,
+					port: 80,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
@@ -3152,7 +3156,8 @@ async function getYamls(req, res) {
 			readinessProbe: {
 				httpGet: {
 					path: `/${doc.app}${doc.api}/utils/health/ready`,
-					port: doc.port,
+					// port: doc.port,
+					port: 80,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
