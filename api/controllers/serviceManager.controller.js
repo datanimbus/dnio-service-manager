@@ -1814,7 +1814,7 @@ function dropCollections(collectionName, app, txnId) {
 			if (err) logger.error(`[${txnId}] DropCollection :: ${collectionName} :: ${err.message}`);
 			else if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${collectionName} deleted successfully`);
 		});
-		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks', '.workflow'];
+		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks', '.workflow', '.dedupe', '.exports'];
 		sufix.forEach(_s => {
 			let colName = collectionName + _s;
 			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${colName}`);
@@ -3158,7 +3158,7 @@ async function getYamls(req, res) {
 		const options = {
 			livenessProbe: {
 				httpGet: {
-					path: `/${doc.app}${doc.api}/utils/health/live`,
+					path: '/api/internal/health/live',
 					// port: doc.port,
 					port: 80,
 					scheme: 'HTTP'
@@ -3168,7 +3168,7 @@ async function getYamls(req, res) {
 			},
 			readinessProbe: {
 				httpGet: {
-					path: `/${doc.app}${doc.api}/utils/health/ready`,
+					path: '/api/internal/health/ready',
 					// port: doc.port,
 					port: 80,
 					scheme: 'HTTP'
