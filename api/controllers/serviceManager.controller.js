@@ -2803,9 +2803,9 @@ function validateUserDeletion(req, res) {
 			return Promise.all(promise)
 				.then(() => {
 					if (flag) {
-						res.status(500).json({ message: 'Document is in use' });
+						return res.status(500).json({ message: 'Document is in use' });
 					}
-					else res.status(200).json({});
+					res.status(200).json({})
 				});
 		});
 }
