@@ -2772,8 +2772,19 @@ function validateUserDeletion(req, res) {
 		.then(_d => {
 			promise = _d.map(data => {
 				let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
+				if (!data.relatedSchemas) {
+					data.relatedSchemas = {};
+				}
+				if (!data.relatedSchemas.internal) {
+					data.relatedSchemas.internal = {};
+				}
+				if (!data.relatedSchemas.internal.users) {
+					data.relatedSchemas.internal.users = [];
+				}
 				let filter = data.relatedSchemas.internal.users.map(doc => {
-					doc.filter = doc.filter.replace('{{id}}', id);
+					if (doc.filter) {
+						doc.filter = doc.filter.replace('{{id}}', id);
+					}
 					return doc;
 				});
 				pr = filter.map(doc => {
