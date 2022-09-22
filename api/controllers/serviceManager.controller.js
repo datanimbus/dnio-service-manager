@@ -2788,6 +2788,9 @@ function validateUserDeletion(req, res) {
 					return doc;
 				});
 				pr = filter.map(doc => {
+					if (!doc.filter) {
+						return Promise.resolve();
+					}
 					return db.collection(data.collectionName).find(JSON.parse(doc.filter)).count()
 						.then(count => {
 							if (count > 0 && doc.isRequired) {
@@ -2795,8 +2798,7 @@ function validateUserDeletion(req, res) {
 							}
 						});
 				});
-				return Promise.all(pr)
-					.then();
+				return Promise.all(pr).then();
 			});
 			return Promise.all(promise)
 				.then(() => {
