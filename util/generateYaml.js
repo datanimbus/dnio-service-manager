@@ -309,12 +309,12 @@ function getUpdateDefinition(def) {
 	if (def.constructor == {}.constructor && def['required']) {
 		delete def.required;
 	}
-	if(Array.isArray(def)) {
+	if (Array.isArray(def)) {
 		def.forEach(attr => {
 			if (attr != null && typeof attr === 'object')
 				getUpdateDefinition(attr);
 		});
-	} else if(def.constructor == {}.constructor) {
+	} else if (def.constructor == {}.constructor) {
 		Object.keys(def).forEach(key => {
 			if (def[key] != null && typeof def[key] === 'object')
 				getUpdateDefinition(def[key]);
@@ -778,7 +778,7 @@ function generateYaml(config) {
 				in: 'query',
 				type: 'string',
 				description: 'Time after which the document will get deleted.'
-			},{
+			}, {
 				name: 'upsert',
 				in: 'query',
 				type: 'boolean',
@@ -875,32 +875,39 @@ function generateYaml(config) {
 		};
 	}
 
-	// swagger.paths['/utils/file/upload'] = {
-	// 	'x-swagger-router-controller': `${methodName.controller}`,
-	// 	'post': {
-	// 		description: 'Uploads the file',
-	// 		operationId: `${methodName.fileUpload}`,
-	// 		parameters: [
-	// 			{
-	// 				name: 'authorization',
-	// 				in: 'header',
-	// 				type: 'string',
-	// 				description: 'The JWT token for req.validation'
-	// 			}
-	// 		],
-	// 		responses: {
-	// 			'200': {
-	// 				description: 'meta data of file'
-	// 			},
-	// 			'400': {
-	// 				description: 'Bad parameters'
-	// 			},
-	// 			'500': {
-	// 				description: 'Internal server error'
-	// 			}
-	// 		}
-	// 	}
-	// };
+	swagger.paths['/utils/file/upload'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: 'Uploads the file',
+			operationId: `${methodName.fileUpload}`,
+			parameters: [
+				{
+					name: 'authorization',
+					in: 'header',
+					type: 'string',
+					description: 'The JWT token for req.validation'
+				},
+				{
+					name: 'encryptionKey',
+					in: 'query',
+					type: 'string',
+					required: false,
+					description: 'Encryption Key to encrypt file',
+				}
+			],
+			responses: {
+				'200': {
+					description: 'meta data of file'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
 
 	// swagger.paths['/utils/file/{id}/view'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
@@ -933,31 +940,40 @@ function generateYaml(config) {
 	// 	}
 	// };
 
-	// swagger.paths['/utils/file/download/{id}'] = {
-	// 	'x-swagger-router-controller': `${methodName.controller}`,
-	// 	'get': {
-	// 		description: 'Download the file',
-	// 		parameters: [{
-	// 			name: 'id',
-	// 			in: 'path',
-	// 			type: 'string',
-	// 			required: true,
-	// 			description: 'Id of file',
-	// 		}],
-	// 		operationId: `${methodName.fileDownload}`,
-	// 		responses: {
-	// 			'200': {
-	// 				description: 'file download'
-	// 			},
-	// 			'400': {
-	// 				description: 'Bad parameters'
-	// 			},
-	// 			'500': {
-	// 				description: 'Internal server error'
-	// 			}
-	// 		}
-	// 	}
-	// };
+	swagger.paths['/utils/file/download/{id}'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: 'Download the file',
+			parameters: [
+				{
+					name: 'id',
+					in: 'path',
+					type: 'string',
+					required: true,
+					description: 'Id of file',
+				},
+				{
+					name: 'encryptionKey',
+					in: 'query',
+					type: 'string',
+					required: false,
+					description: 'Encryption Key to download decrypted file',
+				}
+			],
+			operationId: `${methodName.fileDownload}`,
+			responses: {
+				'200': {
+					description: 'file download'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
 
 	swagger.paths['/utils/export/download/{id}'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
