@@ -2732,7 +2732,22 @@ async function showByName(req, res) {
 }
 
 function customIndex(req, res) {
-	let draft = req.query.draft;
+	const app = req.params.app;
+	const draft = req.query.draft;
+	let filter = req.query.filter;
+	if (filter) {
+		try {
+			filter = JSON.parse(filter);
+		} catch (err) {
+			logger.error(err);
+			filter = null;
+		}
+	}
+	if (!filter) {
+		filter = {};
+	}
+	filter.app = app;
+	req.query.filter = JSON.stringify(filter);
 	if (draft)
 		draftCrudder.index(req, res);
 	else
