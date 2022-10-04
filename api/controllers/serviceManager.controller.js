@@ -1449,6 +1449,8 @@ e.deployAPIHandler = (_req, _res) => {
 							let newModel = JSON.parse(JSON.stringify(newData.stateModel));
 							delete oldModel.enabled;
 							delete newModel.enabled;
+							delete oldModel._id;
+							delete newModel._id;
 							let stateModelComparison = deepEqual(oldModel, newModel);
 							if (!stateModelComparison) {
 								isStateModelChanged = true;
