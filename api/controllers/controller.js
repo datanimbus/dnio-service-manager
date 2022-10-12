@@ -9,6 +9,7 @@ const swaggerDocController = require('./swaggerDoc.controller.js');
 const serviceAuditController = require('./service.audit.controller.js');
 const globalSchemaAuditController = require('./globalSchema.audit.controller.js');
 const bulkCreateController = require('./bulk-create.controller');
+const mlFileQueueController = require('./ml.filequeue.controller');
 // const internalController = require('./internal.controller.js');
 
 // //exports
@@ -126,6 +127,7 @@ router.get('/:app/tags', tagsController.tags);
 router.delete('/:app/internal/app', serviceManagerController.deleteApp);
 router.put('/:app/internal/validateUserDeletion/:userId', serviceManagerController.validateUserDeletion);
 router.put('/:app/internal/userDeletion/:userId', serviceManagerController.userDeletion);
+router.post('/:app/internal/filequeue', mlFileQueueController.create);
 router.get('/internal/health/live', serviceManagerController.health);
 router.get('/internal/health/ready', serviceManagerController.readiness);
 module.exports = router;

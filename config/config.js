@@ -157,7 +157,8 @@ module.exports = {
 		'STORAGE_AZURE_CONTAINER',
 		'STORAGE_AZURE_SHARED_KEY',
 		'STORAGE_AZURE_TIMEOUT',
-		'API_LOGS_METHODS'
+		'API_LOGS_METHODS',
+		'ML_FILE_PARSER'
 	],
 	baseImage: `${dockerReg}data.stack.base:${process.env.IMAGE_TAG}`,
 	isAcceptableK8sStatusCodes: statusCode => {
