@@ -22,8 +22,9 @@ const onlyAuthUrls = [
 
 const internalUrls = [
 	'/sm/{app}/internal/app',
+	'/sm/{app}/internal/filequeue',
 	'/sm/{app}/internal/validateUserDeletion/{userId}',
-	'/sm/{app}/userDeletion/{app}/{userId}',
+	'/sm/{app}/internal/userDeletion/{userId}',
 	'/sm/{app}/service/utils/{id}/statusChange',
 	'/sm/{app}/service/utils/{id}/statusChangeFromMaintenance',
 ];
