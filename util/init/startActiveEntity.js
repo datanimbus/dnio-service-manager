@@ -1,8 +1,6 @@
 let mongoose = require('mongoose');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
-let deploymentUtil = require('../../api/deploy/deploymentUtil');
-let globalDefHelper = require('../../api/helpers/util/globalDefinitionHelper');
-let dm = require('../../api/deploy/deploymentManager');
+let dm = require('../../api/deploy/deploymentUtil');
 let config = require('../../config/config');
 let logger = global.logger;
 function createNSifNotExist(_txnId, ns) {
@@ -30,14 +28,6 @@ function startEntityifStop(_txnId, _schemaDetails) {
 		.then(() => kubeutil.deployment.getDeployment(ns, deploymentName))
 		.then(_d => {
 			if (!_d || (_d && _d.statusCode != 404)) return;
-			let systemFields = {
-				'File': [],
-				'Geojson': []
-			};
-			deploymentUtil.getSystemFields(systemFields, '', _schemaDetails.definition, ['File', 'Geojson']);
-			_schemaDetails.definition = globalDefHelper.expandSchemaWithSystemGlobalDef(_schemaDetails.definition);
-			_schemaDetails.geoJSONFields = systemFields.Geojson;
-			_schemaDetails.fileFields = systemFields.File;
 			return dm.deployService(_txnId, _schemaDetails, false, false);
 		})
 		.then(() => logger.info(`[${_txnId}] Check and starting :: ${id} :: Deployment started`))
@@ -45,10 +35,10 @@ function startEntityifStop(_txnId, _schemaDetails) {
 }
 
 function init() {
-	let txnId = 'SM-StartIfStopped'; 
+	let txnId = 'SM-StartIfStopped';
 	setTimeout(() => {
 		logger.info(`[${txnId}] Starting data services which are not running in k8s`);
-		if(config.isK8sEnv()){
+		if (config.isK8sEnv()) {
 			mongoose.model('services').find({ 'status': 'Active' })
 				.then(services => {
 					let promises = services.map(_s => startEntityifStop(txnId, _s));

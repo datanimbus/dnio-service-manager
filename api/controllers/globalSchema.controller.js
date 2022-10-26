@@ -54,9 +54,9 @@ let deleteGSInUserMgmt = function (_id, _req) {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req.headers['txnid'],
-			'Authorization': _req.headers['authorization'],
-			'User': _req.headers['user']
+			'TxnId': _req.headers && _req.headers['txnid'],
+			'Authorization': _req.headers && _req.headers['authorization'],
+			'User': _req.headers && _req.headers['user']
 		},
 		json: true
 	};
@@ -83,29 +83,6 @@ function validateDefinition(schema) {
 			validateDefinition(sch['definition']);
 		}
 	});
-
-	// Object.keys(schema).forEach(_k => {
-	// 	if (!schema[_k][`type`] || !schema[_k][`properties`]) {
-	// 		throw new Error(`Library definition is invalid`);
-	// 	}
-	// 	if (schema[_k][`type`] === `object` || schema[_k][`type`] === `Array`) {
-	// 		if (!schema[_k][`definition`] || typeof schema[_k][`definition`] != `object`) {
-	// 			throw new Error(`Library definition is invalid`);
-	// 		}
-	// 		validateDefinition(schema[_k][`definition`]);
-	// 	}
-	// });
-}
-
-function updateInusrMgmt(srvcObj, definition, _req) {
-	let permObj = {
-		app: srvcObj.app,
-		entity: srvcObj._id,
-		entityName: srvcObj.name,
-		// to check => converted to array
-		definition: definition
-	};
-	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
 }
 
 schema.pre('save', function (next) {
@@ -198,7 +175,7 @@ function deployService(serv, socket, _req) {
 			return serv.save(_req);
 		})
 		.then(() => {
-			updateInusrMgmt(newServ, newServ.definition, _req).then(() => { });
+			// updateInusrMgmt(newServ, newServ.definition, _req).then(() => { });
 			return deployUtil.deployService(JSON.parse(JSON.stringify(newServ)), socket, _req, true, false);
 		});
 	// .then(() => {

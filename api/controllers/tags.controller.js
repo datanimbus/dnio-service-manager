@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const logger = global.logger;
 let e = {};
 e.tags = (_req, _res) => {
-	let tag = _req.swagger.params.tag.value;
+	let tag = _req.query.tag;
 	let regex = tag ? '^' + tag : '';
 	mongoose.model('services')
 		.aggregate([{

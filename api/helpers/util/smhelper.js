@@ -111,7 +111,7 @@ function schemaValidateDefault(schema, app) {
 
 function getFlows(id, _req) {
 	var options = {
-		url: envConfig.baseUrlPM + '/flow',
+		url: envConfig.baseUrlBM + '/flow',
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',

@@ -1,31 +1,39 @@
 'use strict';
 
+const net = require('net');
 const mongoose = require('mongoose');
-const definition = require('../helpers/serviceManager.definition.js').definition;
-const draftDefinition = JSON.parse(JSON.stringify(definition));
+const request = require('request');
+const _ = require('lodash');
+const yamljs = require('json-to-pretty-yaml');
+
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
-const request = require('request');
-const smhelper = require('../helpers/util/smhelper');
-const _ = require('lodash');
-const smHooks = require('../helpers/serviceManagerHooks.js');
-const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
-const envConfig = require('../../config/config.js');
-const relationManager = require('../helpers/relationManager.js');
-const deployUtil = require('../deploy/deploymentUtil');
-const k8s = require('../../util/k8s.js');
-const fileIO = require('../../util/codegen/lib/fileIO.js');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
-const kubeutil = require('@appveen/data.stack-utils').kubeutil;
-const net = require('net');
-let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
-let queueMgmt = require('../../util/queueMgmt');
+
+const k8s = require('../../util/k8s.js');
 let rolesUtil = require('../helpers/roles');
-//const fs = require('fs');
-var client = queueMgmt.client;
+let queueMgmt = require('../../util/queueMgmt');
+const envConfig = require('../../config/config.js');
+const smhelper = require('../helpers/util/smhelper');
+const deployUtil = require('../deploy/deploymentUtil');
+const smHooks = require('../helpers/serviceManagerHooks.js');
+const relationManager = require('../helpers/relationManager.js');
+const expandRelationHelper = require('../helpers/util/expandRelations');
+const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
+
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
 const schemaValidate = require('../helpers/util/smhelper.js').schemaValidate;
+const definition = require('../helpers/serviceManager.definition.js').definition;
+let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
 const schemaValidateDefault = require('../helpers/util/smhelper.js').schemaValidateDefault;
+
+const startPort = 20010;
+const logger = global.logger;
+var client = queueMgmt.client;
+const destroyDeploymentRetry = 5;
+const draftDefinition = JSON.parse(JSON.stringify(definition));
+
 
 const schema = new mongoose.Schema(definition, {
 	usePushEach: true
@@ -34,26 +42,23 @@ const draftSchema = new mongoose.Schema(draftDefinition, {
 	usePushEach: true
 });
 
-const logger = global.logger;
-const destroyDeploymentRetry = 5;
-const startPort = 20010;
-const expandRelationHelper = require('../helpers/util/expandRelations');
-
 var options = {
 	logger: logger,
 	collectionName: 'services'
 };
-
 var draftOptions = {
 	logger: logger,
 	collectionName: 'services.draft'
 };
 
+
 schema.pre('validate', function (next) {
 	var self = this;
+	// logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
+
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
-	// if (self.definition) self.definition = self.definition.trim();
+
 	if (self.name && _.isEmpty(self.name)) next(new Error('name is empty'));
 	if (self.definition && _.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
 	if (!_.isEmpty(self.preHooks)) {
@@ -67,9 +72,11 @@ schema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	var self = this;
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
+
 	self.name = self.name.trim();
 	self.api = self.api.trim();
-	// self.definition = self.definition.trim();
+
 	if (_.isEmpty(self.name)) next(new Error('name is empty'));
 	if (_.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
 	if (!_.isEmpty(self.preHooks)) {
@@ -103,6 +110,7 @@ schema.post('save', function (error, doc, next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -123,6 +131,7 @@ draftSchema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
+	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -146,6 +155,8 @@ draftSchema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	let self = this;
 	let app = self.app;
+	// logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
+
 	let dsCalendarDetails = getCalendarDSDetails(app);
 	if (self.isNew && self.type != 'internal') {
 		if (self.name == dsCalendarDetails.name) return next(new Error('Cannot use this name.'));
@@ -157,6 +168,8 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
+
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
@@ -170,6 +183,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
+
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
@@ -178,8 +193,9 @@ draftSchema.pre('save', function (next, req) {
 	next();
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
 	try {
 		if (self.definition) schemaValidate(self.definition);
 		next();
@@ -188,8 +204,9 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
 	try {
 		schemaValidate(self.definition);
 		next();
@@ -207,21 +224,11 @@ function reserved(def) {
 			return reserved(ele.definition);
 	});
 	return Promise.all(promise);
-	// var promise = Object.keys(def).map(function (key) {
-	// 	for (var i = 0; i < keywords.length; i++) {
-	// 		if (key.toLowerCase() == keywords[i]) {
-	// 			throw new Error(keywords[i] + ` cannot be used as an attribute name`);
-	// 		}
-	// 	}
-	// 	if (def[key].type == `Object` || def[key].type == `Array`) {
-	// 		return reserved(def[key].definition);
-	// 	}
-
-	// });
-	// return Promise.all(promise);
 }
-schema.pre('save', function (next) {
+
+schema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
 	try {
 		if (self.definition) reserved(self.definition);
 		next();
@@ -230,8 +237,9 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
 	try {
 		reserved(self.definition);
 		next();
@@ -240,8 +248,9 @@ draftSchema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
 	if (self.definition) {
 		schemaValidateDefault(self.definition, self.app)
 			.then(() => {
@@ -256,8 +265,9 @@ schema.pre('save', function (next) {
 
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
 	let self = this;
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
 	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
 			next();
@@ -311,7 +321,8 @@ function nameUniqueCheck(name, app, srvcId) {
 		});
 }
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -319,7 +330,8 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -327,7 +339,8 @@ draftSchema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -335,7 +348,8 @@ schema.pre('save', function (next) {
 	}
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -345,7 +359,8 @@ draftSchema.pre('save', function (next) {
 
 schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2000));
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
+	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -359,7 +374,8 @@ schema.pre('save', function (next) {
 	next();
 });
 
-draftSchema.pre('save', function (next) {
+draftSchema.pre('save', function (next, req) {
+	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -391,34 +407,45 @@ draftSchema.pre('save', function (next) {
 	next();
 });
 
-schema.pre('save', async function (next) {
+schema.pre('save', async function (next, req) {
 	try {
 		if (!this.isNew && this.stateModel && this.stateModel.enabled) {
-			logger.info(`Updating existing records with initial state in state model for service ${this._id}`);
+			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj});
-			logger.debug('Initial states updated - ', status);
+			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
+			logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
 	} catch (err) {
-		logger.error('Error updating initial state of existing records');
+		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		next(err);
+	}
+});
+
+schema.pre('save', async function (next, req) {
+	try {
+		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
+			logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
+			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
+			let workItems = await collection.find({ status: 'Pending', app: this.app, serviceId: this._id });
+			workItems.forEach(item => {
+				let obj = {};
+				obj.checkerStep = this.workflowConfig.makerCheckers[0].steps[0].name;
+				obj.respondedBy = null;
+				obj.audit = [item.audit[0]];
+				collection.findOneAndUpdate({ _id: item._id }, { $set: obj });
+			});
+		}
+		next();
+	} catch (err) {
+		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
 
 function countAttr(def) {
 	let count = 0;
-	// if (def && typeof def === `object`) {
-	// 	Object.keys(def).forEach(_d => {
-	// 		if (def[_d] && def[_d].type === `Object`) {
-	// 			count += countAttr(def[_d].definition);
-	// 		} else {
-	// 			count++;
-	// 		}
-	// 	});
-	// 	return count;
-	// } 
 	if (def && typeof def === 'object') {
 		def.forEach(_d => {
 			if (_d && _d.type === 'Object') {
@@ -436,25 +463,12 @@ function countAttr(def) {
 schema.pre('save', function (next) {
 	let self = this;
 	if (!self.definition) next();
-	// To check if _id ele need to be removed as +1 is there
-	// let def = self.definition.filter(ele => ele.key != '_id');
-	// let count = countAttr(def);
-	// this.attributeCount = count + 1;
 	this.attributeCount = countAttr(self.definition);
 	next();
 });
 
 draftSchema.pre('save', function (next) {
 	let self = this;
-	// let def = JSON.parse(self.definition);
-	// delete def._id;
-	// let count = countAttr(def);
-	// this.attributeCount = count + 1;
-
-	// To check if _id ele need to be removed as =1 is there
-	// let def = self.definition.filter(ele => ele.key != '_id');
-	// let count = countAttr(def);
-	// this.attributeCount = count + 1;
 	this.attributeCount = countAttr(self.definition);
 	next();
 });
@@ -642,7 +656,7 @@ function createWebHooks(data, _req) {
 // To verify whether given webHook or preHook is exist or not
 /*
 e.verifyHook = (_req, _res) => {
-	let url = _req.swagger.params.url && _req.swagger.params.url.value ? _req.swagger.params.url.value : null;
+	let url = _req.params.url && _req.swagger.params.url.value ? _req.swagger.params.url : null;
 	if (!url) {
 		return _res.status(400).json({ 'message': 'url invalid' });
 	}
@@ -678,7 +692,7 @@ e.verifyHook = (_req, _res) => {
 */
 e.verifyHook = (_req, _res) => {
 	let URL = require('url');
-	let url = _req.swagger.params.url && _req.swagger.params.url.value ? _req.swagger.params.url.value : null;
+	let url = _req.query.url ? _req.query.url : null;
 	if (!url) {
 		return _res.status(400).json({
 			'message': 'url invalid'
@@ -794,8 +808,8 @@ e.createDoc = (_req, _res) => {
 		if (_req.body.api) {
 			_req.body.api = _req.body.api.charAt(0) === '/' ? _req.body.api : '/' + _req.body.api;
 		}
-		let role = _req.body.role;
-		delete _req.body.role;
+		// let role = _req.body.role;
+		// delete _req.body.role;
 		let serviceObj = null;
 		return getNextPort()
 			.then(port => _req.body.port = port)
@@ -825,28 +839,8 @@ e.createDoc = (_req, _res) => {
 			.then(_d => {
 				serviceObj = _d;
 				serviceObj.headers = smhelper.generateHeadersForProperties(txnId, serviceObj.headers || []);
-				// To check => if definition is string of array
-				let permObj = {
-					_id: serviceObj._id,
-					app: serviceObj.app,
-					entity: serviceObj._id,
-					entityName: serviceObj.name,
-					roles: role ? role.roles : null,
-					type: 'appcenter',
-					fields: role && role.fields ? JSON.stringify(role.fields) : null,
-					definition: _req.body.definition ? _req.body.definition : null
-				};
-				return deployUtil.postRolesUserMgmt(permObj, _req);
+				return serviceObj;
 			})
-			.then(() => {
-				if (serviceObj.definition) {
-					return smHooks.updateServicesInGlobalSchema(serviceObj, _req);
-				}
-			})
-			.then(() => deployUtil.createServiceInUserMgmt(serviceObj._id, _req, {
-				app: serviceObj.app,
-				name: serviceObj.name
-			}))
 			.then(() => {
 				return smHooks.createDSinMON(serviceObj, _req);
 			})
@@ -967,15 +961,15 @@ function validateCounterChange(isCounterChangeRequired, id, counter, app) {
 
 e.updateDoc = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	let ID = _req.swagger.params.id.value;
+	let ID = _req.params.id;
 	logger.info(`[${txnId}] Update service request received for ${ID}`);
-	
+
 	delete _req.body.collectionName;
 	delete _req.body.version;
 	_req.body._id = ID;
-	
+
 	logger.trace(`[${txnId}] Payload received :: ${JSON.stringify(_req.body)}`);
-	
+
 	let promise = Promise.resolve();
 
 	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers || []);
@@ -993,7 +987,7 @@ e.updateDoc = (_req, _res) => {
 
 			let oldData = JSON.parse(JSON.stringify(_d));
 			if (!_d) {
-				logger.error(`[${txnId}] Document not found in DB`)
+				logger.error(`[${txnId}] Document not found in DB`);
 				return _res.status(404).json({
 					message: 'Not found'
 				});
@@ -1100,18 +1094,6 @@ e.updateDoc = (_req, _res) => {
 							.then(_n => _d.save(_req).then(() => _n));
 					}
 				})
-				// .then(_data => {
-				// 	srvcObj = _data;
-				// 	let permObj = {
-				// 		app: srvcObj.app,
-				// 		entity: srvcObj._id,
-				// 		entityName: srvcObj.name,
-				// 		roles: role ? role.roles : null,
-				// 		fields: role && role.fields ? JSON.stringify(role.fields) : null,
-				// 		definition: _req.body.definition ? (typeof _req.body.definition == 'string' ? _req.body.definition : JSON.stringify(_req.body.definition)) : null
-				// 	};
-				// 	return deployUtil.updateRolesUserMgmt(srvcObj._id, permObj, _req);
-				// })
 				.then((_data) => {
 					srvcObj = _data;
 					_res.status(200).json(srvcObj);
@@ -1221,7 +1203,7 @@ function rollBackDeploy(id, req) {
 
 e.deployAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	let ID = _req.swagger.params.id.value;
+	let ID = _req.params.id;
 	logger.info(`[${txnId}] Service deploy request received for service ${ID}`);
 
 	let user = _req.get('User');
@@ -1235,7 +1217,8 @@ e.deployAPIHandler = (_req, _res) => {
 	let isAuditIndexDeleteRequired = false;
 	let isApiEndpointChanged = false;
 	let removeSoftDeletedRecords = false;
-	
+	let isWorkflowChanged = false;
+
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
 			if (!_d) {
@@ -1243,8 +1226,9 @@ e.deployAPIHandler = (_req, _res) => {
 				_res.status(404).json({ message: 'Not found' });
 			} else {
 				logger.debug(`[${txnId}] Old data found in DB for service ${ID}`);
-				logger.trace(`[${txnId}] Old Data from DB :: ${JSON.stringify(_d)}`);
-				
+				logger.trace(`[${txnId}] Old data from DB :: ${JSON.stringify(_d)}`);
+				logger.debug(`[${txnId}] Service status ${ID} :: ${_d.status}`);
+
 				let oldData = JSON.parse(JSON.stringify(_d));
 				if (_d.status != 'Draft' && !_d.draftVersion) {
 					logger.error(`[${txnId}] No draft data found for service ${ID}`);
@@ -1266,9 +1250,9 @@ e.deployAPIHandler = (_req, _res) => {
 					}
 
 					let promise = Promise.resolve();
-					
+
 					return promise
-						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req) })
+						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req); })
 						.then(() => {
 							let newHooks = {
 								'webHooks': svcObject.webHooks,
@@ -1276,7 +1260,7 @@ e.deployAPIHandler = (_req, _res) => {
 							};
 							return updateWebHook(ID, newHooks, _req);
 						})
-						.then(() => deployUtil.deployService(svcObject, socket, _req, false, false))
+						.then(() => deployUtil.deployService(svcObject, socket, _req, false))
 						.then(() => {
 							logger.info(`[${txnId}] Deployment process started for service ${ID} status ${svcObject.status}`);
 							dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
@@ -1336,7 +1320,7 @@ e.deployAPIHandler = (_req, _res) => {
 								logger.trace(`[${txnId}] Wizard Updated for service ${ID}`);
 								isWizardUpdateRequired = true;
 							}
-							
+
 							if (newData.versionValidity && oldData.versionValidity.validityType != newData.versionValidity.validityType) {
 								logger.trace(`[${txnId}] Verson validity type changed for service ${ID}`);
 								isReDeploymentRequired = true;
@@ -1369,7 +1353,7 @@ e.deployAPIHandler = (_req, _res) => {
 								oldIdElement = oldData.definition ? oldData.definition.find(d => d.key == '_id') : {};
 								newIdElement = newData.definition ? newData.definition.find(d => d.key == '_id') : {};
 								padding = newIdElement ? newIdElement.padding : null;
-	
+
 								if (newData.schemaFree && oldData.definition) {
 									isReDeploymentRequired = true;
 								} else if (!definitionComparison) {
@@ -1387,7 +1371,13 @@ e.deployAPIHandler = (_req, _res) => {
 									isReDeploymentRequired = true;
 								}
 							}
-							
+
+							let workflowComparison = deepEqual(oldData.workflowConfig, newData.workflowConfig);
+							if (!workflowComparison) {
+								isWorkflowChanged = true;
+								isReDeploymentRequired = true;
+							}
+
 							if (isReDeploymentRequired || preHookUpdated || isWizardUpdateRequired) newData.version = _d.version + 1;
 
 							logger.info(`[${txnId}] Redeployment required for service ${ID}? ${isReDeploymentRequired ? 'YES' : 'NO'}`);
@@ -1399,6 +1389,7 @@ e.deployAPIHandler = (_req, _res) => {
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
+							_d.isWorkflowChanged = isWorkflowChanged;
 							if (!definitionComparison) _d.definition = newDefinition;
 
 							let promise = Promise.resolve();
@@ -1424,9 +1415,9 @@ e.deployAPIHandler = (_req, _res) => {
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
 								.then(() => {
-									if (!definitionComparison) {
-										return deployUtil.updateInPM(srvcObj._id, _req);
-									}
+									// if (!definitionComparison) {
+									// 	return deployUtil.updateInPM(srvcObj._id, _req);
+									// }
 								})
 								.then(() => {
 									return newData.remove(_req);
@@ -1437,7 +1428,7 @@ e.deployAPIHandler = (_req, _res) => {
 									if (!envConfig.isCosmosDB() && srvcObj.collectionName != oldData.collectionName) {
 										isReDeploymentRequired = true;
 										if (envConfig.isK8sEnv()) {
-											await k8s.deploymentDelete(_req.get('TxnId'), oldData)
+											await k8s.deploymentDelete(_req.get('TxnId'), oldData);
 											logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${oldData._id}`);
 											await k8s.serviceDelete(_req.get('TxnId'), oldData);
 											logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${oldData._id}`);
@@ -1493,7 +1484,7 @@ e.deployAPIHandler = (_req, _res) => {
 											})
 											.then(_d => {
 												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Result of reindexing: ${JSON.stringify(_d)}`);
-												return deployUtil.deployService(data, socket, _req, true, isDeleteAndCreateRequired ? oldData : false);
+												return deployUtil.deployService(data, socket, _req, oldData ? isReDeploymentRequired : false);
 											})
 											.then(_d => {
 												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Response from deployService :: ${JSON.stringify(_d)}`);
@@ -1533,11 +1524,11 @@ e.deployAPIHandler = (_req, _res) => {
 
 e.startAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
-	var id = _req.swagger.params.id.value;
+	var id = _req.params.id;
 	let socket = _req.app.get('socket');
 	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
 		.then(doc => {
-			if (doc && doc.definition.length == 1) throw new Error('Data service definition not found.');
+			if (doc && !doc.schemaFree && doc.definition.length == 1) throw new Error('Data service definition not found.');
 			if (doc) {
 				checkOutGoingRelation(id)
 					.then(() => {
@@ -1551,10 +1542,10 @@ e.startAPIHandler = (_req, _res) => {
 							logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
 							return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
 								.then(_d => {
-									logger.debug(_d);
+									logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
 									if (_d.statusCode == 404) {
 										return k8s.serviceStart(doc)
-											.then(() => deployUtil.deployService(doc, socket, _req, false, false))
+											.then(() => deployUtil.deployService(doc, socket, _req, false))
 											.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
 									} else {
 										dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
@@ -1564,7 +1555,7 @@ e.startAPIHandler = (_req, _res) => {
 									logger.error(err);
 								});
 						}
-						return deployUtil.deployService(doc, socket, _req, false, false)
+						return deployUtil.deployService(doc, socket, _req, false)
 							.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
 					}, (data) => {
 						let serviceMsg = '';
@@ -1592,13 +1583,14 @@ e.startAPIHandler = (_req, _res) => {
 };
 
 e.stopAPIHandler = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let txnId = _req.get('TxnId');
+	let id = _req.params.id;
 	let socket = _req.app.get('socket');
 	let instances = null;
 	checkIncomingRelation(id)
 		.then(() => {
 			_res.status(202).json({
-				message: 'Deployment termination request accepted!'
+				message: `Deployment termination request accepted for service ${id}.`
 			});
 		}, (data) => {
 			let serviceMsg = '';
@@ -1617,7 +1609,7 @@ e.stopAPIHandler = (_req, _res) => {
 		})
 		.then(() => {
 			if (process.env.SM_ENV == 'K8s') {
-				logger.info('Scaling down to 0');
+				logger.info(`[${txnId}][${id}] Scaling down k8s deployment to 0.`);
 				return crudder.model.findOne({
 					_id: id,
 					'type': { '$nin': ['internal'] }
@@ -1645,8 +1637,7 @@ e.stopAPIHandler = (_req, _res) => {
 					.catch(err => {
 						logger.error(err);
 					});
-			}
-			return destroyDeployment(id, 0, _req);
+			} else logger.info(`[${txnId}][${id}] Can't stop service. Not running on kubernetes.`);
 		})
 		.then(() => {
 			return deployUtil.updateDocument(crudder.model, {
@@ -1670,28 +1661,24 @@ e.stopAPIHandler = (_req, _res) => {
 		});
 };
 
-function destroyServiceFolder(_id) {
-	return fileIO.deleteFolderRecursive('./generatedServices/' + _id);
-}
-
 function destroyDeployment(id, count, _req) {
 	logger.info(`[${_req.get('TxnId')}] Destroy attempt no: ${count}`);
-	let doc = null;
 	return deployUtil.updateDocument(crudder.model, { _id: id }, { status: 'Pending' }, _req)
 		.then(_d => {
-			doc = _d;
 			if (envConfig.isK8sEnv()) {
 				return k8s.deploymentDelete(_req.get('TxnId'), _d)
 					.then(() => logger.info(`[${_req.get('TxnId')}] Deployment delete request queued for ${_d._id}`))
 					.then(() => k8s.serviceDelete(_req.get('TxnId'), _d))
-					.then(() => logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${_d._id}`))
+					.then(() => {
+						logger.info(`[${_req.get('TxnId')}] Service delete request queued for ${_d._id}`);
+						return _d;
+					})
 					.catch(_e => logger.error(`[${_req.get('TxnId')}] ${_e.message}`));
 			} else {
 				logger.info(`[${_req.get('TxnId')}] PM2 not supported`);
+				return _d;
 			}
 		})
-		.then(() => destroyServiceFolder(id))
-		.then(() => doc)
 		.catch(err => {
 			deployUtil.updateDocument(crudder.model, { _id: id }, { comment: err.message }, _req)
 				.then(() => {
@@ -1765,23 +1752,23 @@ function dropCollections(collectionName, app, txnId) {
 }
 
 e.destroyService = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	let socket = _req.app.get('socket');
 	let originalDoc = {};
 	let txnId = _req.get('TxnId');
 	logger.info(`[${txnId}] Deleting the service : ${id}`);
 	logger.debug(`[${txnId}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
-	return smhelper.getFlows(id, _req)
-		.then(_flows => {
-			logger.debug(`[${txnId}] ${JSON.stringify({ _flows })}`);
-			if (_flows.length > 0) {
-				_res.status(400).json({ message: 'Data service is in use by flow ' + _flows.map(_f => _f.name) });
-				logger.info(`[${txnId}] Data service in use by flows`);
-				throw new Error('Data service in use by flows');
-			} else {
-				return checkIncomingRelation(id);
-			}
-		})
+	// return smhelper.getFlows(id, _req)
+	return Promise.resolve([]).then(_flows => {
+		logger.debug(`[${txnId}] ${JSON.stringify({ _flows })}`);
+		if (_flows.length > 0) {
+			_res.status(400).json({ message: 'Data service is in use by flow ' + _flows.map(_f => _f.name) });
+			logger.info(`[${txnId}] Data service in use by flows`);
+			throw new Error('Data service in use by flows');
+		} else {
+			return checkIncomingRelation(id);
+		}
+	})
 		.then((doc) => {
 			logger.debug(`[${txnId}] Delete data service ${id} has 0 incoming relationships`);
 			logger.debug(`[${txnId}] Delete data service :: ID :: ${doc._id}`);
@@ -1825,8 +1812,6 @@ e.destroyService = (_req, _res) => {
 		.then(() => {
 			deployUtil.sendToSocket(socket, 'serviceStatus', { _id: id, app: originalDoc.app, message: 'Entity has been stopped.' });
 			logger.debug(`[${txnId}] Socket updated :: serviceStatus :: Entity has been stopped.`);
-			deployUtil.deleteServiceInUserMgmt(id, _req);
-			// deployUtil.deleteServiceInWorkflow(id, _req);
 			return removeIncomingRelation(id, _req);
 		})
 		.then(() => {
@@ -1884,7 +1869,7 @@ e.destroyService = (_req, _res) => {
 };
 
 e.documentCount = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	const ids = _req.query.serviceIds ? _req.query.serviceIds.split(',') : [];
 	const filter = {
 		'_metadata.deleted': false
@@ -1934,7 +1919,7 @@ e.documentCount = (_req, _res) => {
 };
 
 e.deleteApp = function (_req, _res) {
-	let app = _req.swagger.params.app.value;
+	let app = _req.params.app;
 	let socket = _req.app.get('socket');
 	crudder.model.find({
 		'app': app
@@ -1954,8 +1939,6 @@ e.deleteApp = function (_req, _res) {
 						app: doc.app,
 						message: 'Undeployed'
 					});
-					deployUtil.deleteServiceInUserMgmt(doc._id, _req);
-					deployUtil.deleteServiceInWorkflow(doc._id, _req);
 					dropCollections(doc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${doc.app}`, _req.get('TxnId'));
 					deployUtil.sendToSocket(socket, 'deleteService', {
 						_id: doc._id,
@@ -1987,17 +1970,16 @@ e.deleteApp = function (_req, _res) {
 };
 // change the status of service
 
-function deleteLogs(srvcId, action) {
-	logger.info('service id is', srvcId);
-	logger.info('action is ', action);
-	logger.info('url is', envConfig.baseUrlMON + `/appCenter/${srvcId}/${action}/purge`);
-	let URL = envConfig.baseUrlMON + `/appCenter/${srvcId}/${action}/purge`;
+function deleteLogs(srvcId, app, action) {
+	logger.info(`Deleting Logs for service ID :: ${srvcId} :: Action :: ${action}`);
+	logger.info(`URL :: ${envConfig.baseUrlMON}/${app}/appCenter/${srvcId}/${action}/purge`);
+	let URL = envConfig.baseUrlMON + `/${app}/appCenter/${srvcId}/${action}/purge`;
 	if (action === 'author-audit') {
-		URL = envConfig.baseUrlMON + `/author/${srvcId}/audit/purge`;
+		URL = envConfig.baseUrlMON + `/${app}/author/${srvcId}/audit/purge`;
 	}
 	if (action == 'audit') {
 		// making two api calls to clear appcenter and author audits individually
-		let URL2 = envConfig.baseUrlMON + `/author/${srvcId}/audit/purge`;
+		let URL2 = envConfig.baseUrlMON + `/${app}/author/${srvcId}/audit/purge`;
 		return Promise.all([makePurgeApiCall(URL), makePurgeApiCall(URL2)]);
 	} else {
 		return makePurgeApiCall(URL);
@@ -2029,8 +2011,9 @@ function makePurgeApiCall(url) {
 }
 
 e.changeStatus = function (req, res) {
-	let id = req.swagger.params.id.value;
-	let status = req.swagger.params.status.value;
+	let app = req.params.app;
+	let id = req.params.id;
+	let status = req.query.status;
 	let socket = req.app.get('socket');
 	let relatedService = [];
 	logger.debug(`[${req.get('TxnId')}] Status change :: ${id} :: ${status}`);
@@ -2053,7 +2036,7 @@ e.changeStatus = function (req, res) {
 				let outgoingAPIs;
 				return crudder.model.find({ _id: { $in: outRelationIds } }, { app: 1, api: 1, _id: 1, port: 1, relatedSchemas: 1 }).lean(true)
 					.then((inSrvc => {
-						outgoingAPIs = { 'USER': { url: `${envConfig.baseUrlUSR}/usr` } };
+						outgoingAPIs = { 'USER': { url: `${envConfig.baseUrlUSR}/${app}/usr` } };
 						inSrvc.forEach(_d => {
 							outgoingAPIs[_d._id] = _d;
 							outgoingAPIs[_d._id].url = `/api/c/${_d.app}${_d.api}`;
@@ -2077,9 +2060,13 @@ e.changeStatus = function (req, res) {
 };
 
 e.StatusChangeFromMaintenance = function (req, res) {
-	let relatedService = [];
-	let id = req.swagger.params.id.value;
+	let app = req.params.app;
+	let id = req.params.id;
 	let socket = req.app.get('socket');
+
+	logger.info(`Status Change from Maintenence for Service :: ${id} :: App :: ${app}`);
+
+	let relatedService = [];
 	let _sd = {};
 	let outgoingAPIs;
 	return findCollectionData(id)
@@ -2120,12 +2107,12 @@ e.StatusChangeFromMaintenance = function (req, res) {
 					// })
 					.then(() => {
 						if (_sd._id) {
-							return deleteLogs(_sd._id, 'log');
+							return deleteLogs(_sd._id, app, 'log');
 						}
 					})
 					.then(() => {
 						if (_sd._id) {
-							return deleteLogs(_sd._id, 'audit');
+							return deleteLogs(_sd._id, app, 'audit');
 						}
 					})
 					.then(() => {
@@ -2164,33 +2151,37 @@ function getIdCounter(serviceId, app) {
 
 
 e.startAllServices = (_req, _res) => {
-	var app = _req.swagger.params.app.value;
+	let txnId = _req.get('TxnId');
+	var app = _req.params.app;
 	let socket = _req.app.get('socket');
-	crudder.model.find({
-		'app': app,
-		'status': 'Undeployed'
-	})
+	logger.info(`[${txnId}] Start all services request received for app :: ${app}`);
+
+	crudder.model.find({ 'app': app, 'status': 'Undeployed' })
 		.then(docs => {
 			if (docs) {
+				logger.info(`[${txnId}] Services found :: ${docs.length}`);
+				logger.trace(`[${txnId}] Services found :: ${JSON.stringify(docs)}`);
+
 				let promises = docs.map(doc => {
-					if (doc.definition.length == 1) return;
+					if (doc.definition.length == 1 && !doc.schemaFree) return;
 					doc = doc.toObject();
-					// doc.definition = JSON.parse(doc.definition);
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+
 					if (process.env.SM_ENV == 'K8s') {
 						let instances = doc.instances ? doc.instances : 1;
-						logger.info('Scaling to ' + instances);
+						logger.info(`[${txnId}] Scaling ${doc._id}::${doc.name} to ${instances}`);
+
 						return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
 							.then(_d => {
 								if (_d.statusCode == 404) {
-									return deployUtil.deployService(doc, socket, _req, false, false);
+									return deployUtil.deployService(doc, socket, _req, false);
 								}
 							})
 							.catch(err => {
 								logger.error(err);
 							});
 					}
-					return deployUtil.deployService(doc, socket, _req, false, false);
+					return deployUtil.deployService(doc, socket, _req, false);
 
 				});
 				_res.status(202).json({
@@ -2198,6 +2189,7 @@ e.startAllServices = (_req, _res) => {
 				});
 				return Promise.all(promises);
 			} else {
+				logger.debug(`[${txnId}] No Services found`);
 				_res.status(400).json({
 					message: 'No entity found'
 				});
@@ -2213,21 +2205,26 @@ e.startAllServices = (_req, _res) => {
 
 
 e.stopAllServices = (_req, _res) => {
-	let app = _req.swagger.params.app.value;
+	let txnId = _req.get('TxnId');
+	let app = _req.params.app;
 	let socket = _req.app.get('socket');
-	crudder.model.find({
-		'app': app,
-		status: 'Active'
-	})
+	logger.info(`[${txnId}] Stop all services request received for app :: ${app}`);
+
+	crudder.model.find({ 'app': app, status: 'Active' })
 		.then(_services => {
+			logger.info(`[${txnId}] Services found :: ${_services.length}`);
+			logger.trace(`[${txnId}] Services found :: ${JSON.stringify(_services)}`);
+
 			let promises = _services.map(doc => {
 				if (process.env.SM_ENV == 'K8s') {
-					logger.info('Scaling down to 0');
+					logger.info(`[${txnId}] Scaling ${doc._id}::${doc.name} to 0`);
+
 					const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 					return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), 0)
 						.then(_d => {
 							let instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
-							logger.info('Instances at time of undeploying ' + instances);
+
+							logger.debug(`[${txnId}] Instances of ${doc.name} at time of undeploying ${instances}`);
 							if (doc && instances) {
 								doc.instances = instances;
 								return doc.save(_req);
@@ -2245,6 +2242,8 @@ e.stopAllServices = (_req, _res) => {
 		})
 		.then(docs => {
 			let ids = docs.map(doc => doc._id);
+			logger.debug(`[${txnId}] Updating status of services :: ${ids} :: to Undeployed`);
+
 			docs.forEach(doc => {
 				deployUtil.sendToSocket(socket, 'serviceStatus', {
 					_id: doc._id,
@@ -2272,7 +2271,7 @@ e.stopAllServices = (_req, _res) => {
 };
 
 e.repairAllServices = (_req, _res) => {
-	var app = _req.swagger.params.app.value;
+	var app = _req.params.app;
 	crudder.model.find({
 		'app': app,
 	})
@@ -2302,7 +2301,7 @@ e.repairAllServices = (_req, _res) => {
 
 
 e.repairService = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
+	let id = _req.params.id;
 	return crudder.model.findOne({
 		_id: id
 	})
@@ -2333,19 +2332,19 @@ function updateDeployment(req, res, ds) {
 	return k8s.deploymentDelete(req.get('TxnId'), ds)
 		.then(_d => {
 			logger.info('Deployment deleted');
-			logger.debug(_d);
+			logger.trace(_d);
 			return k8s.serviceDelete(req.get('TxnId'), srvcDoc);
 		})
 		.then(_d => {
 			logger.info('Service deleted');
-			logger.debug(_d);
+			logger.trace(_d);
 			// srvcDoc.definition = JSON.parse(srvcDoc.definition);
 			return k8s.serviceStart(srvcDoc);
 		})
 		.then(_d => {
 			logger.info('Service started');
-			logger.debug(_d);
-			return deployUtil.deployService(srvcDoc, socket, req, false, false);
+			logger.trace(_d);
+			return deployUtil.deployService(srvcDoc, socket, req, false);
 		})
 		.catch(err => {
 			logger.error(err.message);
@@ -2358,8 +2357,8 @@ function updateDeployment(req, res, ds) {
 }
 
 e.getCounter = (_req, _res) => {
-	let id = _req.swagger.params.id.value;
-	let app = _req.swagger.params.app.value;
+	let id = _req.params.id;
+	let app = _req.params.app;
 	return getIdCounter(id, app)
 		.then(_c => {
 			if (_c) {
@@ -2381,23 +2380,10 @@ e.getCounter = (_req, _res) => {
 let initDone = false;
 e.readiness = function (req, res) {
 	if (!initDone) {
-		return require('../../util/init/init')()
-			.then(() => {
-				initDone = true;
-				return res.status(200).json();
-			});
+		require('../../util/init/init')();
+		initDone = true;
 	}
 	return res.status(200).json();
-	/*
-	updateService()
-		.then(() => {
-			
-		})
-		.catch(err => {
-			logger.error(err.message);
-			return res.status(500).json();
-		});
-		*/
 
 };
 
@@ -2435,6 +2421,7 @@ function changeStatusToMaintenance(req, ids, srvcId, status, message) {
 }
 
 function scaleDeployments(req, socket, ids, srvcId, instance) {
+	logger.info(`Scaling Deployments for Services :: ${ids}`);
 	if (!ids.includes(srvcId)) ids.push(srvcId);
 	let promises = ids.map(id => {
 		return mongoose.connection.db.collection('services').findOne({ _id: id })
@@ -2503,9 +2490,10 @@ function scaleDeploymentsToOriginal(req, socket, ids, srvcId) {
 }
 
 e.purgeLogsService = function (req, res) {
-	let id = req.swagger.params.id.value;
-	let type = req.swagger.params.type.value;
-	deleteLogs(id, type)
+	let id = req.params.id;
+	let type = req.params.type;
+	let app = req.params.app;
+	deleteLogs(id, app, type)
 		.then(() => {
 			res.status(200).json({});
 		})
@@ -2516,10 +2504,12 @@ e.purgeLogsService = function (req, res) {
 };
 
 e.purge = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
+	let socket = req.app.get('socket');
+	logger.info(`Purge All Data request received for Service :: ${id}`);
+
 	let _sd = {};
 	let relatedService = [];
-	let socket = req.app.get('socket');
 	return findCollectionData(id)
 		.then(data => {
 			if (data) {
@@ -2568,7 +2558,7 @@ e.purge = function (req, res) {
 };
 
 e.lockDocumentCount = (req, res) => {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let _sd = {};
 	let collectionName = null;
 	let app = null;
@@ -2607,8 +2597,8 @@ function findCollectionData(Id) {
 }
 
 function customShow(req, res) {
-	let draft = req.swagger.params.draft.value;
-	let id = req.swagger.params.id.value;
+	let draft = req.query.draft;
+	let id = req.params.id;
 	if (draft) {
 		draftCrudder.model.findOne({ _id: id })
 			.then(_d => {
@@ -2625,10 +2615,10 @@ function customShow(req, res) {
 
 async function showByName(req, res) {
 	try {
-		const draft = req.swagger.params.draft.value;
-		const name = req.swagger.params.name.value;
-		const app = req.swagger.params.app.value;
-		let select = req.swagger.params.select.value;
+		const draft = req.query.draft;
+		const name = req.params.name;
+		const app = req.params.app;
+		let select = req.query.select;
 		select = select ? select.split(',') : [];
 		const filter = { name: name, app: app, '_metadata.deleted': false };
 		let query;
@@ -2659,7 +2649,7 @@ async function showByName(req, res) {
 }
 
 function customIndex(req, res) {
-	let draft = req.swagger.params.draft.value;
+	let draft = req.query.draft;
 	if (draft)
 		draftCrudder.index(req, res);
 	else
@@ -2667,7 +2657,7 @@ function customIndex(req, res) {
 }
 
 function draftDelete(req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	draftCrudder.model.findOne({ _id: id })
 		.then(_d => {
 			if (_d)
@@ -2690,8 +2680,8 @@ function draftDelete(req, res) {
 }
 
 function validateUserDeletion(req, res) {
-	let id = req.swagger.params.userId.value;
-	let app = req.swagger.params.app.value;
+	let id = req.params.userId;
+	let app = req.params.app;
 	let promise = [];
 	let pr = [];
 	let flag = false;
@@ -2725,8 +2715,8 @@ function validateUserDeletion(req, res) {
 }
 
 function userDeletion(req, res) {
-	let id = req.swagger.params.userId.value;
-	let app = req.swagger.params.app.value;
+	let id = req.params.userId;
+	let app = req.params.app;
 	let promise = [];
 	let pr = [];
 	crudder.model.find({ 'relatedSchemas.internal.users.0': { $exists: true }, app: app })
@@ -2844,16 +2834,10 @@ function createDSWithDefinition(req, dsDefinition) {
 
 		};
 		doc.role = permObj;
-		return deployUtil.postRolesUserMgmt(permObj, req);
+		return serviceObj;
 	})
 		.then(() => doc.save(req))
-		.then((_d) => {
-			doc = _d;
-			return deployUtil.createServiceInUserMgmt(doc._id, req, {
-				app: doc.app,
-				name: doc.name
-			});
-		})
+		.then((_d) => doc = _d)
 		.then(() => smHooks.createDSinMON(doc, req))
 		.then(() => Promise.resolve(doc))
 		.catch(err => {
@@ -2903,7 +2887,9 @@ function disableCalendar(req, res) {
 			}, {
 				status: 'Undeployed'
 			}, req))
-				.then(() => deployUtil.updatePMForCalendar(req, { status: 'Undeployed', app: app }))
+				.then(() => {
+					// deployUtil.updatePMForCalendar(req, { status: 'Undeployed', app: app })
+				})
 				.catch((err) => { throw err; });
 		} else {
 			logger.debug('Calendar DS not found for ' + app);
@@ -2987,8 +2973,8 @@ function checkUniqueField(app, collectionName, field) {
  */
 
 function checkUnique(req, res) {
-	let serviceId = req.swagger.params.id.value;
-	let fields = req.swagger.params.fields.value;
+	let serviceId = req.params.id;
+	let fields = req.query.fields;
 	fields = fields.split(',');
 	getServiceDetailsById(serviceId, { app: 1, collectionName: 1 })
 		.then(srvcDetails => {
@@ -3014,7 +3000,7 @@ function checkUnique(req, res) {
  * Returns the map of status and count of DS for the status
  */
 function countByStatus(req, res) {
-	let filter = req.swagger.params.filter.value;
+	let filter = req.query.filter;
 	if (filter) {
 		if (typeof filter == 'string')
 			filter = JSON.parse(filter);
@@ -3046,6 +3032,141 @@ function countByStatus(req, res) {
 	});
 }
 
+
+async function getYamls(req, res) {
+	try {
+		const txnId = req.get('txnId');
+		const doc = await crudder.model.findOne({ _id: req.params.id }).lean();
+
+		const namespace = (envConfig.dataStackNS + '-' + doc.app).toLowerCase();
+		const port = doc.port;
+		const name = (doc.api).substring(1).toLowerCase();
+		const envVars = [];
+		envConfig.envkeysForDataService.forEach(key => {
+			envVars.push({ name: key, value: process.env[key] });
+		});
+		envVars.push({ name: 'DATA_STACK_APP_NS', value: namespace });
+		envVars.push({ name: 'NODE_OPTIONS', value: `--max-old-space-size=${envConfig.maxHeapSize}` });
+		envVars.push({ name: 'NODE_ENV', value: 'production' });
+		envVars.push({ name: 'SERVICE_ID', value: `${doc._id}` });
+
+		const volumeMounts = {
+			'file-export': {
+				containerPath: '/app/output',
+				hostPath: `${envConfig.fsMount}/${doc._id}`
+			}
+		};
+		logger.trace(`[${txnId}] [${doc._id}] Volume mount data : ${JSON.stringify(volumeMounts)}`);
+
+		const options = {
+			livenessProbe: {
+				httpGet: {
+					path: `/${doc.app}${doc.api}/utils/health/live`,
+					port: doc.port,
+					scheme: 'HTTP'
+				},
+				initialDelaySeconds: 5,
+				timeoutSeconds: envConfig.healthTimeout
+			},
+			readinessProbe: {
+				httpGet: {
+					path: `/${doc.app}${doc.api}/utils/health/ready`,
+					port: doc.port,
+					scheme: 'HTTP'
+				},
+				initialDelaySeconds: 5,
+				timeoutSeconds: envConfig.healthTimeout
+			}
+		};
+
+		const deployData = {
+			apiVersion: 'v1',
+			kind: 'Deployment',
+			metadata: {
+				name: name,
+				namespace: namespace
+			},
+			spec: {
+				replicas: 1,
+				selector: {
+					matchLabels: {
+						app: name
+					}
+				},
+				template: {
+					metadata: {
+						labels: {
+							app: name
+						}
+					},
+					spec: {
+						containers: [
+							{
+								name: name,
+								image: envConfig.baseImage,
+								ports: [
+									{
+										containerPort: port
+									}
+								],
+								env: envVars
+							}
+						]
+					}
+				}
+			}
+		};
+		if (options.livenessProbe) deployData.spec.template.spec.containers[0]['livenessProbe'] = options.livenessProbe;
+		if (options.readinessProbe) deployData.spec.template.spec.containers[0]['readinessProbe'] = options.readinessProbe;
+		if (volumeMounts) {
+			deployData.spec.template.spec.containers[0]['volumeMounts'] = [];
+			deployData.spec.template.spec['volumes'] = [];
+			for (var mount in volumeMounts) {
+				deployData.spec.template.spec.containers[0]['volumeMounts'].push({
+					'name': mount,
+					'mountPath': volumeMounts[mount]['containerPath']
+				});
+				deployData.spec.template.spec['volumes'].push({
+					'name': mount,
+					'hostPath': {
+						'path': volumeMounts[mount]['hostPath']
+					}
+				});
+			}
+		}
+
+		const serviceData = {
+			apiVersion: 'v1',
+			kind: 'Service',
+			metadata: {
+				name: name,
+				namespace: namespace
+			},
+			spec: {
+				type: 'ClusterIP',
+				selector: {
+					app: name
+				},
+				ports: [
+					{
+						protocol: 'TCP',
+						port: 80,
+						targetPort: port
+					}
+				]
+			}
+		};
+
+		const serviceText = yamljs.stringify(serviceData);
+		const deploymentText = yamljs.stringify(deployData);
+		res.status(200).json({ service: serviceText, deployment: deploymentText });
+
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
 module.exports = {
 	create: e.createDoc,
 	index: customIndex,
@@ -3065,6 +3186,7 @@ module.exports = {
 	StatusChangeFromMaintenance: e.StatusChangeFromMaintenance,
 	verifyHook: e.verifyHook,
 	getCounter: e.getCounter,
+	getYamls,
 	stopAllServices: e.stopAllServices,
 	startAllServices: e.startAllServices,
 	repairAllServices: e.repairAllServices,

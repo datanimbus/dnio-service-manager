@@ -1,8 +1,8 @@
-swagger: '2.0'
+swagger: "2.0"
 info:
   version: 0.0.1
   title: serviceManager API
-host: 'localhost:10003'
+host: "localhost:10003"
 basePath: /sm
 schemes:
   - http
@@ -13,7 +13,7 @@ produces:
   - application/json
   - text/plain
 paths:
-  /service:
+  /service/fetchAll:
     x-swagger-router-controller: controller
     get:
       description: Retrieve a list of serviceManager
@@ -43,18 +43,62 @@ paths:
           in: query
           type: string
           description: sort parameter
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/service:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of serviceManager
+      operationId: serviceManagerList
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: page
+          in: query
+          type: integer
+          description: Page number of the request
+        - name: count
+          in: query
+          type: integer
+          description: Number of records per page
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: sort
+          in: query
+          type: string
+          description: sort parameter
         - name: draft
           in: query
           type: boolean
           description: Returns draft documents if true
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
     post:
       description: Create a new serviceManager
@@ -64,40 +108,24 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: data
           in: body
           description: Payload to create a serviceManager
           schema:
-            $ref: '#/definitions/serviceManager_create'
+            $ref: "#/definitions/serviceManager_create"
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  /service/verifyHook:
-    x-swagger-router-controller: controller
-    get:
-      description: Verify hook existence
-      operationId: serviceManagerVerifyHook
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: url
-          in: query
-          type: string
-          description: Payload to verify hook
-      responses:
-        '200':
-          description: isVerified true or false
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error          
-  '/service/{id}':
+  /{app}/service/{id}:
     x-swagger-router-controller: controller
     get:
       description: Retrieves a serviceManager
@@ -107,6 +135,11 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: filter
           in: query
           type: string
@@ -118,20 +151,20 @@ paths:
         - name: draft
           in: query
           type: boolean
-          description: return draft document if true  
+          description: return draft document if true
         - name: id
           in: path
           type: string
           required: true
           description: Id of the object to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
     put:
       description: Updates a serviceManager
@@ -141,24 +174,29 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: data
           in: body
           description: Payload to update a serviceManager
           schema:
-            $ref: '#/definitions/serviceManager_update'
+            $ref: "#/definitions/serviceManager_update"
         - name: id
           in: path
           type: string
           required: true
           description: Id of the serviceManager to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
     delete:
       description: delete a serviceManager
@@ -167,60 +205,54 @@ paths:
         - name: authorization
           in: header
           type: string
-          description: The JWT token for req. validation  
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the serviceManager to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  '/service/utils/{app}/{name}':
+  /{app}/service/utils/verifyHook:
     x-swagger-router-controller: controller
     get:
-      description: Retrieves a serviceManager
-      operationId: serviceManagerShowByName
+      description: Verify hook existence
+      operationId: serviceManagerVerifyHook
       parameters:
         - name: authorization
           in: header
           type: string
           description: The JWT token for req. validation
-        - name: select
-          in: query
-          type: string
-          description: Comma seperated fields to be displayed
-        - name: draft
-          in: query
-          type: boolean
-          description: return draft document if true  
         - name: app
           in: path
           type: string
           required: true
-          description: Id of the object to be updated
-        - name: name
-          in: path
+          description: The App of data stack
+        - name: url
+          in: query
           type: string
-          required: true
-          description: Id of the object to be updated
+          description: Payload to verify hook
       responses:
-        '200':
-          description: List of the entites
-        '400':
+        "200":
+          description: isVerified true or false
+        "400":
           description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  /service/count:
-    x-swagger-router-controller: controller 
+  /{app}/service/utils/count:
+    x-swagger-router-controller: controller
     get:
       description: returns the count of services
       operationId: getServiceCount
@@ -229,19 +261,24 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: filter
           in: query
           type: string
-          description: Filter records based on certain fields  
+          description: Filter records based on certain fields
       responses:
-        '200':
+        "200":
           description: count of services
-        '400':
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  /service/status/count:
-    x-swagger-router-controller: controller 
+  /{app}/service/utils/status/count:
+    x-swagger-router-controller: controller
     get:
       description: returns the count of services by status
       operationId: countByStatus
@@ -250,18 +287,23 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: filter
           in: query
           type: string
-          description: Filter records based on certain fields  
+          description: Filter records based on certain fields
       responses:
-        '200':
+        "200":
           description: count of services
-        '400':
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  /service/audit:
+  /{app}/service/utils/audit:
     x-swagger-router-controller: controller
     get:
       description: Retrieve the audit logs of services
@@ -270,7 +312,12 @@ paths:
         - name: authorization
           in: header
           type: string
-          description: The JWT token for req. validation      
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: page
           in: query
           type: integer
@@ -296,15 +343,15 @@ paths:
           type: string
           description: String to search across all field
       responses:
-        '200':
+        "200":
           description: audit of document
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  /service/audit/count:
+  /{app}/service/utils/audit/count:
     x-swagger-router-controller: controller
     get:
       description: Retrieve the count of audit logs of services
@@ -314,16 +361,21 @@ paths:
           in: query
           type: string
           description: Filter records based on certain fields
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
       responses:
-        '200':
+        "200":
           description: count of audit logs
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error  
-  '/{id}/draftDelete':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/draftDelete:
     x-swagger-router-controller: controller
     delete:
       description: delete the draft of the service
@@ -332,22 +384,27 @@ paths:
         - name: authorization
           in: header
           type: string
-          description: The JWT token for req. validation  
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the serviceManager to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  /{id}/purge/all:
+  /{app}/service/utils/{id}/purge/all:
     x-swagger-router-controller: controller
     delete:
       description: delete a serviceManager
@@ -356,80 +413,27 @@ paths:
         - name: authorization
           in: header
           type: string
-          description: The JWT token for req. validation  
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
-          description: Id of the serviceManager to be updated 
+          description: Id of the serviceManager to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  /validateUserDeletion/{app}/{userId}:
-    x-swagger-router-controller: controller
-    put:
-      description: delete a serviceManager
-      operationId: validateUserDeletion
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation  
-        - name: userId
-          in: path
-          type: string
-          required: true
-          description: Id of the serviceManager to be updated 
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: Id of the serviceManager to be updated 
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error   
-  /userDeletion/{app}/{userId}:
-    x-swagger-router-controller: controller
-    put:
-      description: delete a serviceManager
-      operationId: userDeletion
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation  
-        - name: userId
-          in: path
-          type: string
-          required: true
-          description: Id of the serviceManager to be updated 
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: Id of the serviceManager to be updated 
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error 
-  /{id}/purge/{type}:
+  /{app}/service/utils/{id}/purge/{type}:
     x-swagger-router-controller: controller
     delete:
       description: delete a serviceManager
@@ -438,7 +442,12 @@ paths:
         - name: authorization
           in: header
           type: string
-          description: The JWT token for req. validation  
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
@@ -448,17 +457,17 @@ paths:
           in: path
           type: string
           required: true
-          description: Id of the serviceManager to be updated 
+          description: Id of the serviceManager to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error 
-  '/service/{id}/swagger':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/swagger:
     x-swagger-router-controller: controller
     get:
       description: Retrieves a swagger doc of entity
@@ -468,6 +477,11 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: filter
           in: query
           type: string
@@ -482,15 +496,42 @@ paths:
           required: true
           description: Id of the entity to be shown
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  '/service/{id}/statusChange':
+  /{app}/service/utils/{id}/lockDocument/count:
+    x-swagger-router-controller: controller
+    get:
+      description: returns the count of globalSchemas
+      operationId: lockDocumentCount
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: Id of the serviceManager to be updated
+      responses:
+        "200":
+          description: count of services
+        "400":
+          description: Bad parameters
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/statusChange:
     x-swagger-router-controller: controller
     put:
       description: change status of entity
@@ -501,20 +542,25 @@ paths:
           type: string
           required: true
           description: Id of the entity to be shown
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: status
           in: query
           type: string
           description: status
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error  
-  '/service/{id}/statusChangeFromMaintenance':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/statusChangeFromMaintenance:
     x-swagger-router-controller: controller
     put:
       description: change status of entity
@@ -525,20 +571,25 @@ paths:
           type: string
           required: true
           description: Id of the entity to be shown
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: status
           in: query
           type: string
           description: status
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error      
-  '/service/{id}/checkUnique':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/checkUnique:
     x-swagger-router-controller: controller
     get:
       description: Retrieves a swagger doc of entity
@@ -548,6 +599,11 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: fields
           in: query
           type: string
@@ -558,330 +614,15 @@ paths:
           required: true
           description: Id of the entity to be shown
       responses:
-        '200':
+        "200":
           description: Map of fields with flag indicating uniqueness
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
-  '/app/{app}':
-    x-swagger-router-controller: controller
-    delete:
-      description: delete all the services of give app
-      operationId: deleteApp
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation  
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: Id of the app to be deleted
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-  '/{app}/service/stop' :
-    x-swagger-router-controller: controller
-    put:
-      description: stops all services of a app
-      operationId: stopAllServices
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation  
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: stop all service
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-  '/{app}/service/start' :
-    x-swagger-router-controller: controller
-    put:
-      description: starts all services of a app
-      operationId: startAllServices
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation  
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: start all service
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error  
-  '/{app}/service/repair' :
-    x-swagger-router-controller: controller
-    put:
-      description: reapir all services of a app
-      operationId: repairAllServices
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation  
-        - name: app
-          in: path
-          type: string
-          required: true
-          description: repair all service
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error  
-  /globalSchema:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieve a list of globalSchema
-      operationId: globalSchemaList
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: page
-          in: query
-          type: integer
-          description: Page number of the request
-        - name: count
-          in: query
-          type: integer
-          description: Number of records per page
-        - name: filter
-          in: query
-          type: string
-          description: Filter records based on certain fields
-        - name: select
-          in: query
-          type: string
-          description: Comma seperated fields to be displayed
-        - name: sort
-          in: query
-          type: string
-          description: sort parameter
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-    post:
-      description: Create a new serviceManager
-      operationId: globalSchemaCreate
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: data
-          in: body
-          description: Payload to create a serviceManager
-          schema:
-            $ref: '#/definitions/globalSchema_create'
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
-  '/globalSchema/{id}':
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieves a globalSchema
-      operationId: globalSchemaShow
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: filter
-          in: query
-          type: string
-          description: Filter records based on certain fields
-        - name: select
-          in: query
-          type: string
-          description: Comma seperated fields to be displayed
-        - name: id
-          in: path
-          type: string
-          required: true
-          description: Id of the object to be updated
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-    put:
-      description: Updates a globalSchema
-      operationId: globalSchemaUpdate
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: data
-          in: body
-          description: Payload to update a serviceManager
-          schema:
-            $ref: '#/definitions/globalSchema_update'
-        - name: id
-          in: path
-          type: string
-          required: true
-          description: Id of the globalSchema to be updated
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-    delete:
-      description: delete a globalSchema
-      operationId: globalSchemaDestroy
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: id
-          in: path
-          type: string
-          required: true
-          description: Id of the globalSchema to be updated
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-  /globalSchema/count:
-    x-swagger-router-controller: controller 
-    get:
-      description: returns the count of globalSchemas
-      operationId: globalSchemaCount
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation
-        - name: filter
-          in: query
-          type: string
-          description: Filter records based on certain fields  
-      responses:
-        '200':
-          description: count of services
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error        
-  /globalSchema/audit:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieve the audit logs of globalSchema
-      operationId: globalSchemaAudit
-      parameters:
-        - name: page
-          in: query
-          type: integer
-          description: Page number of the request
-        - name: count
-          in: query
-          type: integer
-          description: Number of records per page
-        - name: filter
-          in: query
-          type: string
-          description: Filter records based on certain fields
-        - name: select
-          in: query
-          type: string
-          description: Comma seperated fields to be displayed
-        - name: sort
-          in: query
-          type: string
-          description: sort parameter
-        - name: search
-          in: query
-          type: string
-          description: String to search across all field
-      responses:
-        '200':
-          description: audit of globalSchema document
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-  /globalSchema/audit/count:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieve the count of logs of globalSchema
-      operationId: globalSchemaAuditCount
-      parameters:
-        - name: filter
-          in: query
-          type: string
-          description: Filter records based on certain fields
-      responses:
-        '200':
-          description: count of audit logs
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-  '/{id}/start':
+  /{app}/service/utils/{id}/start:
     x-swagger-router-controller: controller
     put:
       description: Start a service with given id
@@ -891,19 +632,24 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the object to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  '/{id}/stop':
+  /{app}/service/utils/{id}/stop:
     x-swagger-router-controller: controller
     put:
       description: stop a service with given id
@@ -913,19 +659,24 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the object to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  '/{id}/deploy':
+  /{app}/service/utils/{id}/deploy:
     x-swagger-router-controller: controller
     put:
       description: deploy a service with given id
@@ -935,19 +686,24 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the object to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '500':
-          description: Internal server error        
-  '/{id}/repair':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/repair:
     x-swagger-router-controller: controller
     put:
       description: Repair a service with given id
@@ -957,19 +713,24 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the object to be updated
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '500':
-          description: Internal server error                
-  '/{id}/count':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{id}/count:
     x-swagger-router-controller: controller
     get:
       description: Returns the count of document in a service
@@ -979,21 +740,26 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: id
           in: path
           type: string
           required: true
           description: Id of the service
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '404':
-          description: No service found   
-        '400':
+        "404":
+          description: No service found
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  '/{id}/{app}/idCount':
+  /{app}/service/utils/{id}/idCount:
     x-swagger-router-controller: controller
     get:
       description: Returns the next id counter of document in a service
@@ -1014,15 +780,383 @@ paths:
           required: true
           description: app of the service
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '404':
-          description: No service found   
-        '400':
+        "404":
+          description: No service found
+        "400":
           description: Bad parameters
-        '500':
-          description: Internal server error                 
-  '/calendar/enable':
+        "500":
+          description: Internal server error
+  /{app}/service/utils/stopAll:
+    x-swagger-router-controller: controller
+    put:
+      description: stops all services of a app
+      operationId: stopAllServices
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: stop all service
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/service/utils/startAll:
+    x-swagger-router-controller: controller
+    put:
+      description: starts all services of a app
+      operationId: startAllServices
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: start all service
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/service/utils/repairAll:
+    x-swagger-router-controller: controller
+    put:
+      description: reapir all services of a app
+      operationId: repairAllServices
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: repair all service
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/service/utils/{name}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieves a serviceManager
+      operationId: serviceManagerShowByName
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: draft
+          in: query
+          type: boolean
+          description: return draft document if true
+        - name: name
+          in: path
+          type: string
+          required: true
+          description: Id of the object to be updated
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/globalSchema:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of globalSchema
+      operationId: globalSchemaList
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: page
+          in: query
+          type: integer
+          description: Page number of the request
+        - name: count
+          in: query
+          type: integer
+          description: Number of records per page
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: sort
+          in: query
+          type: string
+          description: sort parameter
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+    post:
+      description: Create a new serviceManager
+      operationId: globalSchemaCreate
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: data
+          in: body
+          description: Payload to create a serviceManager
+          schema:
+            $ref: "#/definitions/globalSchema_create"
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "500":
+          description: Internal server error
+  /{app}/globalSchema/{id}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieves a globalSchema
+      operationId: globalSchemaShow
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: Id of the object to be updated
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+    put:
+      description: Updates a globalSchema
+      operationId: globalSchemaUpdate
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: data
+          in: body
+          description: Payload to update a serviceManager
+          schema:
+            $ref: "#/definitions/globalSchema_update"
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: Id of the globalSchema to be updated
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+    delete:
+      description: delete a globalSchema
+      operationId: globalSchemaDestroy
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: Id of the globalSchema to be updated
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/globalSchema/utils/count:
+    x-swagger-router-controller: controller
+    get:
+      description: returns the count of globalSchemas
+      operationId: globalSchemaCount
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+      responses:
+        "200":
+          description: count of services
+        "400":
+          description: Bad parameters
+        "500":
+          description: Internal server error
+  /{app}/globalSchema/utils/audit:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the audit logs of globalSchema
+      operationId: globalSchemaAudit
+      parameters:
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: page
+          in: query
+          type: integer
+          description: Page number of the request
+        - name: count
+          in: query
+          type: integer
+          description: Number of records per page
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+        - name: select
+          in: query
+          type: string
+          description: Comma seperated fields to be displayed
+        - name: sort
+          in: query
+          type: string
+          description: sort parameter
+        - name: search
+          in: query
+          type: string
+          description: String to search across all field
+      responses:
+        "200":
+          description: audit of globalSchema document
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/globalSchema/utils/audit/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of logs of globalSchema
+      operationId: globalSchemaAuditCount
+      parameters:
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
+        - name: filter
+          in: query
+          type: string
+          description: Filter records based on certain fields
+      responses:
+        "200":
+          description: count of audit logs
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/calendar/enable:
     x-swagger-router-controller: controller
     put:
       description: Enable calendar DS for given app
@@ -1032,6 +1166,11 @@ paths:
           in: header
           type: string
           description: Name of the app to enable calendar for Time Bound Settings
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: data
           in: body
           description: Payload containing app name
@@ -1043,13 +1182,13 @@ paths:
               app:
                 type: string
       responses:
-        '200':
+        "200":
           description: Enabling Calendar
-        '400':
+        "400":
           description: Bad parameters
-        '500':
-          description: Internal server error                
-  '/calendar/disable':
+        "500":
+          description: Internal server error
+  /{app}/calendar/disable:
     x-swagger-router-controller: controller
     put:
       description: Disable calendar DS for given app
@@ -1059,6 +1198,11 @@ paths:
           in: header
           type: string
           description: Name of the app to disable calendar for Time Bound Settings
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: data
           in: body
           description: Payload containing app name
@@ -1070,27 +1214,32 @@ paths:
               app:
                 type: string
       responses:
-        '200':
+        "200":
           description: Disabling Calendar
-        '400':
+        "400":
           description: Bad parameters
-        '500':
+        "500":
           description: Internal server error
-  /logs:
+  /{app}/logs:
     x-swagger-router-controller: controller
     get:
       description: Retrieve the logs
       operationId: logsControllerList
       responses:
-        '200':
+        "200":
           description: logs
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
+        "500":
           description: Internal server error
       parameters:
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: page
           in: query
           type: integer
@@ -1111,30 +1260,8 @@ paths:
           in: query
           type: string
           description: Sort parameters
-  /{id}/lockDocument/count:
-    x-swagger-router-controller: controller 
-    get:
-      description: returns the count of globalSchemas
-      operationId: lockDocumentCount
-      parameters:
-        - name: authorization
-          in: header
-          type: string
-          description: The JWT token for req. validation 
-        - name: id
-          in: path
-          type: string
-          required: true
-          description: Id of the serviceManager to be updated
-      responses:
-        '200':
-          description: count of services
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
-  /tags:
-    x-swagger-router-controller: controller 
+  /{app}/tags:
+    x-swagger-router-controller: controller
     get:
       description: returns the array of tags with start from given string
       operationId: tags
@@ -1143,21 +1270,106 @@ paths:
           in: header
           type: string
           description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: The App of data stack
         - name: tag
           in: query
           type: string
-          description: Filter results based on certain fields  
+          description: Filter results based on certain fields
       responses:
-        '200':
+        "200":
           description: count of services
-        '400':
+        "400":
           description: Bad parameters
-        '500':
-          description: Internal server error    
-  /health/live:
+        "500":
+          description: Internal server error
+  /{app}/internal/app:
+    x-swagger-router-controller: controller
+    delete:
+      description: delete all the services of give app
+      operationId: deleteApp
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: Id of the app to be deleted
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+  /{app}/internal/validateUserDeletion/{userId}:
+    x-swagger-router-controller: controller
+    put:
+      description: delete a serviceManager
+      operationId: validateUserDeletion
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: userId
+          in: path
+          type: string
+          required: true
+          description: Id of the serviceManager to be updated
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: Id of the serviceManager to be updated
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /{app}/internal/userDeletion/{userId}:
+    x-swagger-router-controller: controller
+    put:
+      description: delete a serviceManager
+      operationId: userDeletion
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req. validation
+        - name: userId
+          in: path
+          type: string
+          required: true
+          description: Id of the serviceManager to be updated
+        - name: app
+          in: path
+          type: string
+          required: true
+          description: Id of the serviceManager to be updated
+      responses:
+        "200":
+          description: List of the entites
+        "400":
+          description: Bad parameters
+        "404":
+          description: No records to list with the given parameter set.
+        "500":
+          description: Internal server error
+  /internal/health/live:
     x-swagger-router-controller: controller
     get:
-      description: heath 
+      description: heath
       operationId: health
       parameters:
         - name: authorization
@@ -1165,18 +1377,18 @@ paths:
           type: string
           description: The JWT token for req.validation
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error   
-  /health/ready:
+        "500":
+          description: Internal server error
+  /internal/health/ready:
     x-swagger-router-controller: controller
     get:
-      description: readiness 
+      description: readiness
       operationId: readiness
       parameters:
         - name: authorization
@@ -1184,14 +1396,14 @@ paths:
           type: string
           description: The JWT token for req.validation
       responses:
-        '200':
+        "200":
           description: List of the entites
-        '400':
+        "400":
           description: Bad parameters
-        '404':
+        "404":
           description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error                                                     
+        "500":
+          description: Internal server error
 definitions:
   serviceManager_create:
     required:
@@ -1202,136 +1414,136 @@ definitions:
       name:
         type: string
       description:
-        type: [string, 'null'] 
+        type: [string, "null"]
       api:
         type: string
       versionValidity:
         type: object
         properties:
-          validityValue: 
-            type: [string,number]
-          validityType: 
+          validityValue:
+            type: [string, number]
+          validityType:
             type: string
       wizard:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           properties:
             name:
               type: string
-            fields: 
+            fields:
               type: array
               items:
-                type: string   
+                type: string
       definition:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           type: object
       webHooks:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           properties:
             name:
               type: string
-            url: 
+            url:
               type: string
             failMessage:
-              type: [string, 'null']  
+              type: [string, "null"]
             type:
-              type: [string, 'null']
+              type: [string, "null"]
             refId:
-              type: [string, 'null']
+              type: [string, "null"]
       preHooks:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           properties:
             name:
               type: string
-            url: 
+            url:
               type: string
             failMessage:
-              type: [string, 'null']
+              type: [string, "null"]
             type:
-              type: [string, 'null']
+              type: [string, "null"]
             refId:
-              type: [string, 'null']
+              type: [string, "null"]
       workflowHooks:
-        type: [object, 'null']
+        type: [object, "null"]
         properties:
           posthooks:
-            type: [object, 'null']
+            type: [object, "null"]
             properties:
               submit:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     type:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     refId:
-                      type: [string, 'null']
+                      type: [string, "null"]
               discard:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     type:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     refId:
-                      type: [string, 'null']
+                      type: [string, "null"]
               approve:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     type:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     refId:
-                      type: [string, 'null']
+                      type: [string, "null"]
               reject:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     type:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     refId:
-                      type: [string, 'null']
+                      type: [string, "null"]
               rework:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     type:
-                      type: [string, 'null']
+                      type: [string, "null"]
                     refId:
-                      type: [string, 'null']
+                      type: [string, "null"]
       tags:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           type: string
       role:
@@ -1343,92 +1555,92 @@ definitions:
       name:
         type: string
       description:
-        type: [string, 'null']  
+        type: [string, "null"]
       collectionName:
         type: string
       port:
-        type: number  
+        type: number
       api:
         type: string
       versionValidity:
         type: object
         properties:
-          validityValue: 
-            type: [string,number]
-          validityType: 
+          validityValue:
+            type: [string, number]
+          validityType:
             type: string
       definition:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           type: object
       # attributeList:
       #   type: [array]
       webHooks:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           properties:
             name:
               type: string
-            url: 
+            url:
               type: string
             failMessage:
-              type: [string, 'null']
+              type: [string, "null"]
       preHooks:
-        type: [array, 'null']
+        type: [array, "null"]
         items:
           properties:
             name:
               type: string
-            url: 
+            url:
               type: string
             failMessage:
-              type: [string, 'null']                
+              type: [string, "null"]
       workflowHooks:
-        type: [object, 'null']
+        type: [object, "null"]
         properties:
           posthooks:
-            type: [object, 'null']
+            type: [object, "null"]
             properties:
               submit:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
               discard:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']  
+                      type: [string, "null"]
               approve:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']
+                      type: [string, "null"]
               reject:
-                type: [array, 'null']
+                type: [array, "null"]
                 items:
                   properties:
                     name:
                       type: string
-                    url: 
+                    url:
                       type: string
                     failMessage:
-                      type: [string, 'null']      
+                      type: [string, "null"]
   globalSchema_create:
     required:
       - name
@@ -1437,12 +1649,10 @@ definitions:
       name:
         type: string
       app:
-        type: string  
+        type: string
   globalSchema_update:
     properties:
       name:
-        type: [string, 'null']
+        type: [string, "null"]
       app:
-        type: string   
-  
-          
+        type: string

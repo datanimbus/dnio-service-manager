@@ -7,59 +7,59 @@ const trimUtils = require('./auth.trim');
 const logger = global.logger;
 
 const permittedUrls = [
-	'/sm/health/live',
-	'/sm/health/ready',
-	'/sm/service/{id}/checkUnique',
-	'/sm/service/verifyHook'
+	'/sm/internal/health/live',
+	'/sm/internal/health/ready'
 ];
 
 const onlyAuthUrls = [
-	'/sm/service/verifyHook',
-	'/sm/{id}/lockDocument/count',
-	'/sm/service/{id}/swagger'
+	'/sm/{app}/service/verifyHook',
+	'/sm/{app}/service/utils/{id}/lockDocument/count',
+	'/sm/{app}/service/utils/{id}/swagger',
+	'/sm/{app}/service/utils/{id}/checkUnique',
+	'/sm/{app}/service/utils/verifyHook',
+	'/sm/{app}/service/utils/{id}/yamls'
 ];
 
 const internalUrls = [
-	'/sm/app/{app}',
-	'/sm/validateUserDeletion/{app}/{userId}',
-	'/sm/userDeletion/{app}/{userId}',
-	'/sm/service/{id}/statusChange',
-	'/sm/service/{id}/statusChangeFromMaintenance',
+	'/sm/{app}/internal/app',
+	'/sm/{app}/internal/validateUserDeletion/{userId}',
+	'/sm/{app}/userDeletion/{app}/{userId}',
+	'/sm/{app}/service/utils/{id}/statusChange',
+	'/sm/{app}/service/utils/{id}/statusChangeFromMaintenance',
 ];
 
 const adminOnlyUrls = [
-	'/sm/calendar/enable',
-	'/sm/calendar/disable',
-	'/sm/{app}/service/stop ',
-	'/sm/{app}/service/start ',
-	'/sm/{app}/service/repair',
-	'/sm/service/status/count',
+	'/sm/service/fetchAll'
 ];
 
 const commonUrls = [
-	'/sm/service',
-	'/sm/service/{id}',
-	'/sm/service/utils/{app}/{name}',
-	'/sm/service/count',
-	'/sm/service/audit',
-	'/sm/service/audit/count',
-	'/sm/{id}/draftDelete',
-	'/sm/{id}/purge/all',
-	'/sm/{id}/purge/{type}',
-	'/sm/service/{id}/checkUnique',
-	'/sm/globalSchema',
-	'/sm/globalSchema/{id}',
-	'/sm/globalSchema/count',
-	'/sm/globalSchema/audit',
-	'/sm/globalSchema/audit/count',
-	'/sm/{id}/start',
-	'/sm/{id}/stop',
-	'/sm/{id}/deploy',
-	'/sm/{id}/repair',
-	'/sm/{id}/count',
-	'/sm/{id}/{app}/idCount',
-	'/sm/logs',
-	'/sm/tags'
+	'/sm/{app}/calendar/enable',
+	'/sm/{app}/calendar/disable',
+	'/sm/{app}/service',
+	'/sm/{app}/service/{id}',
+	'/sm/{app}/service/utils/{name}',
+	'/sm/{app}/service/utils/count',
+	'/sm/{app}/service/utils/audit',
+	'/sm/{app}/service/utils/audit/count',
+	'/sm/{app}/service/utils/stopAll ',
+	'/sm/{app}/service/utils/startAll ',
+	'/sm/{app}/service/utils/repairAll',
+	'/sm/{app}/service/utils/status/count',
+	'/sm/{app}/service/utils/{id}/draftDelete',
+	'/sm/{app}/service/utils/{id}/purge/all',
+	'/sm/{app}/service/utils/{id}/purge/{type}',
+	'/sm/{app}/service/utils/{id}/checkUnique',
+	'/sm/{app}/service/utils/{id}/start',
+	'/sm/{app}/service/utils/{id}/stop',
+	'/sm/{app}/service/utils/{id}/deploy',
+	'/sm/{app}/service/utils/{id}/repair',
+	'/sm/{app}/service/utils/{id}/count',
+	'/sm/{app}/service/utils/{id}/idCount',
+	'/sm/{app}/globalSchema',
+	'/sm/{app}/globalSchema/{id}',
+	'/sm/{app}/globalSchema/utils/count',
+	'/sm/{app}/globalSchema/utils/audit',
+	'/sm/{app}/globalSchema/utils/audit/count',
 ];
 
 
@@ -83,6 +83,11 @@ router.use((req, res, next) => {
 		req.locals.app = req.body.app;
 	}
 	// check if user is app admin or super admin
+	const matchingPath = commonUrls.find(e => compareURL(e, req.path));
+	if (!req.locals.app && matchingPath) {
+		const params = getUrlParams(matchingPath, req.path);
+		if (params && params['{app}']) req.locals.app = params['{app}'];
+	}
 
 	if (!req.user) {
 		req.user = {};
@@ -157,14 +162,14 @@ function compareURL(tempUrl, url) {
 
 function canAccessPath(req) {
 
-	if (compareURL('/sm/service', req.path) && req.method === 'GET') {
+	if (compareURL('/sm/{app}/service', req.path) && req.method === 'GET') {
 		return true;
 	}
-	if (compareURL('/sm/service/{id}', req.path) && req.method === 'GET') {
+	if (compareURL('/sm/{app}/service/{id}', req.path) && req.method === 'GET') {
 		return true;
 	}
 
-	if (compareURL('/sm/service', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		if ((req.method == 'POST')) {
 			if (_.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
 				return true;
@@ -174,7 +179,7 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/sm/service/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		if ((req.method == 'PUT' || req.method == 'DELETE')) {
 			if (_.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
 				return true;
@@ -184,34 +189,34 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/sm/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/service/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/service/audit', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/audit', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/service/audit/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/audit/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/draftDelete', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/{id}/draftDelete', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/purge/all', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/purge/all', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/purge/{type}', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/purge/{type}', req.path) && _.intersection(req.user.appPermissions, ['PMDSS']).length > 0) {
 		return true;
 	}
-	// if (compareURL('/sm/service/{id}/swagger', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
-	// 	return true;
-	// }
-	if (compareURL('/sm/service/{id}/checkUnique', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/swagger', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/globalSchema', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/checkUnique', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/globalSchema', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
 		if ((req.method == 'POST')) {
 			if (_.intersection(req.user.appPermissions, ['PML']).length > 0) {
 				return true;
@@ -221,7 +226,7 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/sm/globalSchema/{id}', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
+	if (compareURL('/sm/{app}/globalSchema/{id}', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
 		if ((req.method == 'PUT' || req.method == 'DELETE')) {
 			if (_.intersection(req.user.appPermissions, ['PML']).length > 0) {
 				return true;
@@ -231,37 +236,37 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/sm/globalSchema/count', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
+	if (compareURL('/sm/{app}/globalSchema/utils/count', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/globalSchema/audit', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
+	if (compareURL('/sm/{app}/globalSchema/utils/audit', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/globalSchema/audit/count', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
+	if (compareURL('/sm/{app}/globalSchema/utils/audit/count', req.path) && _.intersection(req.user.appPermissions, ['PVL', 'PML']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/start', req.path) && _.intersection(req.user.appPermissions, ['PMDSPS']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/start', req.path) && _.intersection(req.user.appPermissions, ['PMDSPS']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/stop', req.path) && _.intersection(req.user.appPermissions, ['PMDSPS']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/stop', req.path) && _.intersection(req.user.appPermissions, ['PMDSPS']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/deploy', req.path) && _.intersection(req.user.appPermissions, ['PMDSPD']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/deploy', req.path) && _.intersection(req.user.appPermissions, ['PMDSPD']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/repair', req.path) && _.intersection(req.user.appPermissions, ['PMDSPD']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/repair', req.path) && _.intersection(req.user.appPermissions, ['PMDSPD']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS', 'PVDS'], comparator).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS', 'PVDS'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/{id}/{app}/idCount', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
+	if (compareURL('/sm/{app}/service/utils/{id}/idCount', req.path) && _.intersection(req.user.appPermissions, ['PMDSD', 'PVDSD']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/logs', req.path) && _.intersection(req.user.appPermissions, ['PVDSA']).length > 0) {
+	if (compareURL('/sm/{app}/logs', req.path) && _.intersection(req.user.appPermissions, ['PVDSA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/sm/tags', req.path) && _.intersection(req.user.appPermissions, ['PVDSS', 'PMDSS']).length > 0) {
+	if (compareURL('/sm/{app}/tags', req.path) && _.intersection(req.user.appPermissions, ['PVDSS', 'PMDSS']).length > 0) {
 		return true;
 	}
 	return false;
@@ -272,8 +277,22 @@ function comparator(main, pattern) {
 	return main.startsWith(pattern);
 }
 
+function getUrlParams(tempUrl, url) {
+	const values = {};
+	let tempUrlSegment = tempUrl.split('/').filter(_d => _d != '');
+	let urlSegment = url.split('/').filter(_d => _d != '');
+	tempUrlSegment.shift();
+	urlSegment.shift();
+	tempUrlSegment.forEach((_k, i) => {
+		if (_k.startsWith('{') && _k.endsWith('}') && urlSegment[i] != '') {
+			values[_k] = urlSegment[i];
+		}
+	});
+	logger.trace(`Params Map :: ${values}`);
+	return values;
+}
 
-router.use(['/sm/service', '/sm/service/:id'], async (req, res, next) => {
+router.use(['/sm/{app}/service', '/sm/{app}/service/:id'], async (req, res, next) => {
 
 	const original = res.json;
 	function jsonHook(json) {

@@ -1,6 +1,6 @@
 'use strict';
 // const { generateYaml } = require('../../util/codegen/projectSkeletons/generateYaml');
-const { generateYaml } = require('../../util/codegen/v2/generateYaml');
+const { generateYaml } = require('../../util/generateYaml');
 const logger = global.logger;
 const mongoose = require('mongoose');
 const apiNotAllowed = ['/file/upload', '/file/{id}/view', '/file/{id}/remove', '/fileMapper/mapping', '/fileMapper/create', '/hook', '/lock', '/utils/experienceHook', '/fileMapper/enrich', '/health/live', '/health/ready', '/fileMapper/{fileId}/create', '/fileMapper/{fileId}/mapping', '/fileMapper/{fileId}/count', '/fileMapper/{fileId}', '/fileMapper/{fileId}/enrichDataForWF', '/utils/fileTransfers/{id}', '/utils/fileTransfers/count', '/utils/fileTransfers', '/utils/hrefUpdate', '/utils/securedFields', '/utils/fileTransfers/{fileId}/readStatus'];
@@ -18,7 +18,7 @@ function addAuthHeader(paths, jwt) {
 
 function show(req, res) {
 	let txnId = req.get('TxnId');
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	logger.debug(`[${txnId}] Fetching Swagger API documentation for service :: ${id}`);
 	mongoose.model('services').findOne({ '_id': id, '_metadata.deleted': false })
 		.then(_d => {
