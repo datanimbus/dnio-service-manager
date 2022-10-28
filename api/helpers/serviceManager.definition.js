@@ -402,5 +402,17 @@ var definition = {
 		'required': false,
 		'default': null
 	},
+	'fileStorage': {
+		'type': 'Object',
+		'definition': {
+			'type': {
+				'type': 'String',
+				'default': 'GRIDFS'
+			},
+			'connectorId': {
+				'type': 'String'
+			}
+		}
+	}
 };
 module.exports.definition = definition;
