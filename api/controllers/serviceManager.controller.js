@@ -1319,6 +1319,30 @@ e.deployAPIHandler = (_req, _res) => {
 
 					return promise
 						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req); })
+						.then((output) => {
+							//Deploy the related schemas
+							let relatedSchemas = [];
+							if (output?.relatedSchemas?.incoming.length > 0) {
+								let incomingRelatedSchemas = output.relatedSchemas.incoming;
+								incomingRelatedSchemas.map((incomingRelatedSchema) => {
+									relatedSchemas.push(incomingRelatedSchema.service);
+								});
+							}
+							else if (output?.relatedSchemas?.outgoing.length > 0) {
+								let outgoingRelatedSchemas = output.relatedSchemas.outgoing;
+								outgoingRelatedSchemas.map((outgoingRelatedSchema) => {
+									relatedSchemas.push(outgoingRelatedSchema.service);
+								});
+							}
+							if (relatedSchemas.length > 0) {
+								crudder.model.find({ _id: { $in: relatedSchemas }, '_metadata.deleted': false })
+									.then((relatedSchemasData) => {
+										relatedSchemasData.map((oneRelatedSchemaData) => {
+											deployUtil.deployService(oneRelatedSchemaData, socket, _req, false);
+										})
+									});
+							}
+						})
 						.then(() => {
 							let newHooks = {
 								'webHooks': svcObject.webHooks,
@@ -1495,6 +1519,30 @@ e.deployAPIHandler = (_req, _res) => {
 									return Promise.resolve();
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
+								.then((output) => {
+									//Deploy the related schemas
+									let relatedSchemas = [];
+									if (output?.relatedSchemas?.incoming.length > 0) {
+										let incomingRelatedSchemas = output.relatedSchemas.incoming;
+										incomingRelatedSchemas.map((incomingRelatedSchema) => {
+											relatedSchemas.push(incomingRelatedSchema.service);
+										});
+									}
+									else if (output?.relatedSchemas?.outgoing.length > 0) {
+										let outgoingRelatedSchemas = output.relatedSchemas.outgoing;
+										outgoingRelatedSchemas.map((outgoingRelatedSchema) => {
+											relatedSchemas.push(outgoingRelatedSchema.service);
+										});
+									}
+									if (relatedSchemas.length > 0) {
+										crudder.model.find({ _id: { $in: relatedSchemas }, '_metadata.deleted': false })
+											.then((relatedSchemasData) => {
+												relatedSchemasData.map((oneRelatedSchemaData) => {
+													deployUtil.deployService(oneRelatedSchemaData, socket, _req, false);
+												})
+											});
+									}
+								})
 								.then(() => {
 									// if (!definitionComparison) {
 									// 	return deployUtil.updateInPM(srvcObj._id, _req);
