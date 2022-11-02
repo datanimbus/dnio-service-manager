@@ -879,17 +879,33 @@ e.createDoc = (_req, _res) => {
 		let serviceObj = null;
 		return getNextPort()
 			.then(port => _req.body.port = port)
-			.then(async() => {
-				let connector = await smHooks.getDefaultConnector(_req);
-				_req.body.fileStorage = {
-					type: 'MongoDB',
-					connectorId: connector[0]._id
-				};
-			})
 			.then(() => smHooks.validateAppAndGetAppData(_req))
-			.then((appData) => {
+			.then(async (appData) => {
 				if (!('disableInsights' in _req.body)) {
 					_req.body.disableInsights = appData.disableInsights;
+				}
+				let connectors = await smHooks.getDefaultConnector(_req);
+				if (!_req.body.dataStorage) {
+					if (appData.dataStorage) {
+						_req.body.dataStorage = appData.dataStorage;
+					} else {
+						let conn = _.find(connectors, conn => conn.type === 'MongoDB');
+						_req.body.dataStorage = {
+							type: conn.type,
+							connectorId: conn._id
+						};
+					}
+				}
+				if (!_req.body.fileStorage) {
+					if (appData.fileStorage) {
+						_req.body.fileStorage = appData.fileStorage;
+					} else {
+						let conn = _.find(connectors, conn => conn.type === 'GridFS');
+						_req.body.fileStorage = {
+							type: conn.type,
+							connectorId: conn._id
+						};
+					}
 				}
 				return apiUniqueCheck(_req.body.api, _req.body.app);
 			})

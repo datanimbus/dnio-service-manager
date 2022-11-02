@@ -406,8 +406,18 @@ var definition = {
 		'type': 'Object',
 		'definition': {
 			'type': {
-				'type': 'String',
-				'default': 'GRIDFS'
+				'type': 'String'
+			},
+			'connectorId': {
+				'type': 'String'
+			}
+		}
+	},
+	'dataStorage': {
+		'type': 'Object',
+		'definition': {
+			'type': {
+				'type': 'String'
 			},
 			'connectorId': {
 				'type': 'String'

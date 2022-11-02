@@ -100,7 +100,7 @@ e.removeServicesInGlobalSchema = function (serviceId, req) {
 
 e.validateAppAndGetAppData = function (_req) {
 	var options = {
-		url: envConfig.baseUrlUSR + '/app/' + _req.body.app + '?select=_id,type,disableInsights',
+		url: envConfig.baseUrlUSR + '/admin/app/' + _req.body.app + '?select=_id,type,disableInsights,dataStorage,fileStorage',
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
