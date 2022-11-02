@@ -130,6 +130,39 @@ e.validateAppAndGetAppData = function (_req) {
 	}));
 };
 
+
+e.getDefaultConnector = function (_req) {
+	var options = {
+		url: `${envConfig.baseUrlUSR}/${_req.body.app}/connector?select=_id,type&filter=%7B%22options.default%22:true%2C%22app%22:%22${_req.body.app}%22%7D`,
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			'TxnId': _req.get('TxnId'),
+			'Authorization': _req.headers.authorization
+		},
+		json: true
+	};
+	return new Promise((_resolve, _reject) => request.get(options, function (err, res, body) {
+		if (err) {
+			logger.error(err.message);
+			_reject();
+		} else if (!res) {
+			logger.error('App management service is down!');
+			_reject({
+				'message': 'App management service is down!'
+			});
+		} else if (res.statusCode == 404) {
+			logger.info('Connector not found for App ' + _req.body.app + '!');
+			_reject({
+				'message': 'Default Connector not found'
+			});
+		} else {
+			logger.info('Default Connector for app ' + _req.body.app + ' exists!');
+			_resolve(body);
+		}
+	}));
+};
+
 e.createDSinMON = (serviceObj, _req) => {
 	let body = {
 		'srvc': serviceObj.app + '.' + serviceObj.collectionName

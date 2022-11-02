@@ -879,6 +879,13 @@ e.createDoc = (_req, _res) => {
 		let serviceObj = null;
 		return getNextPort()
 			.then(port => _req.body.port = port)
+			.then(async() => {
+				let connector = await smHooks.getDefaultConnector(_req);
+				_req.body.fileStorage = {
+					type: 'MongoDB',
+					connectorId: connector[0]._id
+				};
+			})
 			.then(() => smHooks.validateAppAndGetAppData(_req))
 			.then((appData) => {
 				if (!('disableInsights' in _req.body)) {
