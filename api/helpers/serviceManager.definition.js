@@ -402,25 +402,14 @@ var definition = {
 		'required': false,
 		'default': null
 	},
-	'fileStorage': {
+	'connectors': {
 		'type': 'Object',
 		'definition': {
-			'type': {
-				'type': 'String'
+			'data': {
+				'type': 'Object'
 			},
-			'connectorId': {
-				'type': 'String'
-			}
-		}
-	},
-	'dataStorage': {
-		'type': 'Object',
-		'definition': {
-			'type': {
-				'type': 'String'
-			},
-			'connectorId': {
-				'type': 'String'
+			'file': {
+				'type': 'Object'
 			}
 		}
 	}
