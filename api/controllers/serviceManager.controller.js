@@ -884,29 +884,21 @@ e.createDoc = (_req, _res) => {
 				if (!('disableInsights' in _req.body)) {
 					_req.body.disableInsights = appData.disableInsights;
 				}
-				let connectors = await smHooks.getDefaultConnector(_req);
-				if (!_req.body.dataStorage) {
-					if (appData.dataStorage) {
-						_req.body.dataStorage = appData.dataStorage;
-					} else {
-						let conn = _.find(connectors, conn => conn.type === 'MongoDB');
-						_req.body.dataStorage = {
-							type: conn.type,
-							connectorId: conn._id
-						};
-					}
+
+				if (!_req.body.connectors?.data) {
+					_req.body.connectors = {
+						data: {},
+						file: {}
+					};
 				}
-				if (!_req.body.fileStorage) {
-					if (appData.fileStorage) {
-						_req.body.fileStorage = appData.fileStorage;
-					} else {
-						let conn = _.find(connectors, conn => conn.type === 'GridFS');
-						_req.body.fileStorage = {
-							type: conn.type,
-							connectorId: conn._id
-						};
-					}
+
+				if (!_req.body.connectors?.data?._id) {
+					_req.body.connectors.data._id = appData.connectors.data._id;
 				}
+				if (!_req.body.connectors?.file?._id) {
+					_req.body.connectors.file._id = appData.connectors.file._id;
+				}
+
 				return apiUniqueCheck(_req.body.api, _req.body.app);
 			})
 			.then(() => nameUniqueCheck(_req.body.name, _req.body.app))
@@ -1124,7 +1116,22 @@ e.updateDoc = (_req, _res) => {
 
 			let srvcObj = null;
 			return smHooks.validateAppAndGetAppData(_req)
-				.then(() => {
+				.then((appData) => {
+
+					if (!_req.body.connectors?.data) {
+						_req.body.connectors = {
+							data: {},
+							file: {}
+						};
+					}
+	
+					if (!_req.body.connectors?.data?._id) {
+						_req.body.connectors.data._id = appData.connectors.data._id;
+					}
+					if (!_req.body.connectors?.file?._id) {
+						_req.body.connectors.file._id = appData.connectors.file._id;
+					}
+					
 					if (oldData.name != _req.body.name) {
 						return nameUniqueCheck(_req.body.name, _req.body.app, ID);
 					} else {
