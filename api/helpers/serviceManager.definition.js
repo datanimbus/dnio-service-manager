@@ -402,15 +402,14 @@ var definition = {
 		'required': false,
 		'default': null
 	},
-	'fileStorage': {
+	'connectors': {
 		'type': 'Object',
 		'definition': {
-			'type': {
-				'type': 'String',
-				'default': 'GRIDFS'
+			'data': {
+				'type': 'Object'
 			},
-			'connectorId': {
-				'type': 'String'
+			'file': {
+				'type': 'Object'
 			}
 		}
 	}
