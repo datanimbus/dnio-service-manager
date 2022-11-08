@@ -84,7 +84,7 @@ e.updateServicesInGlobalSchema = (serviceObj, req) => {
 
 e.removeServicesInGlobalSchema = function (serviceId, req) {
 	logger.info(`[${req.get('TxnId')}] ${serviceId} : Removing services in global schema `);
-	return mongoose.model('globalSchema').find({services: serviceId })
+	return mongoose.model('globalSchema').find({ services: serviceId })
 		.then(docs => {
 			let promiseArr = [];
 			logger.info(`[${req.get('TxnId')}] ${serviceId} : Found ${docs.length} global schema links`);
@@ -100,12 +100,12 @@ e.removeServicesInGlobalSchema = function (serviceId, req) {
 
 e.validateAppAndGetAppData = function (_req) {
 	var options = {
-		url: envConfig.baseUrlUSR + '/admin/app/' + _req.body.app + '?select=_id,type,disableInsights,connectors',
+		url: envConfig.baseUrlUSR + '/data/app/' + _req.body.app + '?select=_id,type,disableInsights,connectors',
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
 			'TxnId': _req.get('TxnId'),
-			'Authorization': _req.headers.authorization
+			'Authorization': 'JWT ' + global.SM_TOKEN
 		},
 		json: true
 	};
@@ -209,7 +209,7 @@ e.updateExpiry = (serviceObj, _req, oldCollectionName, newCollectionName) => {
 		body = { 'srvc': serviceObj.app + '.' + serviceObj.collectionName };
 	}
 	if (oldCollectionName != newCollectionName) {
-		body.oldCollectionName = serviceObj.app + '.' + oldCollectionName,
+		body.oldCollectionName = serviceObj.app + '.' + oldCollectionName;
 		body.newCollectionName = serviceObj.app + '.' + newCollectionName;
 	}
 
