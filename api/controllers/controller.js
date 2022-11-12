@@ -130,4 +130,5 @@ router.put('/:app/internal/userDeletion/:userId', serviceManagerController.userD
 router.post('/:app/internal/filequeue', mlFileQueueController.create);
 router.get('/internal/health/live', serviceManagerController.health);
 router.get('/internal/health/ready', serviceManagerController.readiness);
+router.get('/internal/ds/env', serviceManagerController.getEnvVars);
 module.exports = router;

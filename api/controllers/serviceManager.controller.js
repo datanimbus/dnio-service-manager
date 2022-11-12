@@ -1124,14 +1124,14 @@ e.updateDoc = (_req, _res) => {
 							file: {}
 						};
 					}
-	
+
 					if (!_req.body.connectors?.data?._id) {
 						_req.body.connectors.data._id = appData.connectors.data._id;
 					}
 					if (!_req.body.connectors?.file?._id) {
 						_req.body.connectors.file._id = appData.connectors.file._id;
 					}
-					
+
 					if (oldData.name != _req.body.name) {
 						return nameUniqueCheck(_req.body.name, _req.body.app, ID);
 					} else {
@@ -3233,14 +3233,10 @@ async function getYamls(req, res) {
 		// const port = doc.port;
 		const port = 80;
 		const name = (doc.api).substring(1).toLowerCase();
-		const envVars = [];
-		envConfig.envkeysForDataService.forEach(key => {
-			envVars.push({ name: key, value: process.env[key] });
-		});
-		envVars.push({ name: 'DATA_STACK_APP_NS', value: namespace });
-		envVars.push({ name: 'NODE_OPTIONS', value: `--max-old-space-size=${envConfig.maxHeapSize}` });
-		envVars.push({ name: 'NODE_ENV', value: 'production' });
-		envVars.push({ name: 'SERVICE_ID', value: `${doc._id}` });
+		const envVars = [
+			{ name: 'DATA_STACK_APP_NS', value: namespace },
+			{ name: 'SERVICE_ID', value: `${doc._id}` }
+		];
 
 		const volumeMounts = {
 			'file-export': {
@@ -3361,6 +3357,23 @@ async function getYamls(req, res) {
 	}
 }
 
+async function getEnvVars(req, res) {
+	try {
+		let envVars = {}
+		envConfig.envkeysForDataService.forEach(key => {
+			envVars[key] = process.env[key];
+		});
+		envVars['NODE_OPTIONS'] = `--max-old-space-size=${envConfig.maxHeapSize}`;
+		envVars['NODE_ENV'] = 'production';
+
+		res.status(200).json(envVars);
+
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
 async function importFromXLSX(req, res) {
 	let doc;
 	let responseSent = false;
@@ -3444,5 +3457,6 @@ module.exports = {
 	disableCalendar: disableCalendar,
 	checkUnique: checkUnique,
 	countByStatus: countByStatus,
-	importFromXLSX
+	importFromXLSX,
+	getEnvVars
 };

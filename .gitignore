@@ -43,6 +43,7 @@ generatedServices/*
 .nyc_output/
 coverage
 send.sh
+build.sh
 test.js
 LAST_PULL
 CURRENT_SM

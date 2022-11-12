@@ -61,18 +61,19 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		logger.debug(`[${txnId}] Service moved to pending status ${schema._id}`);
 
 		let envVars = {};
-		config.envkeysForDataService.forEach(key => envVars[key] = process.env[key]);
-		envVars['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + schema.app).toLowerCase();
-		envVars['NODE_OPTIONS'] = `--max-old-space-size=${config.maxHeapSize}`;
-		envVars['NODE_ENV'] = 'production';
+		// config.envkeysForDataService.forEach(key => envVars[key] = process.env[key]);
+		envVars['DATA_STACK_NAMESPACE'] = process.env.DATA_STACK_NAMESPACE;
+		// envVars['DATA_STACK_APP_NS'] = (config.dataStackNS + '-' + schema.app).toLowerCase();
+		// envVars['NODE_OPTIONS'] = `--max-old-space-size=${config.maxHeapSize}`;
+		// envVars['NODE_ENV'] = 'production';
 		envVars['SERVICE_ID'] = `${schema._id}`;
 
 		let deploymentEnvVars = [];
 		Object.keys(envVars).forEach(key => deploymentEnvVars.push({ name: key, value: envVars[key] }));
 
-		logger.trace(`[${txnId}] Environment variables to send to DM ${schema._id} :: ${JSON.stringify(deploymentEnvVars)}`);
+		// logger.trace(`[${txnId}] Environment variables to send to DM ${schema._id} :: ${JSON.stringify(deploymentEnvVars)}`);
 
-		let namespace = envVars['DATA_STACK_APP_NS'];
+		let namespace = (config.dataStackNS + '-' + schema.app).toLowerCase();
 		// let port = schema.port;
 		let port = 80;
 		let name = (schema.api).substring(1).toLowerCase();
@@ -88,7 +89,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		let options = {
 			livenessProbe: {
 				httpGet: {
-					path: `/api/internal/health/live`,
+					path: '/api/internal/health/live',
 					// port: schema.port,
 					port: 80,
 					scheme: 'HTTP'
@@ -98,7 +99,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 			},
 			readinessProbe: {
 				httpGet: {
-					path: `/api/internal/health/ready`,
+					path: '/api/internal/health/ready',
 					// port: schema.port,
 					port: 80,
 					scheme: 'HTTP'
@@ -120,7 +121,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		if (!config.isAcceptableK8sStatusCodes(k8sServiceResponse.statusCode)) throw new Error(`Service creation failed for service ${schema._id}/${schema.name}`);
 		logger.trace(`[${txnId}] [${schema._id}] Service creation response: ${JSON.stringify(k8sServiceResponse)}`);
 
-		let k8sDeploymentResponse = await kubeutil.deployment.createDeployment(namespace, name, config.baseImage, port, deploymentEnvVars, options, version, volumeMounts);
+		let k8sDeploymentResponse = await kubeutil.deployment.createDeployment(namespace, name, config.baseImage, port, null, options, version, volumeMounts);
 		if (!config.isAcceptableK8sStatusCodes(k8sDeploymentResponse.statusCode)) throw new Error(`Deployment creation failed for service ${schema._id}/${schema.name}`);
 		logger.trace(`[${txnId}] [${schema._id}] Deployment creation response: ${JSON.stringify(k8sDeploymentResponse)}`);
 

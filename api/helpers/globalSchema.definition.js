@@ -18,7 +18,7 @@ var definition = {
 					return {
 						type: 'Object',
 						definition: []
-					}
+					};
 				}
 				// 'definition': [
 				// 	{

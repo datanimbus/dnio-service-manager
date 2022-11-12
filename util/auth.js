@@ -27,6 +27,7 @@ const internalUrls = [
 	'/sm/{app}/internal/userDeletion/{userId}',
 	'/sm/{app}/service/utils/{id}/statusChange',
 	'/sm/{app}/service/utils/{id}/statusChangeFromMaintenance',
+	'/sm/internal/ds/env'
 ];
 
 const adminOnlyUrls = [

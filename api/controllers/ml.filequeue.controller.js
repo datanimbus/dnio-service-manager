@@ -23,6 +23,6 @@ e.create = async (req, res) => {
 			});
 		}
 	}
-}
+};
 
 module.exports = e;
