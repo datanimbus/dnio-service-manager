@@ -3234,7 +3234,7 @@ async function getYamls(req, res) {
 		const port = 80;
 		const name = (doc.api).substring(1).toLowerCase();
 		const envVars = [
-			{ name: 'DATA_STACK_APP_NS', value: namespace },
+			{ name: 'DATA_STACK_NAMESPACE', value: process.env.DATA_STACK_NAMESPACE },
 			{ name: 'SERVICE_ID', value: `${doc._id}` }
 		];
 
