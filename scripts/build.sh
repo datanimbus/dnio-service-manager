@@ -11,7 +11,7 @@ echo "****************************************************"
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if $cleanBuild ; then
-    docker build --no-cache -t data.stack.sm:$TAG .
+    docker build --no-cache --pull -t data.stack.sm:$TAG .
 else 
     docker build -t data.stack.sm:$TAG .
 fi
@@ -30,7 +30,7 @@ cd $WORKSPACE/ds-base
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if $cleanBuild ; then
-    docker build --no-cache -t data.stack.base:$TAG .
+    docker build --no-cache --pull -t data.stack.base:$TAG .
 else 
     docker build -t data.stack.base:$TAG .
 fi
