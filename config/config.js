@@ -110,6 +110,12 @@ module.exports = {
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true
 	},
+	mongoLogsOptions: {
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		dbName: process.env.MONGO_LOGS_DBNAME || 'datastackLogs',
+		useNewUrlParser: true
+	},
 	mongoAppcenterOptions: {
 		// numberOfRetries: process.env.MONGO_RECONN_TRIES,
 		// retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,

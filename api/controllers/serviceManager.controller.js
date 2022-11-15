@@ -1884,7 +1884,7 @@ async function renameCollections(oldColl, newColl, app) {
 	}
 }
 
-function dropCollections(collectionName, app, txnId) {
+function dropCollections(collectionName, app, txnId, appName) {
 	logger.debug(`[${txnId}] DropCollection :: DB clean up : ${app}`);
 	let appCenterDB = global.mongoConnection.db(app);
 	logger.error(`[${txnId}] DropCollection :: AppCenter DB Connection ${appCenterDB ? 'Active' : 'Inactive'}`);
@@ -1907,6 +1907,16 @@ function dropCollections(collectionName, app, txnId) {
 			if (err) logger.error(`[${txnId}] DropCollection :: counter :: ${collectionName} :: ${err.message}`);
 			else logger.info(`[${txnId}] DropCollection :: Counter ${collectionName} deleted successfully`);
 		});
+
+		let logsDB = global.mongoConnection.db(envConfig.mongoLogsOptions.dbName);
+		logger.error(`[${txnId}] DropCollection :: Logs DB Connection ${logsDB ? 'Active' : 'Inactive'}`);
+		if (logsDB) {
+			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${appName}.${collectionName}.audit`);
+			logsDB.dropCollection(`${appName}.${collectionName}.audit`, (err, coll) => {
+				if (err) logger.error(`[${txnId}] DropCollection :: ${appName}.${collectionName}.audit :: ${err.message}`);
+				else if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${appName}.${collectionName}.audit deleted successfully`);
+			});
+		}
 	}
 }
 
@@ -1986,7 +1996,7 @@ e.destroyService = (_req, _res) => {
 		.then(() => {
 			if (originalDoc && originalDoc.permanentDeleteData) {
 				logger.info(`[${txnId}] Deleting service ${id} : Dropping collection ${originalDoc.collectionName} under db ${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
-				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, txnId);
+				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, txnId, originalDoc.app);
 			}
 		})
 		.then(() => {
