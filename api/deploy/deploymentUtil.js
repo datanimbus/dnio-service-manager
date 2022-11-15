@@ -80,7 +80,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		let version = schema.version;
 		let volumeMounts = {
 			'file-export': {
-				containerPath: '/app/output',
+				containerPath: '/tmp/app/output',
 				hostPath: `${config.fsMount}/${schema._id}`
 			}
 		};
