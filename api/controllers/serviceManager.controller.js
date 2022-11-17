@@ -1368,7 +1368,7 @@ e.deployAPIHandler = (_req, _res) => {
 								crudder.model.find({ _id: { $in: relatedSchemas }, '_metadata.deleted': false })
 									.then((relatedSchemasData) => {
 										relatedSchemasData.map((oneRelatedSchemaData) => {
-											deployUtil.deployService(oneRelatedSchemaData, socket, _req, false);
+											deployUtil.deployService(oneRelatedSchemaData, socket, _req, true);
 										})
 									});
 							}
@@ -1388,13 +1388,14 @@ e.deployAPIHandler = (_req, _res) => {
 						});
 				} else {
 					return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
-						.then(newData => {
+						.then(data => {
+							let newData = JSON.parse(JSON.stringify(data.toObject()));
 							if (envConfig.verifyDeploymentUser && !isSuperAdmin && newData && newData._metadata && newData._metadata.lastUpdatedBy == user) {
 								logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${newData.status}`);
 								return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 							}
 
-							if (newData.webHooks || newData.workflowHooks) {
+							if (newData.webHooks.length || newData.workflowHooks) {
 								logger.trace(`[${txnId}] Webhooks updated for service ${ID}`);
 								isWebHookUpdateRequired = true;
 							}
@@ -1518,7 +1519,7 @@ e.deployAPIHandler = (_req, _res) => {
 							logger.info(`[${txnId}] Clean redeploy for service ${ID}? ${isDeleteAndCreateRequired ? 'YES' : 'NO'}`);
 							logger.info(`[${txnId}] Audit index delete required for service ${ID}? ${isAuditIndexDeleteRequired ? 'YES' : 'NO'}`);
 
-							let srvcObj = JSON.parse(JSON.stringify(newData.toObject()));
+							let srvcObj = JSON.parse(JSON.stringify(newData));
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
@@ -1568,7 +1569,7 @@ e.deployAPIHandler = (_req, _res) => {
 										crudder.model.find({ _id: { $in: relatedSchemas }, '_metadata.deleted': false })
 											.then((relatedSchemasData) => {
 												relatedSchemasData.map((oneRelatedSchemaData) => {
-													deployUtil.deployService(oneRelatedSchemaData, socket, _req, false);
+													deployUtil.deployService(oneRelatedSchemaData.toObject(), socket, _req, true);
 												})
 											});
 									}
@@ -1579,7 +1580,7 @@ e.deployAPIHandler = (_req, _res) => {
 									// }
 								})
 								.then(() => {
-									return newData.remove(_req);
+									return data.remove(_req);
 								})
 								.then(async () => {
 									dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
