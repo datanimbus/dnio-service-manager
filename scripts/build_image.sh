@@ -70,12 +70,6 @@ sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if [ -f $WORKSPACE/../CLEAN_BUILD_SM ]; then
     echo "****************************************************"
-    echo "docker rm node:18-alpine"
-    echo "****************************************************"
-
-    docker rm node:18-alpine
-
-    echo "****************************************************"
     echo "data.stack.sm :: Doing a clean build"
     echo "****************************************************"
     
