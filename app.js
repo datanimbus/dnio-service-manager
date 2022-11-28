@@ -140,6 +140,16 @@ let queueMgmt = require('./util/queueMgmt');
 dataStackutils.eventsUtil.setNatsClient(queueMgmt.client);
 var logToQueue = dataStackutils.logToQueue('sm', queueMgmt.client, envConfig.logQueueName, 'sm.logs');
 app.use(logToQueue);
+
+if(global.mongoConnection){
+	require('./api/init/init')();
+}
+else{
+	setTimeout(()=>{
+		require('./api/init/init')();
+	},2000);
+}
+
 app.use(require('./util/auth'));
 
 app.use('/sm', require('./api/controllers/controller'));
