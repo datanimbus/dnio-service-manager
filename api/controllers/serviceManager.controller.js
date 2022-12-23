@@ -677,6 +677,7 @@ function checkOutGoingRelation(serviceId) {
 			.catch((err) => reject(err));
 	});
 }
+
 //remove incoming relation of the entity 
 function removeIncomingRelation(serviceId, req) {
 	let txnId = req && req.headers && req.headers['TxnId'];
@@ -1553,13 +1554,14 @@ e.deployAPIHandler = (_req, _res) => {
 								.then((output) => {
 									//Deploy the related schemas
 									let relatedSchemas = [];
-									if (output?.relatedSchemas?.incoming.length > 0) {
-										let incomingRelatedSchemas = output.relatedSchemas.incoming;
-										incomingRelatedSchemas.map((incomingRelatedSchema) => {
-											relatedSchemas.push(incomingRelatedSchema.service);
-										});
-									}
-									else if (output?.relatedSchemas?.outgoing.length > 0) {
+									// if (output?.relatedSchemas?.incoming.length > 0) {
+									// 	let incomingRelatedSchemas = output.relatedSchemas.incoming;
+									// 	incomingRelatedSchemas.map((incomingRelatedSchema) => {
+									// 		relatedSchemas.push(incomingRelatedSchema.service);
+									// 	});
+									// }
+									// else 
+									if (output?.relatedSchemas?.outgoing.length > 0) {
 										let outgoingRelatedSchemas = output.relatedSchemas.outgoing;
 										outgoingRelatedSchemas.map((outgoingRelatedSchema) => {
 											relatedSchemas.push(outgoingRelatedSchema.service);
@@ -1683,64 +1685,80 @@ e.deployAPIHandler = (_req, _res) => {
 };
 
 e.startAPIHandler = (_req, _res) => {
-	let txnId = _req.get('TxnId');
-	var id = _req.params.id;
-	let socket = _req.app.get('socket');
-	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
-		.then(doc => {
-			if (doc && !doc.schemaFree && doc.definition.length == 1) throw new Error('Data service definition not found.');
-			if (doc) {
-				checkOutGoingRelation(id)
-					.then(() => {
-						_res.status(202).json({ message: 'Entity has been saved successfully' });
-						// doc.save(_req);
-						doc = doc.toObject();
-						// doc.definition = JSON.parse(doc.definition);
-						const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
-						if (process.env.SM_ENV == 'K8s') {
-							let instances = doc.instances ? doc.instances : 1;
-							logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
-							return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
-								.then(_d => {
-									logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
-									if (_d.statusCode == 404) {
-										return k8s.serviceStart(doc)
-											.then(() => deployUtil.deployService(doc, socket, _req, false))
-											.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
-									} else {
-										dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
-									}
-								})
-								.catch(err => {
-									logger.error(err);
-								});
-						}
-						return deployUtil.deployService(doc, socket, _req, false)
-							.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
-					}, (data) => {
-						let serviceMsg = '';
-						if (data.relatedEntities.length == 1) {
-							serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-						} else if (data.relatedEntities.length == 2) {
-							serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
-						} else {
-							serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
-						}
+	let id = _req.params.id;
 
-						_res.status(400).json({
-							message: 'Data Service ' + data.name + '  is dependent on the following ' + serviceMsg + '. Please make sure the dependent Data Services are also started.'
-						});
-					});
-
-			} else {
-				throw new Error('No service found with given id');
-			}
-		})
-		.catch(e => {
-			logger.error(`[${txnId}] Data service start error ${id} :: ${e.message}`);
-			if (!_res.headersSent) _res.status(500).json({ message: e.message });
-		});
+	startService(_req, _res, id, []);
 };
+
+
+async function startService(req, res, id, list) {
+	try {
+		let txnId = req.get('TxnId');
+		let socket = req.app.get('socket');
+
+		let doc = await crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } });
+	
+		if (doc && !doc?.schemaFree && doc?.definition?.length == 1) {
+			throw new Error('Data service definition not found.');
+		}
+		if (doc) {
+			if (!res.headersSent) res.status(202).json({ message: 'Entity has been saved successfully' });
+
+			doc = doc.toObject();
+			list.push(id);
+			list = _.uniq(list);
+			let relatedEntities = [];
+	
+			if (doc.relatedSchemas.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
+				let extService = doc.relatedSchemas.outgoing.map(obj => obj.service);
+				extService = _.uniq(extService);
+	
+				let docs = await crudder.model.find({ _id: { $in: extService } }, '_id status name').lean();
+	
+				docs.forEach(docObj => {
+					if (docObj.status == 'Undeployed') {
+						relatedEntities.push(docObj._id);
+					}
+				});
+			}
+	
+			relatedEntities = _.difference(relatedEntities, list);
+			if (relatedEntities.length > 0) {
+				relatedEntities.forEach(entity => {
+					startService(req, res, entity, relatedEntities.concat(list));
+				});
+			} else {
+				const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+				if (process.env.SM_ENV == 'K8s') {
+					let instances = doc.instances ? doc.instances : 1;
+					logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
+					return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
+						.then(_d => {
+							logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
+							if (_d.statusCode == 404) {
+								return k8s.serviceStart(doc)
+									.then(() => deployUtil.deployService(doc, socket, req, false))
+									.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+							} else {
+								dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc);
+							}
+						})
+						.catch(err => {
+							logger.error(err);
+						});
+				}
+				return deployUtil.deployService(doc, socket, req, false)
+					.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+			}
+
+		} else {
+			throw new Error('No service found with given id');
+		}
+	} catch (err) {
+		logger.error(`[${txnId}] Data service start error ${id} :: ${e.message}`)
+		if (!res.headersSent) res.status(500).json({ message: e.message });
+	}
+}
 
 e.stopAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
