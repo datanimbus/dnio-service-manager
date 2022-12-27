@@ -1350,28 +1350,29 @@ e.deployAPIHandler = (_req, _res) => {
 
 					return promise
 						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req); })
-						.then((output) => {
-							//Deploy the related schemas
-							let relatedSchemas = [];
-							if (output?.relatedSchemas?.incoming.length > 0) {
-								let incomingRelatedSchemas = output.relatedSchemas.incoming;
-								incomingRelatedSchemas.map((incomingRelatedSchema) => {
-									relatedSchemas.push(incomingRelatedSchema.service);
+						.then(async (doc) => {
+							let relatedEntities = [];
+
+							if (doc?.relatedSchemas?.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
+								let extServices = doc.relatedSchemas.outgoing.map(obj => obj.service);
+								extServices = _.uniq(extServices);
+
+								let docs = await crudder.model.find({ _id: { $in: extServices } }, '_id status name').lean();
+
+								docs.forEach(docObj => {
+									if (docObj.status == 'Undeployed') {
+										relatedEntities.push(docObj._id);
+									}
 								});
 							}
-							else if (output?.relatedSchemas?.outgoing.length > 0) {
-								let outgoingRelatedSchemas = output.relatedSchemas.outgoing;
-								outgoingRelatedSchemas.map((outgoingRelatedSchema) => {
-									relatedSchemas.push(outgoingRelatedSchema.service);
-								});
-							}
-							if (relatedSchemas.length > 0) {
-								crudder.model.find({ _id: { $in: relatedSchemas }, '_metadata.deleted': false })
-									.then((relatedSchemasData) => {
-										relatedSchemasData.map((oneRelatedSchemaData) => {
-											deployUtil.deployService(oneRelatedSchemaData, socket, _req, true);
-										})
-									});
+
+							if (relatedEntities.length > 0) {
+								let promises = await relatedEntities.reduce(async (prev, entity) => {
+									await prev;
+									return await startService(_req, null, entity, relatedEntities);
+								}, Promise.resolve());
+
+								return await promises;
 							}
 						})
 						.then(() => {
@@ -1551,36 +1552,37 @@ e.deployAPIHandler = (_req, _res) => {
 									return Promise.resolve();
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
-								.then((output) => {
-									//Deploy the related schemas
-									let relatedSchemas = [];
-									// if (output?.relatedSchemas?.incoming.length > 0) {
-									// 	let incomingRelatedSchemas = output.relatedSchemas.incoming;
-									// 	incomingRelatedSchemas.map((incomingRelatedSchema) => {
-									// 		relatedSchemas.push(incomingRelatedSchema.service);
-									// 	});
-									// }
-									// else 
-									if (output?.relatedSchemas?.outgoing.length > 0) {
-										let outgoingRelatedSchemas = output.relatedSchemas.outgoing;
-										outgoingRelatedSchemas.map((outgoingRelatedSchema) => {
-											relatedSchemas.push(outgoingRelatedSchema.service);
+								.then(async (doc) => {
+
+									let relatedEntities = [];
+
+									if (doc?.relatedSchemas?.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
+										let extServices = doc.relatedSchemas.outgoing.map(obj => obj.service);
+										extServices = _.uniq(extServices);
+
+										let docs = await crudder.model.find({ _id: { $in: extServices } }, '_id status name').lean();
+
+										docs.forEach(docObj => {
+											if (docObj.status == 'Undeployed') {
+												relatedEntities.push(docObj._id);
+											}
 										});
 									}
-									if (relatedSchemas.length > 0) {
-										crudder.model.find({ _id: { $in: relatedSchemas }, '_metadata.deleted': false })
-											.then((relatedSchemasData) => {
-												relatedSchemasData.map((oneRelatedSchemaData) => {
-													deployUtil.deployService(oneRelatedSchemaData.toObject(), socket, _req, true);
-												})
-											});
+
+									if (relatedEntities.length > 0) {
+										let promises = await relatedEntities.reduce(async (prev, entity) => {
+											await prev;
+											return await startService(_req, null, entity, relatedEntities);
+										}, Promise.resolve());
+
+										return await promises;
 									}
 								})
-								.then(() => {
-									// if (!definitionComparison) {
-									// 	return deployUtil.updateInPM(srvcObj._id, _req);
-									// }
-								})
+								// .then(() => {
+								// 		// if (!definitionComparison) {
+								// 		// 	return deployUtil.updateInPM(srvcObj._id, _req);
+								// 		// }
+								// 	})
 								.then(() => {
 									return data.remove(_req);
 								})
@@ -1702,7 +1704,7 @@ async function startService(req, res, id, list) {
 			throw new Error('Data service definition not found.');
 		}
 		if (doc) {
-			if (!res.headersSent) res.status(202).json({ message: 'Entity has been saved successfully' });
+			if (res && !res?.headersSent) res.status(202).json({ message: 'Entity has been saved successfully' });
 
 			doc = doc.toObject();
 			list.push(id);
