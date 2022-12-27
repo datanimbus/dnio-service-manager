@@ -1697,7 +1697,7 @@ async function startService(req, res, id, list) {
 		let socket = req.app.get('socket');
 
 		let doc = await crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } });
-	
+
 		if (doc && !doc?.schemaFree && doc?.definition?.length == 1) {
 			throw new Error('Data service definition not found.');
 		}
@@ -1708,48 +1708,51 @@ async function startService(req, res, id, list) {
 			list.push(id);
 			list = _.uniq(list);
 			let relatedEntities = [];
-	
+
 			if (doc.relatedSchemas.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
 				let extService = doc.relatedSchemas.outgoing.map(obj => obj.service);
 				extService = _.uniq(extService);
-	
+
 				let docs = await crudder.model.find({ _id: { $in: extService } }, '_id status name').lean();
-	
+
 				docs.forEach(docObj => {
 					if (docObj.status == 'Undeployed') {
 						relatedEntities.push(docObj._id);
 					}
 				});
 			}
-	
+
 			relatedEntities = _.difference(relatedEntities, list);
 			if (relatedEntities.length > 0) {
-				relatedEntities.forEach(entity => {
-					startService(req, res, entity, relatedEntities.concat(list));
-				});
-			} else {
-				const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
-				if (process.env.SM_ENV == 'K8s') {
-					let instances = doc.instances ? doc.instances : 1;
-					logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
-					return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
-						.then(_d => {
-							logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
-							if (_d.statusCode == 404) {
-								return k8s.serviceStart(doc)
-									.then(() => deployUtil.deployService(doc, socket, req, false))
-									.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
-							} else {
-								dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc);
-							}
-						})
-						.catch(err => {
-							logger.error(err);
-						});
-				}
-				return deployUtil.deployService(doc, socket, req, false)
-					.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+				let promises = await relatedEntities.reduce(async (prev, entity) => {
+					await prev;
+					return await startService(req, res, entity, relatedEntities.concat(list));
+				}, Promise.resolve());
+
+				await promises;
 			}
+
+			const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+			if (process.env.SM_ENV == 'K8s') {
+				let instances = doc.instances ? doc.instances : 1;
+				logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
+				return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
+					.then(_d => {
+						logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
+						if (_d.statusCode == 404) {
+							return k8s.serviceStart(doc)
+								.then(() => deployUtil.deployService(doc, socket, req, false))
+								.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+						} else {
+							dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc);
+						}
+					})
+					.catch(err => {
+						logger.error(err);
+					});
+			}
+			return deployUtil.deployService(doc, socket, req, false)
+				.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
 
 		} else {
 			throw new Error('No service found with given id');
