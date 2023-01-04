@@ -98,9 +98,9 @@ draftSchema.pre('validate', function (next) {
 	next();
 });
 
-schema.index({ api: 1, app: 1 }, { unique: '__CUSTOM_API_DUPLICATE_ERROR__' });
+schema.index({ api: 1, app: 1 }, { unique: true });
 
-schema.index({ name: 1, app: 1 }, { unique: '__CUSTOM_NAME_DUPLICATE_ERROR__' });
+schema.index({ name: 1, app: 1 }, { unique: true });
 
 schema.post('save', function (error, doc, next) {
 	if ((error.errors && error.errors.api) || error.name === 'ValidationError' && error.message.indexOf('__CUSTOM_API_DUPLICATE_ERROR__') > -1) {
@@ -1052,6 +1052,12 @@ e.updateDoc = (_req, _res) => {
 	logger.trace(`[${txnId}] Payload received :: ${JSON.stringify(_req.body)}`);
 
 	let promise = Promise.resolve();
+
+	if (_req.body.schemaFree && _req.body.definition.length > 1) {
+		let def = _.find(_req.body.definition, def => def.key == '_id');
+
+		_req.body.definition = [def];
+	}
 
 	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers || []);
 	if (!_req.body.schemaFree && _req.body.definition) {
