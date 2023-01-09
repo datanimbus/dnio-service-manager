@@ -18,10 +18,10 @@
     "license": "ISC",
     "dependencies": {
         "@appveen/data.stack-utils": "^1.0.19",
-        "@appveen/ds-auth-cache": "https://github.com/appveen/ds-auth-cache.git",
+        "@appveen/ds-auth-cache": "^1.0.7",
         "@appveen/json-utils": "^1.1.0",
-        "@appveen/swagger-mongoose-crud": "github:appveen/swagger-mongoose-crud",
-        "@appveen/utils": "https://github.com/appveen/utils.git",
+        "@appveen/swagger-mongoose-crud": "^2.0.1",
+        "@appveen/utils": "^2.1.13",
         "archiver": "^5.3.0",
         "bluebird": "^3.5.1",
         "copy-dir": "^1.2.0",
