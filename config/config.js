@@ -105,14 +105,20 @@ module.exports = {
 		stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
-		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true
 	},
+	mongoLogsOptions: {
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		dbName: process.env.MONGO_LOGS_DBNAME || 'datastackLogs',
+		useNewUrlParser: true
+	},
 	mongoAppcenterOptions: {
-		numberOfRetries: process.env.MONGO_RECONN_TRIES,
-		retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
+		// numberOfRetries: process.env.MONGO_RECONN_TRIES,
+		// retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true
 	},
 	enableSearchIndex: (process.env.DS_FUZZY_SEARCH && process.env.DS_FUZZY_SEARCH.toLowerCase() === 'true') || false,
@@ -121,6 +127,7 @@ module.exports = {
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60,
 	verifyDeploymentUser: (process.env.VERIFY_DEPLOYMENT_USER && process.env.VERIFY_DEPLOYMENT_USER.toLowerCase() === 'true') || false,
 	TOKEN_SECRET: process.env.TOKEN_SECRET || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
+	RBAC_JWT_KEY: process.env.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
 	envkeysForDataService: [
 		'FQDN',
 		'GOOGLE_API_KEY',
@@ -151,12 +158,8 @@ module.exports = {
 		'API_REQUEST_TIMEOUT',
 		'TZ_DEFAULT',
 		'MAX_JSON_SIZE',
-		'STORAGE_ENGINE',
-		'STORAGE_AZURE_CONNECTION_STRING',
-		'STORAGE_AZURE_CONTAINER',
-		'STORAGE_AZURE_SHARED_KEY',
-		'STORAGE_AZURE_TIMEOUT',
-		'API_LOGS_METHODS'
+		'API_LOGS_METHODS',
+		'ML_FILE_PARSER'
 	],
 	baseImage: `${dockerReg}data.stack.base:${process.env.IMAGE_TAG}`,
 	isAcceptableK8sStatusCodes: statusCode => {

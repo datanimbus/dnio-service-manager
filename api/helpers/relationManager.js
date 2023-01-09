@@ -156,7 +156,8 @@ e.checkRelationsAndCreate = function (_serviceInfo, req) {
 					doc.relatedSchemas.incoming.push({
 						service: genServiceObj._id,
 						uri: uri,
-						port: genServiceObj.port,
+						// port: genServiceObj.port,
+						port: 80,
 						app: genServiceObj.app,
 						isRequired: obj.isRequired
 					});
@@ -302,7 +303,8 @@ e.checkRelationsAndUpdate = function (oldData, newData, req) {
 					doc.relatedSchemas.incoming.push({
 						service: genServiceObj._id,
 						uri: uri,
-						port: genServiceObj.port,
+						// port: genServiceObj.port,
+						port: 80,
 						isRequired: obj.isRequired
 					});
 				});

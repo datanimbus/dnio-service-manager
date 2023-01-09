@@ -34,8 +34,8 @@ e.deploymentDelete = (_txnId, _schema) => {
 e.serviceStart = (_schema) => {
 	// (_namespace, _name, _port)
 	const ns = envConfig.dataStackNS + '-' + _schema.app.toLowerCase().replace(/ /g, '');
-	logger.info('Creating service ' + ns + ' ' + _schema.api.split('/')[1].toLowerCase() + ' ' + _schema.port);
-	return kubeutil.service.createService(ns, _schema.api.split('/')[1].toLowerCase(), _schema.port, release)
+	logger.info('Creating service ' + ns + ' ' + _schema.api.split('/')[1].toLowerCase() + ' ' + 80);
+	return kubeutil.service.createService(ns, _schema.api.split('/')[1].toLowerCase(), 80, release)
 		.then(_ => {
 			logger.info('Create service return ' + _.statusCode);
 			logger.trace(`Service start response : ${JSON.stringify(_)}`);

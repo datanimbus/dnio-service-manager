@@ -22,10 +22,12 @@ const onlyAuthUrls = [
 
 const internalUrls = [
 	'/sm/{app}/internal/app',
+	'/sm/{app}/internal/filequeue',
 	'/sm/{app}/internal/validateUserDeletion/{userId}',
-	'/sm/{app}/userDeletion/{app}/{userId}',
+	'/sm/{app}/internal/userDeletion/{userId}',
 	'/sm/{app}/service/utils/{id}/statusChange',
 	'/sm/{app}/service/utils/{id}/statusChangeFromMaintenance',
+	'/sm/internal/ds/env'
 ];
 
 const adminOnlyUrls = [
@@ -38,6 +40,11 @@ const commonUrls = [
 	'/sm/{app}/service',
 	'/sm/{app}/service/{id}',
 	'/sm/{app}/service/utils/{name}',
+	'/sm/{app}/service/utils/import/upload',
+	'/sm/{app}/service/utils/import/list',
+	'/sm/{app}/service/utils/import/{id}/show',
+	'/sm/{app}/service/utils/import/{id}/start',
+	'/sm/{app}/service/utils/import/{id}/clean',
 	'/sm/{app}/service/utils/count',
 	'/sm/{app}/service/utils/audit',
 	'/sm/{app}/service/utils/audit/count',
@@ -63,7 +70,7 @@ const commonUrls = [
 ];
 
 
-router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.TOKEN_SECRET, decodeOnly: true }));
+router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
 
 router.use((req, res, next) => {
 	if (!req.locals) {
@@ -187,6 +194,22 @@ function canAccessPath(req) {
 				return false;
 			}
 		}
+		return true;
+	}
+
+	if (compareURL('/sm/{app}/service/utils/import/upload', req.path) && _.intersectionWith(req.user.appPermissions, ['PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/list', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/{id}/show', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/{id}/start', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/sm/{app}/service/utils/import/{id}/clean', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/sm/{app}/service/utils/{app}/{name}', req.path) && _.intersectionWith(req.user.appPermissions, ['PVDS', 'PMDS'], comparator).length > 0) {

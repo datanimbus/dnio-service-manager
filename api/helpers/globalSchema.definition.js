@@ -11,19 +11,30 @@ var definition = {
 		'required': true
 	},
 	'definition': {
-		'type': {
-			'definition': [{
-				'key': 'String',
-				'type': 'String',
-				'definition': {
-					'type': 'Object',
-					'required': false
-				},
-				'properties': {
-					'type': 'Object'
+		'type': [
+			{
+				'type': 'Object',
+				default: function () {
+					return {
+						type: 'Object',
+						definition: []
+					};
 				}
-			}]
-		}
+				// 'definition': [
+				// 	{
+				// 		'key': 'String',
+				// 		'type': 'String',
+				// 		'definition': {
+				// 			'type': 'Object',
+				// 			'required': false
+				// 		},
+				// 		'properties': {
+				// 			'type': 'Object'
+				// 		}
+				// 	}
+				// ]
+			}
+		]
 	},
 	'services': {
 		'type': ['String']
@@ -41,7 +52,9 @@ var definition = {
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': { 'type': 'Number' }
+				'type': {
+					'release': { 'type': 'String' }
+				}
 			}
 		}
 	}

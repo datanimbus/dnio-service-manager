@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/globalSchema.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const utils = require('@appveen/utils');
 const _ = require('lodash');
 const dataStackUtils = require('@appveen/data.stack-utils');
@@ -10,7 +10,7 @@ const globalDefHelper = require('../helpers/util/globalDefinitionHelper');
 const deployUtil = require('../deploy/deploymentUtil');
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
-const schema = new mongoose.Schema(definition, {
+const schema = MakeSchema(definition, {
 	usePushEach: true
 });
 const envConfig = require('../../config/config');
@@ -89,13 +89,15 @@ schema.pre('save', function (next) {
 	let self = this;
 	if (!self.definition) next();
 	let definition = self.definition;
-	if (!definition[0].definition || !Array.isArray(definition[0].definition)) {
-		next(new Error('Library definition is invalid'));
-	} else {
-		try {
-			validateDefinition(definition[0].definition);
-		} catch (err) {
+	if (definition && definition[0]) {
+		if (!definition[0].definition || !Array.isArray(definition[0].definition)) {
 			next(new Error('Library definition is invalid'));
+		} else {
+			try {
+				validateDefinition(definition[0].definition);
+			} catch (err) {
+				next(new Error('Library definition is invalid'));
+			}
 		}
 	}
 	next();
@@ -111,6 +113,9 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	let self = this;
+	if (self._metadata.version) {
+		self._metadata.version.release = process.env.RELEASE;
+	}
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}

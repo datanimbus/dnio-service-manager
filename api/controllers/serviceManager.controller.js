@@ -6,7 +6,7 @@ const request = require('request');
 const _ = require('lodash');
 const yamljs = require('json-to-pretty-yaml');
 
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
 
@@ -28,6 +28,8 @@ const definition = require('../helpers/serviceManager.definition.js').definition
 let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
 const schemaValidateDefault = require('../helpers/util/smhelper.js').schemaValidateDefault;
 
+const xlsxUtils = require('../helpers/util/xlsx.utils');
+
 const startPort = 20010;
 const logger = global.logger;
 var client = queueMgmt.client;
@@ -35,10 +37,10 @@ const destroyDeploymentRetry = 5;
 const draftDefinition = JSON.parse(JSON.stringify(definition));
 
 
-const schema = new mongoose.Schema(definition, {
+const schema = MakeSchema(definition, {
 	usePushEach: true
 });
-const draftSchema = new mongoose.Schema(draftDefinition, {
+const draftSchema = MakeSchema(draftDefinition, {
 	usePushEach: true
 });
 
@@ -54,7 +56,8 @@ var draftOptions = {
 
 schema.pre('validate', function (next) {
 	var self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Service :: Validating service name and definition not empty`);
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
@@ -72,10 +75,17 @@ schema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	var self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating service name and definition not empty`);
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service :: Validating service name and definition not empty`);
 
 	self.name = self.name.trim();
 	self.api = self.api.trim();
+
+	if (self.workflowConfig && self.workflowConfig.makerCheckers && self.workflowConfig.makerCheckers[0]) {
+		self.workflowConfig.makerCheckers[0].steps.forEach(item => {
+			item.name = item.name.trim();
+		});
+	}
 
 	if (_.isEmpty(self.name)) next(new Error('name is empty'));
 	if (_.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
@@ -88,9 +98,9 @@ draftSchema.pre('validate', function (next) {
 	next();
 });
 
-schema.index({ api: 1, app: 1 }, { unique: '__CUSTOM_API_DUPLICATE_ERROR__' });
+schema.index({ api: 1, app: 1 }, { unique: true });
 
-schema.index({ name: 1, app: 1 }, { unique: '__CUSTOM_NAME_DUPLICATE_ERROR__' });
+schema.index({ name: 1, app: 1 }, { unique: true });
 
 schema.post('save', function (error, doc, next) {
 	if ((error.errors && error.errors.api) || error.name === 'ValidationError' && error.message.indexOf('__CUSTOM_API_DUPLICATE_ERROR__') > -1) {
@@ -110,7 +120,8 @@ schema.post('save', function (error, doc, next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if API endpoint is already in use`);
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service :: Validating if API endpoint is already in use`);
 	return crudder.model.findOne({ app: self.app, api: self.api, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -131,7 +142,8 @@ draftSchema.pre('validate', function (next) {
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
-	// logger.debug(`[${req.headers['TxnId']}] Draft Service :: Validating if service name is already in use`);
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service :: Validating if service name is already in use`);
 	return crudder.model.findOne({ app: self.app, name: self.name, _id: { $ne: self._id } }, { _id: 1 })
 		.then(_d => {
 			if (_d) {
@@ -155,7 +167,8 @@ draftSchema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	let self = this;
 	let app = self.app;
-	// logger.debug(`[${req.headers['TxnId']}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
+	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre:: Validating if API endpoint and name are in use for internal service`);
 
 	let dsCalendarDetails = getCalendarDSDetails(app);
 	if (self.isNew && self.type != 'internal') {
@@ -168,7 +181,40 @@ schema.pre('validate', function (next) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Adding metadata details`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating if service is schemafree`);
+
+	if (self.schemaFree) {
+		if (self.stateModel && self.stateModel.enabled) {
+			next(new Error('Schema Free service can not have state model enabled.'));
+		}
+		if (self.workflowConfig && self.workflowConfig.enabled) {
+			next(new Error('Schema Free service can not have workflow enabled.'));
+		}
+	}
+	next();
+});
+
+draftSchema.pre('save', function (next, req) {
+	let self = this;
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Adding metadata details`);
+
+	if (self.schemaFree) {
+		if (self.stateModel && self.stateModel.enabled) {
+			next(new Error('Schema Free service can not have state model enabled.'));
+		}
+		if (self.workflowConfig && self.workflowConfig.enabled) {
+			next(new Error('Schema Free service can not have workflow enabled.'));
+		}
+	}
+	next();
+});
+
+schema.pre('save', function (next, req) {
+	let self = this;
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
@@ -183,11 +229,9 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Adding metadata details`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Adding metadata details`);
 
-	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
-	}
 	let user = req.headers ? req.headers.user : 'AUTO';
 	self._metadata.lastUpdatedBy = user;
 	next();
@@ -195,7 +239,8 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating definition`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating definition`);
 	try {
 		if (self.definition) schemaValidate(self.definition);
 		next();
@@ -206,7 +251,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating definition`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating definition`);
 	try {
 		schemaValidate(self.definition);
 		next();
@@ -228,7 +274,8 @@ function reserved(def) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Checking attribute names for reserved words`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Checking attribute names for reserved words`);
 	try {
 		if (self.definition) reserved(self.definition);
 		next();
@@ -239,7 +286,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Checking attribute names for reserved words`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Checking attribute names for reserved words`);
 	try {
 		reserved(self.definition);
 		next();
@@ -250,7 +298,8 @@ draftSchema.pre('save', function (next, req) {
 
 schema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating schema fields for default value`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating schema fields for default value`);
 	if (self.definition) {
 		schemaValidateDefault(self.definition, self.app)
 			.then(() => {
@@ -267,7 +316,8 @@ schema.pre('save', function (next, req) {
 
 draftSchema.pre('save', function (next, req) {
 	let self = this;
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating schema fields for default value`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating schema fields for default value`);
 	schemaValidateDefault(self.definition, self.app)
 		.then(() => {
 			next();
@@ -322,7 +372,8 @@ function nameUniqueCheck(name, app, srvcId) {
 }
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -331,7 +382,8 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating service name must be less than 40 characters`);
 	if (this.name.length > 40) {
 		next(new Error('Entity name must be less than 40 characters. '));
 	} else {
@@ -340,7 +392,8 @@ draftSchema.pre('save', function (next, req) {
 });
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating service description must be less than 250 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -349,7 +402,8 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating service description must be less than 250 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating service description must be less than 250 characters`);
 	if (this.description && this.description.length > 250) {
 		next(new Error('Entity description should not be more than 250 character '));
 	} else {
@@ -360,7 +414,8 @@ draftSchema.pre('save', function (next, req) {
 schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2000));
 
 schema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -375,7 +430,8 @@ schema.pre('save', function (next, req) {
 });
 
 draftSchema.pre('save', function (next, req) {
-	logger.debug(`[${req.headers['TxnId']}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.debug(`[${txnId}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	// One extra character for / in api
 	if (this.api.length > 41) {
@@ -408,25 +464,34 @@ draftSchema.pre('save', function (next) {
 });
 
 schema.pre('save', async function (next, req) {
+	let txnId = req && req.headers && req.headers['TxnId'];
 	try {
-		if (!this.isNew && this.stateModel && this.stateModel.enabled) {
-			logger.info(`[${req.headers['TxnId']}] Updating existing records with initial state in state model for service :: ${this._id}`);
+		if (!this.isNew && this.stateModel && this.stateModel.enabled && this.isStateModelChanged) {
+			logger.info(`[${txnId}] Updating existing records with initial state in state model for service :: ${this._id}`);
 			let obj = {};
 			obj[this.stateModel.attribute] = this.stateModel.initialStates[0];
-			let status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
-			logger.debug(`[${req.headers['TxnId']}] Initial States updated :: ${JSON.stringify(status.result)}`);
+			let status;
+			if (this.oldModel.states) {
+				let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state; });
+				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: { '$nin': states } }, { $set: obj });
+			} else {
+				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
+			}
+
+			logger.debug(`[${txnId}] Initial States updated :: ${JSON.stringify(status.result)}`);
 		}
 		next();
 	} catch (err) {
-		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		logger.error(`[${txnId}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
 
 schema.pre('save', async function (next, req) {
+	let txnId = req && req.headers && req.headers['TxnId'];
 	try {
 		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
-			logger.info(`[${req.headers['TxnId']}] Updating existing work items to first step for service :: ${this._id}`);
+			logger.info(`[${txnId}] Updating existing work items to first step for service :: ${this._id}`);
 			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
 			let workItems = await collection.find({ status: 'Pending', app: this.app, serviceId: this._id });
 			workItems.forEach(item => {
@@ -439,7 +504,7 @@ schema.pre('save', async function (next, req) {
 		}
 		next();
 	} catch (err) {
-		logger.error(`[${req.headers['TxnId']}] Error updating initial state of existing records`);
+		logger.error(`[${txnId}] Error updating initial state of existing records`);
 		next(err);
 	}
 });
@@ -612,13 +677,15 @@ function checkOutGoingRelation(serviceId) {
 			.catch((err) => reject(err));
 	});
 }
+
 //remove incoming relation of the entity 
 function removeIncomingRelation(serviceId, req) {
-	logger.info(`[${req.get('TxnId')}] ${serviceId} : Removing incoming relationships`);
+	let txnId = req && req.headers && req.headers['TxnId'];
+	logger.info(`[${txnId}] ${serviceId} : Removing incoming relationships`);
 	let promiseArr = [];
 	return crudder.model.find({ 'relatedSchemas.incoming.service': serviceId })
 		.then(docs => {
-			logger.info(`[${req.get('TxnId')}] ${serviceId} : Found ${docs.length} incoming relationships`);
+			logger.info(`[${txnId}] ${serviceId} : Found ${docs.length} incoming relationships`);
 			docs.forEach(doc => {
 				if (doc && !_.isEmpty(doc.relatedSchemas.incoming)) {
 					doc.relatedSchemas.incoming = doc.relatedSchemas.incoming.filter(obj => obj.service != serviceId);
@@ -814,10 +881,25 @@ e.createDoc = (_req, _res) => {
 		return getNextPort()
 			.then(port => _req.body.port = port)
 			.then(() => smHooks.validateAppAndGetAppData(_req))
-			.then((appData) => {
+			.then(async (appData) => {
 				if (!('disableInsights' in _req.body)) {
 					_req.body.disableInsights = appData.disableInsights;
 				}
+
+				if (!_req.body.connectors?.data) {
+					_req.body.connectors = {
+						data: {},
+						file: {}
+					};
+				}
+
+				if (!_req.body.connectors?.data?._id) {
+					_req.body.connectors.data._id = appData.connectors.data._id;
+				}
+				if (!_req.body.connectors?.file?._id) {
+					_req.body.connectors.file._id = appData.connectors.file._id;
+				}
+
 				return apiUniqueCheck(_req.body.api, _req.body.app);
 			})
 			.then(() => nameUniqueCheck(_req.body.name, _req.body.app))
@@ -864,7 +946,7 @@ e.createDoc = (_req, _res) => {
 				}
 			})
 			.catch(_e => {
-				logger.error(_e.message);
+				logger.error(_e);
 				if (serviceObj && serviceObj._id) {
 					crudder.model.remove({
 						_id: serviceObj._id
@@ -875,10 +957,9 @@ e.createDoc = (_req, _res) => {
 				}
 				if (!_res.headersSent) {
 					_res.status(400).json({
-						message: _e.message
+						message: _e ? _e.message : 'Something Went Wrong'
 					});
 				}
-				logger.error(_e);
 			});
 	} catch (e) {
 		if (!_res.headersSent) {
@@ -972,6 +1053,12 @@ e.updateDoc = (_req, _res) => {
 
 	let promise = Promise.resolve();
 
+	if (_req.body.schemaFree && _req.body.definition.length > 1) {
+		let def = _.find(_req.body.definition, def => def.key == '_id');
+
+		_req.body.definition = [def];
+	}
+
 	_req.body.headers = smhelper.generateHeadersForProperties(txnId, _req.body.headers || []);
 	if (!_req.body.schemaFree && _req.body.definition) {
 		promise = globalDefHelper.expandSchemaWithGlobalDef(_req.body.app, _req.body.definition);
@@ -1036,7 +1123,22 @@ e.updateDoc = (_req, _res) => {
 
 			let srvcObj = null;
 			return smHooks.validateAppAndGetAppData(_req)
-				.then(() => {
+				.then((appData) => {
+
+					if (!_req.body.connectors?.data) {
+						_req.body.connectors = {
+							data: {},
+							file: {}
+						};
+					}
+
+					if (!_req.body.connectors?.data?._id) {
+						_req.body.connectors.data._id = appData.connectors.data._id;
+					}
+					if (!_req.body.connectors?.file?._id) {
+						_req.body.connectors.file._id = appData.connectors.file._id;
+					}
+
 					if (oldData.name != _req.body.name) {
 						return nameUniqueCheck(_req.body.name, _req.body.app, ID);
 					} else {
@@ -1218,6 +1320,7 @@ e.deployAPIHandler = (_req, _res) => {
 	let isApiEndpointChanged = false;
 	let removeSoftDeletedRecords = false;
 	let isWorkflowChanged = false;
+	let isStateModelChanged = false;
 
 	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 		.then(_d => {
@@ -1253,6 +1356,31 @@ e.deployAPIHandler = (_req, _res) => {
 
 					return promise
 						.then(() => { if (!svcObject.schemaFree) relationManager.checkRelationsAndUpdate(oldData, _d, _req); })
+						.then(async (doc) => {
+							let relatedEntities = [];
+
+							if (doc?.relatedSchemas?.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
+								let extServices = doc.relatedSchemas.outgoing.map(obj => obj.service);
+								extServices = _.uniq(extServices);
+
+								let docs = await crudder.model.find({ _id: { $in: extServices } }, '_id status name').lean();
+
+								docs.forEach(docObj => {
+									if (docObj.status == 'Undeployed') {
+										relatedEntities.push(docObj._id);
+									}
+								});
+							}
+
+							if (relatedEntities.length > 0) {
+								let promises = await relatedEntities.reduce(async (prev, entity) => {
+									await prev;
+									return await startService(_req, null, entity, relatedEntities);
+								}, Promise.resolve());
+
+								return await promises;
+							}
+						})
 						.then(() => {
 							let newHooks = {
 								'webHooks': svcObject.webHooks,
@@ -1268,13 +1396,14 @@ e.deployAPIHandler = (_req, _res) => {
 						});
 				} else {
 					return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
-						.then(newData => {
+						.then(data => {
+							let newData = JSON.parse(JSON.stringify(data.toObject()));
 							if (envConfig.verifyDeploymentUser && !isSuperAdmin && newData && newData._metadata && newData._metadata.lastUpdatedBy == user) {
 								logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${newData.status}`);
 								return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
 							}
 
-							if (newData.webHooks || newData.workflowHooks) {
+							if (newData.webHooks.length || newData.workflowHooks) {
 								logger.trace(`[${txnId}] Webhooks updated for service ${ID}`);
 								isWebHookUpdateRequired = true;
 							}
@@ -1371,10 +1500,23 @@ e.deployAPIHandler = (_req, _res) => {
 									isReDeploymentRequired = true;
 								}
 							}
+							if (oldData.workflowConfig && newData.workflowConfig) {
+								let workflowComparison = deepEqual(oldData.workflowConfig, newData.workflowConfig);
+								if (!workflowComparison) {
+									isWorkflowChanged = true;
+									isReDeploymentRequired = true;
+								}
+							}
 
-							let workflowComparison = deepEqual(oldData.workflowConfig, newData.workflowConfig);
-							if (!workflowComparison) {
-								isWorkflowChanged = true;
+							let oldModel = JSON.parse(JSON.stringify(oldData.stateModel));
+							let newModel = JSON.parse(JSON.stringify(newData.stateModel));
+							delete oldModel.enabled;
+							delete newModel.enabled;
+							delete oldModel._id;
+							delete newModel._id;
+							let stateModelComparison = deepEqual(oldModel, newModel);
+							if (!stateModelComparison) {
+								isStateModelChanged = true;
 								isReDeploymentRequired = true;
 							}
 
@@ -1385,11 +1527,13 @@ e.deployAPIHandler = (_req, _res) => {
 							logger.info(`[${txnId}] Clean redeploy for service ${ID}? ${isDeleteAndCreateRequired ? 'YES' : 'NO'}`);
 							logger.info(`[${txnId}] Audit index delete required for service ${ID}? ${isAuditIndexDeleteRequired ? 'YES' : 'NO'}`);
 
-							let srvcObj = JSON.parse(JSON.stringify(newData.toObject()));
+							let srvcObj = JSON.parse(JSON.stringify(newData));
 							delete srvcObj.__v;
 							Object.assign(_d, srvcObj);
 							_d.draftVersion = null;
 							_d.isWorkflowChanged = isWorkflowChanged;
+							_d.isStateModelChanged = isStateModelChanged;
+							_d.oldModel = oldModel;
 							if (!definitionComparison) _d.definition = newDefinition;
 
 							let promise = Promise.resolve();
@@ -1414,13 +1558,39 @@ e.deployAPIHandler = (_req, _res) => {
 									return Promise.resolve();
 								})
 								.then(() => relationManager.checkRelationsAndUpdate(oldData, _d, _req))
-								.then(() => {
-									// if (!definitionComparison) {
-									// 	return deployUtil.updateInPM(srvcObj._id, _req);
-									// }
+								.then(async (doc) => {
+
+									let relatedEntities = [];
+
+									if (doc?.relatedSchemas?.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
+										let extServices = doc.relatedSchemas.outgoing.map(obj => obj.service);
+										extServices = _.uniq(extServices);
+
+										let docs = await crudder.model.find({ _id: { $in: extServices } }, '_id status name').lean();
+
+										docs.forEach(docObj => {
+											if (docObj.status == 'Undeployed') {
+												relatedEntities.push(docObj._id);
+											}
+										});
+									}
+
+									if (relatedEntities.length > 0) {
+										let promises = await relatedEntities.reduce(async (prev, entity) => {
+											await prev;
+											return await startService(_req, null, entity, relatedEntities);
+										}, Promise.resolve());
+
+										return await promises;
+									}
 								})
+								// .then(() => {
+								// 		// if (!definitionComparison) {
+								// 		// 	return deployUtil.updateInPM(srvcObj._id, _req);
+								// 		// }
+								// 	})
 								.then(() => {
-									return newData.remove(_req);
+									return data.remove(_req);
 								})
 								.then(async () => {
 									dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
@@ -1523,64 +1693,83 @@ e.deployAPIHandler = (_req, _res) => {
 };
 
 e.startAPIHandler = (_req, _res) => {
-	let txnId = _req.get('TxnId');
-	var id = _req.params.id;
-	let socket = _req.app.get('socket');
-	crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } })
-		.then(doc => {
-			if (doc && !doc.schemaFree && doc.definition.length == 1) throw new Error('Data service definition not found.');
-			if (doc) {
-				checkOutGoingRelation(id)
-					.then(() => {
-						_res.status(202).json({ message: 'Entity has been saved successfully' });
-						// doc.save(_req);
-						doc = doc.toObject();
-						// doc.definition = JSON.parse(doc.definition);
-						const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
-						if (process.env.SM_ENV == 'K8s') {
-							let instances = doc.instances ? doc.instances : 1;
-							logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
-							return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
-								.then(_d => {
-									logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
-									if (_d.statusCode == 404) {
-										return k8s.serviceStart(doc)
-											.then(() => deployUtil.deployService(doc, socket, _req, false))
-											.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
-									} else {
-										dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc);
-									}
-								})
-								.catch(err => {
-									logger.error(err);
-								});
-						}
-						return deployUtil.deployService(doc, socket, _req, false)
-							.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', _req, doc));
-					}, (data) => {
-						let serviceMsg = '';
-						if (data.relatedEntities.length == 1) {
-							serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-						} else if (data.relatedEntities.length == 2) {
-							serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
-						} else {
-							serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
-						}
+	let id = _req.params.id;
 
-						_res.status(400).json({
-							message: 'Data Service ' + data.name + '  is dependent on the following ' + serviceMsg + '. Please make sure the dependent Data Services are also started.'
-						});
-					});
-
-			} else {
-				throw new Error('No service found with given id');
-			}
-		})
-		.catch(e => {
-			logger.error(`[${txnId}] Data service start error ${id} :: ${e.message}`);
-			if (!_res.headersSent) _res.status(500).json({ message: e.message });
-		});
+	startService(_req, _res, id, []);
 };
+
+
+async function startService(req, res, id, list) {
+	try {
+		let txnId = req.get('TxnId');
+		let socket = req.app.get('socket');
+
+		let doc = await crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } });
+
+		if (doc && !doc?.schemaFree && doc?.definition?.length == 1) {
+			throw new Error('Data service definition not found.');
+		}
+		if (doc) {
+			if (res && !res?.headersSent) res.status(202).json({ message: 'Entity has been saved successfully' });
+
+			doc = doc.toObject();
+			list.push(id);
+			list = _.uniq(list);
+			let relatedEntities = [];
+
+			if (doc.relatedSchemas.outgoing && !_.isEmpty(doc.relatedSchemas.outgoing)) {
+				let extService = doc.relatedSchemas.outgoing.map(obj => obj.service);
+				extService = _.uniq(extService);
+
+				let docs = await crudder.model.find({ _id: { $in: extService } }, '_id status name').lean();
+
+				docs.forEach(docObj => {
+					if (docObj.status == 'Undeployed') {
+						relatedEntities.push(docObj._id);
+					}
+				});
+			}
+
+			relatedEntities = _.difference(relatedEntities, list);
+			if (relatedEntities.length > 0) {
+				let promises = await relatedEntities.reduce(async (prev, entity) => {
+					await prev;
+					return await startService(req, res, entity, relatedEntities.concat(list));
+				}, Promise.resolve());
+
+				await promises;
+			}
+
+			const ns = envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+			if (process.env.SM_ENV == 'K8s') {
+				let instances = doc.instances ? doc.instances : 1;
+				logger.info(`[${txnId}] Data service start :: ${id} ::Scaling to ${instances}`);
+				return kubeutil.deployment.scaleDeployment(ns, doc.api.split('/')[1].toLowerCase(), instances)
+					.then(_d => {
+						logger.debug(`[${txnId}] Scale deployment response : ${JSON.stringify(_d)}`);
+						if (_d.statusCode == 404) {
+							return k8s.serviceStart(doc)
+								.then(() => deployUtil.deployService(doc, socket, req, false))
+								.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+						} else {
+							dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc);
+						}
+					})
+					.catch(err => {
+						logger.error(err);
+					});
+			}
+			return deployUtil.deployService(doc, socket, req, false)
+				.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+
+		} else {
+			throw new Error('No service found with given id');
+		}
+	} catch (err) {
+		logger.error(`[${txnId}] Data service start error ${id} :: ${e.message}`)
+		if (!res.headersSent) res.status(500).json({ message: e.message });
+	}
+}
 
 e.stopAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
@@ -1725,7 +1914,7 @@ async function renameCollections(oldColl, newColl, app) {
 	}
 }
 
-function dropCollections(collectionName, app, txnId) {
+function dropCollections(collectionName, app, txnId, appName) {
 	logger.debug(`[${txnId}] DropCollection :: DB clean up : ${app}`);
 	let appCenterDB = global.mongoConnection.db(app);
 	logger.error(`[${txnId}] DropCollection :: AppCenter DB Connection ${appCenterDB ? 'Active' : 'Inactive'}`);
@@ -1735,7 +1924,7 @@ function dropCollections(collectionName, app, txnId) {
 			if (err) logger.error(`[${txnId}] DropCollection :: ${collectionName} :: ${err.message}`);
 			else if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${collectionName} deleted successfully`);
 		});
-		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks', '.workflow'];
+		let sufix = ['.bulkCreate', '.exportedFile.chunks', '.exportedFile.files', '.fileImport.chunks', '.fileImport.files', '.fileTransfers', '.files', '.chunks', '.workflow', '.dedupe', '.exports'];
 		sufix.forEach(_s => {
 			let colName = collectionName + _s;
 			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${colName}`);
@@ -1748,6 +1937,16 @@ function dropCollections(collectionName, app, txnId) {
 			if (err) logger.error(`[${txnId}] DropCollection :: counter :: ${collectionName} :: ${err.message}`);
 			else logger.info(`[${txnId}] DropCollection :: Counter ${collectionName} deleted successfully`);
 		});
+
+		let logsDB = global.mongoConnection.db(envConfig.mongoLogsOptions.dbName);
+		logger.error(`[${txnId}] DropCollection :: Logs DB Connection ${logsDB ? 'Active' : 'Inactive'}`);
+		if (logsDB) {
+			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${appName}.${collectionName}.audit`);
+			logsDB.dropCollection(`${appName}.${collectionName}.audit`, (err, coll) => {
+				if (err) logger.error(`[${txnId}] DropCollection :: ${appName}.${collectionName}.audit :: ${err.message}`);
+				else if (coll) logger.info(`[${txnId}] DropCollection :: Collection ${appName}.${collectionName}.audit deleted successfully`);
+			});
+		}
 	}
 }
 
@@ -1827,7 +2026,7 @@ e.destroyService = (_req, _res) => {
 		.then(() => {
 			if (originalDoc && originalDoc.permanentDeleteData) {
 				logger.info(`[${txnId}] Deleting service ${id} : Dropping collection ${originalDoc.collectionName} under db ${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`);
-				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, txnId);
+				dropCollections(originalDoc.collectionName, `${process.env.DATA_STACK_NAMESPACE}-${originalDoc.app}`, txnId, originalDoc.app);
 			}
 		})
 		.then(() => {
@@ -2047,7 +2246,7 @@ e.changeStatus = function (req, res) {
 					.then(doc => {
 						if (doc && doc.status !== 'Active') {
 							logger.info(`[${req.get('TxnId')}] Service status of ${id} changed to ${status}`);
-							deployUtil.sendToSocket(socket, 'serviceStatus', { message: 'Deployed', _id: id, app: doc.app, port: doc.port, api: doc.api });
+							deployUtil.sendToSocket(socket, 'serviceStatus', { message: 'Deployed', _id: id, app: doc.app, port: 80, api: doc.api });
 						}
 						res.json({ message: 'Status changed', outgoingAPIs: outgoingAPIs });
 					})
@@ -2086,7 +2285,8 @@ e.StatusChangeFromMaintenance = function (req, res) {
 										message: 'Undeployed',
 										_id: id,
 										app: doc.app,
-										port: doc.port,
+										// port: doc.port,
+										port: 80,
 										api: doc.api
 									});
 								}
@@ -2380,7 +2580,7 @@ e.getCounter = (_req, _res) => {
 let initDone = false;
 e.readiness = function (req, res) {
 	if (!initDone) {
-		require('../../util/init/init')();
+		// require('../../util/init/init')();
 		initDone = true;
 	}
 	return res.status(200).json();
@@ -2388,7 +2588,9 @@ e.readiness = function (req, res) {
 };
 
 e.health = function (req, res) {
-	if (mongoose.connection.readyState === 1 && client && client.nc && client.nc.connected) {
+	logger.trace('Mongo DB State:', mongoose.connection.readyState);
+	logger.trace('NATS State:', client && client.nc ? client.nc.connected : null);
+	if (mongoose.connection.readyState == 1 && client && client.nc && client.nc.connected) {
 		return res.status(200).json();
 	} else {
 		return res.status(400).json();
@@ -2407,7 +2609,8 @@ function changeStatusToMaintenance(req, ids, srvcId, status, message) {
 							message: 'Deployed',
 							_id: id,
 							app: doc.app,
-							port: doc.port,
+							// port: doc.port,
+							port: 80,
 							api: doc.api
 						});
 					}
@@ -2649,7 +2852,22 @@ async function showByName(req, res) {
 }
 
 function customIndex(req, res) {
-	let draft = req.query.draft;
+	const app = req.params.app;
+	const draft = req.query.draft;
+	let filter = req.query.filter;
+	if (filter) {
+		try {
+			filter = JSON.parse(filter);
+		} catch (err) {
+			logger.error(err);
+			filter = null;
+		}
+	}
+	if (!filter) {
+		filter = {};
+	}
+	filter.app = app;
+	req.query.filter = JSON.stringify(filter);
 	if (draft)
 		draftCrudder.index(req, res);
 	else
@@ -2689,11 +2907,25 @@ function validateUserDeletion(req, res) {
 		.then(_d => {
 			promise = _d.map(data => {
 				let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
+				if (!data.relatedSchemas) {
+					data.relatedSchemas = {};
+				}
+				if (!data.relatedSchemas.internal) {
+					data.relatedSchemas.internal = {};
+				}
+				if (!data.relatedSchemas.internal.users) {
+					data.relatedSchemas.internal.users = [];
+				}
 				let filter = data.relatedSchemas.internal.users.map(doc => {
-					doc.filter = doc.filter.replace('{{id}}', id);
+					if (doc.filter) {
+						doc.filter = doc.filter.replace('{{id}}', id);
+					}
 					return doc;
 				});
 				pr = filter.map(doc => {
+					if (!doc.filter) {
+						return Promise.resolve();
+					}
 					return db.collection(data.collectionName).find(JSON.parse(doc.filter)).count()
 						.then(count => {
 							if (count > 0 && doc.isRequired) {
@@ -2701,15 +2933,14 @@ function validateUserDeletion(req, res) {
 							}
 						});
 				});
-				return Promise.all(pr)
-					.then();
+				return Promise.all(pr).then();
 			});
 			return Promise.all(promise)
 				.then(() => {
 					if (flag) {
-						res.status(500).json({ message: 'Document is in use' });
+						return res.status(500).json({ message: 'Document is in use' });
 					}
-					else res.status(200).json({});
+					res.status(200).json({})
 				});
 		});
 }
@@ -3039,16 +3270,13 @@ async function getYamls(req, res) {
 		const doc = await crudder.model.findOne({ _id: req.params.id }).lean();
 
 		const namespace = (envConfig.dataStackNS + '-' + doc.app).toLowerCase();
-		const port = doc.port;
+		// const port = doc.port;
+		const port = 80;
 		const name = (doc.api).substring(1).toLowerCase();
-		const envVars = [];
-		envConfig.envkeysForDataService.forEach(key => {
-			envVars.push({ name: key, value: process.env[key] });
-		});
-		envVars.push({ name: 'DATA_STACK_APP_NS', value: namespace });
-		envVars.push({ name: 'NODE_OPTIONS', value: `--max-old-space-size=${envConfig.maxHeapSize}` });
-		envVars.push({ name: 'NODE_ENV', value: 'production' });
-		envVars.push({ name: 'SERVICE_ID', value: `${doc._id}` });
+		const envVars = [
+			{ name: 'DATA_STACK_NAMESPACE', value: process.env.DATA_STACK_NAMESPACE },
+			{ name: 'SERVICE_ID', value: `${doc._id}` }
+		];
 
 		const volumeMounts = {
 			'file-export': {
@@ -3061,8 +3289,9 @@ async function getYamls(req, res) {
 		const options = {
 			livenessProbe: {
 				httpGet: {
-					path: `/${doc.app}${doc.api}/utils/health/live`,
-					port: doc.port,
+					path: '/api/internal/health/live',
+					// port: doc.port,
+					port: 80,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
@@ -3070,8 +3299,9 @@ async function getYamls(req, res) {
 			},
 			readinessProbe: {
 				httpGet: {
-					path: `/${doc.app}${doc.api}/utils/health/ready`,
-					port: doc.port,
+					path: '/api/internal/health/ready',
+					// port: doc.port,
+					port: 80,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
@@ -3080,7 +3310,7 @@ async function getYamls(req, res) {
 		};
 
 		const deployData = {
-			apiVersion: 'v1',
+			apiVersion: 'apps/v1',
 			kind: 'Deployment',
 			metadata: {
 				name: name,
@@ -3167,6 +3397,72 @@ async function getYamls(req, res) {
 	}
 }
 
+async function getEnvVars(req, res) {
+	try {
+		let envVars = {}
+		envConfig.envkeysForDataService.forEach(key => {
+			envVars[key] = process.env[key];
+		});
+		envVars['NODE_OPTIONS'] = `--max-old-space-size=${envConfig.maxHeapSize}`;
+		envVars['NODE_ENV'] = 'production';
+
+		res.status(200).json(envVars);
+
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
+async function importFromXLSX(req, res) {
+	let doc;
+	let responseSent = false;
+	try {
+		let socket = req.app.get('socket');
+		const serviceTransfers = mongoose.model('service-transfers');
+		const transfersDoc = new serviceTransfers({
+			app: req.params.app,
+			fileName: req.files.file.name,
+			status: 'Pending',
+			user: req.user._id
+		});
+		doc = await transfersDoc.save(req);
+		deployUtil.sendToSocket(socket, 'serviceImport', { message: 'File Import Processing', _id: doc._id, app: doc.app });
+		res.status(200).json({ message: 'File is Processing' });
+		responseSent = true;
+		const result = await xlsxUtils.readFileForDataService(req, doc._id);
+		if (!result || result.length == 0) {
+			doc.status = 'Error';
+			doc.error = 'Unable to read file';
+			await doc.save(req);
+			// res.status(400).json({ message: 'Something Went Wrong While reading the File' });
+			return;
+		}
+		if (result.some(e => e.statusCode != '200')) {
+			doc.status = 'Error';
+			doc.error = 'Errors in File Data';
+			doc.result = result.map(e => e.body);
+			await doc.save(req);
+			// res.status(400).json({ message: 'Errors found in File Data' });
+			return;
+		}
+		doc.result = result.map(e => e.body);
+		doc.status = 'Uploaded';
+		await doc.save(req);
+		deployUtil.sendToSocket(socket, 'serviceImport', { message: 'File Import Processed', _id: doc._id, app: doc.app });
+		// res.status(200).json({ result, importId: doc._id });
+	} catch (err) {
+		doc.status = 'Error';
+		doc.error = err.message;
+		await doc.save(req);
+		logger.error(err);
+		if (!responseSent) {
+			res.status(400).json({ message: err.message });
+		}
+	}
+
+}
+
 module.exports = {
 	create: e.createDoc,
 	index: customIndex,
@@ -3200,5 +3496,7 @@ module.exports = {
 	enableCalendar: enableCalendar,
 	disableCalendar: disableCalendar,
 	checkUnique: checkUnique,
-	countByStatus: countByStatus
+	countByStatus: countByStatus,
+	importFromXLSX,
+	getEnvVars
 };

@@ -42,6 +42,12 @@ generatedServices/*
 
 .nyc_output/
 coverage
-build.sh
 send.sh
+build.sh
 test.js
+LAST_PULL
+CURRENT_SM
+LATEST_SM
+LAST_PULL_SM
+ds-base
+tmp

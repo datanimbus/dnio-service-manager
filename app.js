@@ -12,7 +12,9 @@ const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
 const mongoose = require('mongoose');
 const socket = require('socket.io');
-const mongo = require('mongodb').MongoClient;
+const { MongoClient } = require('mongodb');
+const upload = require('express-fileupload');
+const JWT = require('jsonwebtoken');
 let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
 global.Promise = bluebird;
@@ -20,10 +22,14 @@ global.logger = logger;
 const envConfig = require('./config/config.js');
 let mongoAppcenterUrl = envConfig.mongoAppcenterUrl;
 
+const token = JWT.sign({ name: 'SM_TOKEN', _id: 'admin', isSuperAdmin: true }, envConfig.RBAC_JWT_KEY);
+global.SM_TOKEN = token;
+
 const app = express();
 app.use(express.json({
 	limit: '5mb'
 }));
+app.use(upload({ useTempFiles: true }));
 // let init = require('./util/init/init');
 if (envConfig.isK8sEnv()) {
 	logger.info('*** K8s environment detected ***');
@@ -45,10 +51,9 @@ function customLogger(coll, op, doc, proj) {
 
 if (envConfig.debugDB) mongoose.set('debug', customLogger);
 
-mongo.connect(mongoAppcenterUrl, {
-	db: envConfig.mongoAppcenterOptions,
-	useNewUrlParser: true
-}, (error, db) => {
+// mongoose.set('useFindAndModify', false);
+
+MongoClient.connect(mongoAppcenterUrl, envConfig.mongoAppcenterOptions, (error, db) => {
 	if (error) logger.error(error.message);
 	if (db) {
 		global.mongoConnection = db;
@@ -81,17 +86,30 @@ function initSocket(server) {
 }
 
 let authorDBName = envConfig.mongoOptions.dbName;
-mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions, err => {
-	if (err) {
-		logger.error(err.message);
-	} else {
+(async () => {
+	try {
+		await mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions);
 		logger.info(`Connected to ${authorDBName} DB`);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
 		require('./util/init/fixDataService')();
+	} catch (err) {
+		logger.error(err);
 	}
-});
+})();
+// mongoose.connect(envConfig.mongoUrl, envConfig.mongoOptions, err => {
+// 	if (err) {
+// 		logger.error(err.message);
+// 	} else {
+// 		logger.info(`Connected to ${authorDBName} DB`);
+// 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
+// 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
+// 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+// 		require('./util/init/fixDataService')();
+// 	}
+// });
+
 
 mongoose.connection.on('connecting', () => {
 	logger.info(authorDBName + ' DB connecting');
@@ -122,6 +140,16 @@ let queueMgmt = require('./util/queueMgmt');
 dataStackutils.eventsUtil.setNatsClient(queueMgmt.client);
 var logToQueue = dataStackutils.logToQueue('sm', queueMgmt.client, envConfig.logQueueName, 'sm.logs');
 app.use(logToQueue);
+
+if(global.mongoConnection){
+	require('./api/init/init')();
+}
+else{
+	setTimeout(()=>{
+		require('./api/init/init')();
+	},2000);
+}
+
 app.use(require('./util/auth'));
 
 app.use('/sm', require('./api/controllers/controller'));

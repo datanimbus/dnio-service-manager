@@ -106,39 +106,41 @@ var definition = {
 		'default': false
 	},
 	'definition': {
-		'type': [{
-			'key': {
-				'type': 'String',
-				'required': true
-			},
-			'type': {
-				'type': 'String',
-				'required': true
-			},
-			'prefix': {
-				'type': 'String',
-				'required': false
-			},
-			'suffix': {
-				'type': 'String',
-				'required': false
-			},
-			'padding': {
-				'type': 'Number',
-				'required': false
-			},
-			'counter': {
-				'type': 'Number',
-				'required': false
-			},
-			'definition': {
-				'type': 'Object',
-				'required': false
-			},
-			'properties': {
-				'type': 'Object'
+		'type': [
+			{
+				'key': {
+					'type': 'String',
+					'required': true
+				},
+				'type': {
+					'type': 'String',
+					'required': true
+				},
+				'prefix': {
+					'type': 'String',
+					'required': false
+				},
+				'suffix': {
+					'type': 'String',
+					'required': false
+				},
+				'padding': {
+					'type': 'Number',
+					'required': false
+				},
+				'counter': {
+					'type': 'Number',
+					'required': false
+				},
+				'definition': {
+					'type': 'Object',
+					'required': false
+				},
+				'properties': {
+					'type': 'Object'
+				}
 			}
-		}],
+		],
 		'default': undefined
 	},
 	// 'attributeList': [{
@@ -385,8 +387,12 @@ var definition = {
 	},
 	'_metadata': {
 		'type': {
+			'deleted': {
+				'type': 'Boolean',
+				'default': false
+			},
 			'version': {
-				'release': { 'type': 'Number' }
+				'release': { 'type': 'String' }
 			},
 			'lastUpdatedBy': { 'type': 'String' }
 		}
@@ -396,5 +402,16 @@ var definition = {
 		'required': false,
 		'default': null
 	},
+	'connectors': {
+		'type': 'Object',
+		'definition': {
+			'data': {
+				'type': 'Object'
+			},
+			'file': {
+				'type': 'Object'
+			}
+		}
+	}
 };
 module.exports.definition = definition;
