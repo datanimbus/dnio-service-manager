@@ -1508,8 +1508,8 @@ e.deployAPIHandler = (_req, _res) => {
 								}
 							}
 
-							let oldModel = JSON.parse(JSON.stringify(oldData.stateModel));
-							let newModel = JSON.parse(JSON.stringify(newData.stateModel));
+							let oldModel = oldData.stateModel ? JSON.parse(JSON.stringify(oldData.stateModel)) : {};
+							let newModel = newData.stateModel ? JSON.parse(JSON.stringify(newData.stateModel)) : {};
 							delete oldModel.enabled;
 							delete newModel.enabled;
 							delete oldModel._id;
