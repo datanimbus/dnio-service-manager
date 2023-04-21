@@ -94,6 +94,10 @@ router.use((req, res, next) => {
 	if (!req.locals.app && matchingPath) {
 		const params = getUrlParams(matchingPath, req.path);
 		if (params && params['{app}']) req.locals.app = params['{app}'];
+
+		// if (!params['{id}'].match(/^[a-zA-Z][a-zA-Z0-9]*$/)) {
+		// 	return next(new Error('Service name must consist of alphanumeric characters only.'));
+		// }
 	}
 
 	if (!req.user) {
@@ -124,6 +128,10 @@ router.use((req, res, next) => {
 		req.locals.skipPermissionCheck = true;
 		return next();
 	}
+
+	if (!req.locals.app.match(/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]+$/)) {
+		return next(new Error('App name must consist of alphanumeric characters or \'-\' , and must start and end with an alphanumeric character.'));
+	} 
 
 	// Check if path is allowed only to admins and super admins.
 	if (adminOnlyUrls.some(e => compareURL(e, req.path)) && req.locals.skipPermissionCheck) {
