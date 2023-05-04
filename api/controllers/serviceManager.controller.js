@@ -9,6 +9,7 @@ const yamljs = require('json-to-pretty-yaml');
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
 const k8s = require('../../util/k8s.js');
 let rolesUtil = require('../helpers/roles');
@@ -16,19 +17,16 @@ let queueMgmt = require('../../util/queueMgmt');
 const envConfig = require('../../config/config.js');
 const smhelper = require('../helpers/util/smhelper');
 const deployUtil = require('../deploy/deploymentUtil');
+const xlsxUtils = require('../helpers/util/xlsx.utils');
 const smHooks = require('../helpers/serviceManagerHooks.js');
 const relationManager = require('../helpers/relationManager.js');
 const expandRelationHelper = require('../helpers/util/expandRelations');
 const globalDefHelper = require('../helpers/util/globalDefinitionHelper.js');
-
-const kubeutil = require('@appveen/data.stack-utils').kubeutil;
-
 const schemaValidate = require('../helpers/util/smhelper.js').schemaValidate;
 const definition = require('../helpers/serviceManager.definition.js').definition;
 let getCalendarDSDefinition = require('../helpers/calendar').getCalendarDSDefinition;
 const schemaValidateDefault = require('../helpers/util/smhelper.js').schemaValidateDefault;
 
-const xlsxUtils = require('../helpers/util/xlsx.utils');
 
 const startPort = 20010;
 const logger = global.logger;
@@ -44,6 +42,7 @@ const draftSchema = MakeSchema(draftDefinition, {
 	usePushEach: true
 });
 
+
 var options = {
 	logger: logger,
 	collectionName: 'services'
@@ -55,12 +54,18 @@ var draftOptions = {
 
 
 schema.pre('validate', function (next) {
-	var self = this;
+	let self = this;
 	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
-	logger.debug(`[${txnId}] Service :: Validating service name and definition not empty`);
+	logger.debug(`[${txnId}] Service :: Validating service name and definition are not empty`);
 
 	self.name = self.name.trim();
 	self.api ? self.api = self.api.trim() : `/${_.camelCase(self.name)}`;
+
+	if (self.workflowConfig && self.workflowConfig.makerCheckers && self.workflowConfig.makerCheckers[0]) {
+		self.workflowConfig.makerCheckers[0].steps.forEach(item => {
+			item.name = item.name.trim();
+		});
+	}
 
 	if (self.name && _.isEmpty(self.name)) next(new Error('name is empty'));
 	if (self.definition && _.isEmpty(self.definition) && !self.schemaFree) next(new Error('definition is empty'));
@@ -74,7 +79,7 @@ schema.pre('validate', function (next) {
 });
 
 draftSchema.pre('validate', function (next) {
-	var self = this;
+	let self = this;
 	let txnId = self.req && self.req.headers && self.req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service :: Validating service name and definition not empty`);
 
@@ -98,9 +103,11 @@ draftSchema.pre('validate', function (next) {
 	next();
 });
 
+
 schema.index({ api: 1, app: 1 }, { unique: true });
 
 schema.index({ name: 1, app: 1 }, { unique: true });
+
 
 schema.post('save', function (error, doc, next) {
 	if ((error.errors && error.errors.api) || error.name === 'ValidationError' && error.message.indexOf('__CUSTOM_API_DUPLICATE_ERROR__') > -1) {
@@ -117,6 +124,7 @@ schema.post('save', function (error, doc, next) {
 		next(error);
 	}
 });
+
 
 draftSchema.pre('validate', function (next) {
 	let self = this;
@@ -416,24 +424,33 @@ schema.pre('save', cuti.counter.getIdGenerator('SRVC', 'services', null, null, 2
 schema.pre('save', function (next, req) {
 	let txnId = req && req.headers && req.headers['TxnId'];
 	logger.debug(`[${txnId}] Service Pre :: Validating API endpoint name must be less than 40 characters`);
-	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
+
 	// One extra character for / in api
+	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
+	var nameregx = /^[a-zA-Z]+[a-zA-Z0-9 _]*$/;
+	
 	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
 	if (this.api.match(apiregx)) {
-		next();
+		if (this.name.match(nameregx)) {
+			next();
+		} else {
+			return next(new Error('Service name must consist of alphanumeric characters and/or an underscore and space and must start with an alphabet.'));
+		}
 	} else {
-		next(new Error('API Endpoint must consist of alphanumeric characters and must start with \'/\' and followed by an alphabet.'));
+		return next(new Error('API Endpoint must consist of alphanumeric characters and must start with \'/\' and followed by an alphabet.'));
 	}
-	next();
 });
 
 draftSchema.pre('save', function (next, req) {
 	let txnId = req && req.headers && req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
-	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
+	
 	// One extra character for / in api
+	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
+	var nameregx = /^[a-zA-Z]+[a-zA-Z0-9 _]*$/;
+	
 	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
@@ -441,6 +458,11 @@ draftSchema.pre('save', function (next, req) {
 		next();
 	} else {
 		next(new Error('API Endpoint must consist of alphanumeric characters and must start with \'/\' and followed by an alphabet.'));
+	}
+	if (this.name.match(nameregx)) {
+		next();
+	} else {
+		next(new Error('Service name must consist of alphanumeric characters and/or an underscore and space and must start with an alphabet.'));
 	}
 	next();
 });
