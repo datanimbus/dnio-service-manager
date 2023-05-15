@@ -433,11 +433,12 @@ schema.pre('save', function (next, req) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
 	if (this.api.match(apiregx)) {
-		if (this.name.match(nameregx)) {
-			next();
-		} else {
-			return next(new Error('Service name must consist of alphanumeric characters and/or an underscore and space and must start with an alphabet.'));
-		}
+		return next();
+		// if (this.name.match(nameregx)) {
+		// 	next();
+		// } else {
+		// 	return next(new Error('Service name must consist of alphanumeric characters and/or an underscore and space and must start with an alphabet.'));
+		// }
 	} else {
 		return next(new Error('API Endpoint must consist of alphanumeric characters and must start with \'/\' and followed by an alphabet.'));
 	}
@@ -459,11 +460,11 @@ draftSchema.pre('save', function (next, req) {
 	} else {
 		next(new Error('API Endpoint must consist of alphanumeric characters and must start with \'/\' and followed by an alphabet.'));
 	}
-	if (this.name.match(nameregx)) {
-		next();
-	} else {
-		next(new Error('Service name must consist of alphanumeric characters and/or an underscore and space and must start with an alphabet.'));
-	}
+	// if (this.name.match(nameregx)) {
+	// 	next();
+	// } else {
+	// 	next(new Error('Service name must consist of alphanumeric characters and/or an underscore and space and must start with an alphabet.'));
+	// }
 	next();
 });
 
