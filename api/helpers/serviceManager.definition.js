@@ -38,6 +38,10 @@ var definition = {
 		'type': 'Boolean',
 		'default': false
 	},
+	'simpleDate': {
+		'type': 'Boolean',
+		'default': false
+	},
 	'wizard': {
 		'type': [{
 			'name': 'String',
