@@ -274,7 +274,7 @@ function reserved(def) {
 	var promise = def.map(ele => {
 		if (ele.key && keywords.includes(ele.key.toLowerCase()))
 			throw new Error(ele.key + ' cannot be used as an attribute name');
-		if (ele.type == 'Object' || ele.type == 'Array')
+		if ((ele.type == 'Object' || ele.type == 'Array') && !ele.properties.schemaFree)
 			return reserved(ele.definition);
 	});
 	return Promise.all(promise);
@@ -428,7 +428,7 @@ schema.pre('save', function (next, req) {
 	// One extra character for / in api
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	var nameregx = /^[a-zA-Z]+[a-zA-Z0-9_ -]*$/;
-	
+
 	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
@@ -447,11 +447,11 @@ schema.pre('save', function (next, req) {
 draftSchema.pre('save', function (next, req) {
 	let txnId = req && req.headers && req.headers['TxnId'];
 	logger.debug(`[${txnId}] Draft Service Pre :: Validating API endpoint name must be less than 40 characters`);
-	
+
 	// One extra character for / in api
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
 	var nameregx = /^[a-zA-Z]+[a-zA-Z0-9_ -]*$/;
-	
+
 	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
 	}
@@ -536,7 +536,7 @@ function countAttr(def) {
 	let count = 0;
 	if (def && typeof def === 'object') {
 		def.forEach(_d => {
-			if (_d && _d.type === 'Object') {
+			if ((_d && _d.type === 'Object') && !_d.properties.schemaFree) {
 				count += countAttr(_d.definition);
 			} else {
 				count++;
@@ -1250,11 +1250,11 @@ function allowedChangeForCalendarDS(oldDefinition, newDefinition) {
 	if (oldDefinition.length != newDefinition.length) return false;
 	for (var i = 0; i < oldDefinition.length; i++) {
 		if (newDefinition[i].key == 'name' && oldDefinition[i].key == 'name') {
-			delete newDefinition[i].propperties.enum;
-			delete oldDefinition[i].propperties.enum;
+			delete newDefinition[i].properties.enum;
+			delete oldDefinition[i].properties.enum;
 		}
-		delete newDefinition[i].propperties.label;
-		delete oldDefinition[i].propperties.label;
+		delete newDefinition[i].properties.label;
+		delete oldDefinition[i].properties.label;
 	}
 	return _.isEqual(oldDefinition, newDefinition);
 	// let isAllowed = true;
@@ -1265,11 +1265,11 @@ function allowedChangeForCalendarDS(oldDefinition, newDefinition) {
 	// 		return false;
 	// 	}
 	// 	if(newAttr.key == 'name' && oldAttr.key == 'name') {
-	// 		delete newAttr.propperties.enum;
-	// 		delete oldAttr.propperties.enum;
+	// 		delete newAttr.properties.enum;
+	// 		delete oldAttr.properties.enum;
 	// 	}
-	// 	delete newAttr.propperties.label;
-	// 	delete oldAttr.propperties.label;
+	// 	delete newAttr.properties.label;
+	// 	delete oldAttr.properties.label;
 	// 	if(!_.isEqual(oldAttr, newAttr)) {
 	// 		isAllowed = false;
 	// 		return false;
