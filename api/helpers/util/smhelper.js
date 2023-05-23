@@ -16,7 +16,7 @@ function schemaValidate(schema) {
 			return;
 		}
 		if (attribute.key.length <= 40) {
-			if (attribute['type'] === 'Object' || attribute['type'] === 'Array') {
+			if ((attribute['type'] === 'Object' || attribute['type'] === 'Array') && !attribute['properties']['schemaFree']) {
 				schemaValidate(attribute['definition']);
 			}
 		} else {
@@ -39,7 +39,7 @@ function schemaValidate(schema) {
 
 function schemaValidateDefault(schema, app) {
 	var promises = schema.map(function (attribute) {
-		if (attribute['type'] == 'Object' || attribute['type'] == 'Array') {
+		if ((attribute['type'] == 'Object' || attribute['type'] == 'Array') && !attribute['properties']['schemaFree']) {
 			if (!(attribute['properties']['relatedTo']))
 				return schemaValidateDefault(attribute['definition'], app);
 		}
@@ -167,7 +167,7 @@ function canUpdateAPI(relations) {
 		});
 }
 
-function generateHeadersForProperties(_txnId, _headers){
+function generateHeadersForProperties(_txnId, _headers) {
 	logger.trace(`[${_txnId}] Generating headers for properties :: Before :: ${JSON.stringify(_headers)}`);
 	_headers.forEach(_header => {
 		_header['header'] = `Data-Stack-DS-${_header.key}`;
