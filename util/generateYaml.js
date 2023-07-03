@@ -3,196 +3,107 @@ const getParameters = [
 	{
 		name: 'page',
 		in: 'query',
-		type: 'integer',
-		description: 'Page number of the request'
+		description: 'Page number of the request',
+		schema: { type: 'integer' }
 	},
 	{
 		name: 'count',
 		in: 'query',
-		type: 'integer',
-		description: 'Number of records per page'
-	},
-	{
-		name: 'authorization',
-		in: 'header',
-		type: 'string',
-		description: 'The JWT token for req.validation'
+		description: 'Number of records per page',
+		schema: { type: 'integer' }
 	},
 	{
 		name: 'filter',
 		in: 'query',
-		type: 'string',
-		description: 'Filter records based on certain fields'
+		description: 'Filter records based on certain fields',
+		schema: { type: 'string' }
 	},
 	{
 		name: 'select',
 		in: 'query',
-		type: 'string',
-		description: 'Comma seperated fields to be displayed'
+		description: 'Comma seperated fields to be displayed',
+		schema: { type: 'string' }
 	},
 	{
 		name: 'sort',
 		in: 'query',
-		type: 'string',
-		description: 'sort parameter'
+		description: 'sort parameter',
+		schema: { type: 'string' }
 	}
 ];
 
-const bulkShowParameters = [{
-	name: 'id',
-	in: 'query',
-	type: 'string',
-	description: 'comma separated ids'
-},
-{
-	name: 'select',
-	in: 'query',
-	type: 'string',
-	description: 'Comma seperated fields to be displayed'
-},
-{
-	name: 'sort',
-	in: 'query',
-	type: 'string',
-	description: 'sort parameter'
-},
-{
-	name: 'authorization',
-	in: 'header',
-	type: 'string',
-	description: 'The JWT token for req.validation'
-}
+const bulkShowParameters = [
+	{
+		name: 'id',
+		in: 'query',
+		description: 'comma separated ids',
+		schema: { type: 'string' }
+	},
+	{
+		name: 'select',
+		in: 'query',
+		description: 'Comma seperated fields to be displayed',
+		schema: { type: 'string' }
+	},
+	{
+		name: 'sort',
+		in: 'query',
+		description: 'sort parameter',
+		schema: { type: 'string' }
+	}
 ];
 
-const bulkDeleteParameters = [
+const showParameters = [
 	{
-		name: 'authorization',
-		in: 'header',
-		type: 'string',
-		description: 'The JWT token for req.validation'
-	}, {
-		name: 'ids',
-		in: 'body',
-		description: 'Payload to reset a User',
-		schema: {
-			type: 'object',
-			properties: {
-				ids: {
-					type: 'array',
-					items: {
-						type: 'string'
-					}
-				}
-			}
-		}
-	}];
-
-const showParameters = [{
-	name: 'select',
-	in: 'query',
-	type: 'string',
-	description: 'Comma seperated fields to be displayed'
-}, {
-	name: 'id',
-	in: 'path',
-	type: 'string',
-	required: true,
-	description: 'Id of the object to be updated',
-},
-{
-	name: 'authorization',
-	in: 'header',
-	type: 'string',
-	description: 'The JWT token for req.validation'
-}];
-
-const hookParameters = [{
-	name: 'url',
-	in: 'query',
-	type: 'string',
-	description: 'Url to hit'
-},
-{
-	name: 'data',
-	in: 'body',
-	schema: {
-		type: 'object'
+		name: 'select',
+		in: 'query',
+		description: 'Comma seperated fields to be displayed',
+		schema: { type: 'string' }
 	},
-	description: 'data'
-}];
+	{
+		name: 'id',
+		in: 'path',
+		required: true,
+		description: 'Id of the object to be updated',
+		schema: { type: 'string' }
+	}
+];
+
+const hookParameters = [
+	{
+		name: 'url',
+		in: 'query',
+		description: 'Url to hit',
+		schema: { type: 'string' }
+	}
+];
+
 const experienceHookParameters = [
 	{
 		name: 'name',
 		in: 'query',
-		type: 'string',
-		description: 'name of hook to hit'
+		description: 'name of hook to hit',
+		schema: { type: 'string' }
+	}
+];
+
+const countParameters = [
+	{
+		name: 'filter',
+		in: 'query',
+		description: 'Filter records based on certain fields',
+		schema: { type: 'string' }
 	},
 	{
-		name: 'data',
-		in: 'body',
+		name: 'expand',
+		in: 'query',
+		description: 'expand document based on relations',
 		schema: {
-			type: 'object'
+			type: 'boolean',
+			default: false
 		},
-		description: 'data'
-	}];
-
-const countParameters = [{
-	name: 'filter',
-	in: 'query',
-	type: 'string',
-	description: 'Filter records based on certain fields'
-},
-{
-	name: 'authorization',
-	in: 'header',
-	type: 'string',
-	description: 'The JWT token for req.validation'
-},
-{
-	name: 'expand',
-	in: 'query',
-	type: 'boolean',
-	description: 'expand document based on relations',
-	default: false
-}];
-
-const exportParameters = [{
-	name: 'filter',
-	in: 'body',
-	type: 'string',
-	description: 'Filter records based on certain fields'
-},
-{
-	name: 'select',
-	in: 'body',
-	type: 'string',
-	description: 'Comma seperated fields to be displayed'
-},
-{
-	name: 'sort',
-	in: 'body',
-	type: 'string',
-	description: 'sort parameter'
-},
-{
-	name: 'skip',
-	in: 'body',
-	type: 'integer',
-	description: 'Number of records to skip'
-},
-{
-	name: 'batchSize',
-	in: 'body',
-	type: 'integer',
-	description: 'Batch size for cursor'
-},
-{
-	name: 'authorization',
-	in: 'header',
-	type: 'string',
-	description: 'The JWT token for req.validation'
-}];
-
+	}
+];
 
 function getType(type) {
 	type = type == 'largeString' ? 'String' : type;
@@ -215,7 +126,8 @@ function getCreateDefinition(defArr) {
 		} else if (attribute['type'] === 'Array') {
 			if (attribute['definition'][0]['type'] === 'Array') {
 				definition = {
-					type: ['array', 'null'],
+					type: 'array',
+					nullable: true,
 					items: getCreateDefinition(attribute['definition'])
 				};
 			} else {
@@ -246,26 +158,31 @@ function getCreateDefinition(defArr) {
 		} else if (attribute['type'] == 'Array') {
 			if (attribute['definition'][0]['type'] === 'Array') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
+					nullable: true,
 					items: {
-						type: ['array', 'null'],
+						type: 'array',
+						nullable: true,
 						items: getCreateDefinition(attribute['definition'])
 					}
 				};
 			} else if (attribute['definition'][0]['type'] === 'Object') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
+					nullable: true,
 					items: getCreateDefinition(attribute['definition'])
 				};
 			}
 			else if (attribute['definition'][0]['type'] === 'User') {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
+					nullable: true,
 					items: getCreateDefinition(attribute['definition'])
 				};
 			} else {
 				definition['properties'][el] = {
-					type: ['array', 'null'],
+					type: 'array',
+					nullable: true,
 					items: {
 						type: getType(attribute['definition'][0]['type'])
 					}
@@ -278,7 +195,8 @@ function getCreateDefinition(defArr) {
 				};
 			} else {
 				definition['properties'][el] = {
-					type: [getType(attribute['type']), 'null']
+					type: getType(attribute['type']),
+					nullable: true
 				};
 			}
 			if (attribute['properties'] && attribute['properties']['enum']) {
@@ -370,30 +288,28 @@ function generateYaml(config) {
 	getUpdateDefinition(updateDefinition);
 	var basePath = config.api.charAt(0) === '/' ? config.api : '/' + config.api;
 	var swagger = {
-		swagger: '2.0',
+		openapi: '3.0.0',
 		info: {
 			version: `${config.version}`,
 			title: config.name + ' API'
 		},
-		host: 'localhost:' + config.port,
-		basePath: '/' + config.app + basePath,
-		schemes: ['http'],
-		consumes: ['application/json', 'multipart/form-data'],
-		produces: ['application/json', 'text/plain'],
+		servers: [{ 'url': `http://localhost:${config.port}/${config.app}${basePath}` }],
 		paths: {},
-		definitions: {}
+		components: {}
 	};
+	let schemas = {}
+	let securitySchemes = {};
 	var name = _.camelCase(config.name);
-	swagger.definitions[`${name}_create`] = createDefinition;
-	swagger.definitions[`${name}_update`] = updateDefinition;
-	if (mathDefinition) swagger.definitions[`${name}_math`] = mathDefinition;
-	swagger.definitions['mapping'] = {
+	schemas[`${name}_create`] = createDefinition;
+	schemas[`${name}_update`] = updateDefinition;
+	if (mathDefinition) schemas[`${name}_math`] = mathDefinition;
+	schemas['mapping'] = {
 		'properties': {
 			'headers': {
-				'type': ['string']
+				'type': 'string'
 			},
 			'headerMapping': {
-				'type': ['string']
+				'type': 'string'
 			}
 		}
 	};
@@ -410,34 +326,46 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
-	swagger.definitions['bulkCreateData'] = {
+	schemas['bulkCreateData'] = {
 		'properties': {
 			'fileId': {
 				'type': 'string'
 			}
 		}
 	};
+	securitySchemes['bearerAuth'] = {
+		'type': 'http',
+		'scheme': 'bearer',
+		'bearerFormat': 'JWT'
+	}
+
+	swagger.components.securitySchemes = securitySchemes
+	swagger.components.schemas = schemas;
+
 	let expandOption = {
 		name: 'expand',
 		in: 'query',
-		type: 'boolean',
 		description: 'expand document based on relations',
-		default: false
+		schema: {
+			type: 'boolean',
+			default: false
+		}
 	};
 
 	let totalRecord = {
 		name: 'totalRecords',
 		in: 'query',
-		type: 'integer',
 		description: 'total records',
+		schema: { type: 'integer' }
 	};
 
 	let searchOption = {
 		name: 'search',
 		in: 'query',
-		type: 'string',
-		description: 'String to search across all field'
+		description: 'String to search across all field',
+		schema: { type: 'string' }
 	};
+
 	swagger.paths['/'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
@@ -454,42 +382,44 @@ function generateYaml(config) {
 				'500': {
 					description: 'Internal server error'
 				}
-			}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
 		},
 		'post': {
 			description: `Create a new '${config.name}'`,
 			operationId: `${methodName.create}`,
-			parameters: [{
-				name: 'data',
-				in: 'body',
+			requestBody: {
 				description: `Payload to create a '${config.name}'`,
-				schema: {
-					$ref: `#/definitions/${name}_create`
+				content: {
+					'application/json': {
+						schema: {
+							$ref: `#/components/schemas/${name}_create`
+						}
+					}
 				}
+
 			},
-			{
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			},
-			{
+			parameters: [{
 				name: 'expireAt',
 				in: 'query',
-				type: 'string',
-				description: 'ISO format date after which the document will get deleted'
+				description: 'ISO format date after which the document will get deleted',
+				schema: { type: 'string' }
 			},
 			{
 				name: 'expireAfter',
 				in: 'query',
-				type: 'string',
-				description: 'Time after which the document will get deleted.'
+				description: 'Time after which the document will get deleted.',
+				schema: { type: 'string' }
 			},
 			{
 				name: 'upsert',
 				in: 'query',
-				type: 'boolean',
-				description: 'upsert parameter'
+				description: 'upsert parameter',
+				schema: { type: 'boolean' }
 			}],
 			responses: {
 				'200': {
@@ -501,56 +431,334 @@ function generateYaml(config) {
 				'500': {
 					description: 'Internal server error'
 				}
-			}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
 		}
 	};
-	swagger.paths['/utils/simulate'] = {
+
+	swagger.paths['/{id}'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: `validate '${config.name}'`,
-			operationId: `${methodName.simulate}`,
-			parameters: [{
-				name: 'data',
-				in: 'body',
-				description: `Payload to validate '${config.name}'`,
+		'get': {
+			description: `Retrieve an existing '${config.name}'`,
+			operationId: `${methodName.show}`,
+			parameters: showParameters.concat([{
+				name: 'expand',
+				in: 'query',
+				description: 'expand document based on relations',
 				schema: {
-					$ref: `#/definitions/${name}_update`
+					type: 'boolean',
+					default: false
+				},
+			}]),
+			responses: {
+				'200': {
+					description: `${config.name} document`
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'404': {
+					description: 'No records to list with the given parameter set.'
+				},
+				'500': {
+					description: 'Internal server error'
 				}
 			},
-			{
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		},
+		'put': {
+			description: `Update an existing '${config.name}'`,
+			operationId: `${methodName.update}`,
+			requestBody: {
+				description: `Payload to update a '${config.name}'`,
+				content: {
+					'application/json': {
+						schema: {
+							$ref: `#/components/schemas/${name}_update`
+						}
+					}
+				}
+
+			},
+			parameters: [{
+				name: 'id',
+				in: 'path',
+				required: true,
+				description: `Id of the '${config.name}' to be updated`,
+				schema: { type: 'string' }
 			},
 			{
-				name: 'generateId',
+				name: 'expireAt',
 				in: 'query',
-				type: 'boolean',
-				description: 'Generate Id for the document',
-				default: false
+				description: 'ISO format date after which the document will get deleted',
+				schema: { type: 'string' }
 			},
 			{
-				name: 'operation',
+				name: 'expireAfter',
 				in: 'query',
-				type: 'string',
-				description: 'request method',
-				default: false
-			},
-			{
-				name: 'docId',
+				description: 'Time after which the document will get deleted.',
+				schema: { type: 'string' }
+			}, {
+				name: 'upsert',
 				in: 'query',
-				type: 'string',
-				description: 'request method',
-				default: false
-			},
-			{
-				name: 'select',
-				in: 'query',
-				type: 'string',
-				description: 'select in case of get',
-				default: false
+				description: 'upsert parameter',
+				schema: { type: 'boolean' }
 			}],
+			responses: {
+				'200': {
+					description: 'Update entry'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'404': {
+					description: 'No records to list with the given parameter set.'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		},
+		'delete': {
+			description: `Delete an existing '${config.name}'`,
+			operationId: `${methodName.destroy}`,
+			parameters: [{
+				name: 'id',
+				in: 'path',
+				required: true,
+				description: `Id of the '${config.name}' to be deleted`,
+				schema: { type: 'string' }
+			}],
+			responses: {
+				'200': {
+					description: 'Empty object'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'404': {
+					description: 'No records to list with the given parameter set.'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	if (mathDefinition) {
+		swagger.paths['/{id}/math'] = {
+			'x-swagger-router-controller': `${methodName.controller}`,
+			'put': {
+				description: `Does math operation on a '${config.name}'`,
+				operationId: `${methodName.math}`,
+				requestBody: {
+					description: `Payload to update a '${config.name}'`,
+					content: {
+						'application/json': {
+							schema: {
+								$ref: `#/components/schemas/${name}_math`
+							}
+						}
+					}
+
+				},
+				parameters: [{
+					name: 'id',
+					in: 'path',
+					required: true,
+					description: `Id of the '${config.name}' to be updated`,
+					schema: { type: 'string' }
+				}],
+				responses: {
+					'200': {
+						description: 'Update entry'
+					},
+					'400': {
+						description: 'Bad parameters'
+					},
+					'404': {
+						description: 'No records to list with the given parameter set.'
+					},
+					'500': {
+						description: 'Internal server error'
+					}
+				},
+				security: [
+					{
+						"bearerAuth": []
+					}
+				]
+			}
+		};
+	}
+
+	swagger.paths['/utils/aggregate'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: 'runs aggregate query',
+			operationId: 'v1_aggregate',
+			requestBody: {
+				description: 'Payload to aggregate',
+				content: {
+					'application/json': {
+						schema: {
+							'type': 'array',
+							'items': {
+								'type': 'object'
+							}
+						}
+					}
+				}
+
+			},
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/bulkDelete'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'delete': {
+			description: `Deletes a list of '${name}'`,
+			operationId: `${methodName.bulkDelete}`,
+			// TODO - requestBody can't be used inside DELETE operation
+			// requestBody: {
+			// 	description: 'Payload to reset a User',
+			// 	content: {
+			// 		'application/json': {
+			// 			schema: {
+			// 				type: 'object',
+			// 				properties: {
+			// 					ids: {
+			// 						type: 'array',
+			// 						items: {
+			// 							type: 'string'
+			// 						}
+			// 					}
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// },
+			responses: {
+				'200': {
+					description: 'Empty Object'
+				},
+				'400': {
+					description: 'List document ids not deleted'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/bulkShow'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: `Retrieve a list of '${config.name}'`,
+			operationId: `${methodName.bulkShow}`,
+			parameters: bulkShowParameters,
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/count'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: `returns count of '${config.name}'`,
+			operationId: `${methodName.count}`,
+			parameters: countParameters,
+			responses: {
+				'200': {
+					description: 'Count of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/experienceHook'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: 'triggers the hook with data',
+			operationId: `${methodName.experienceHook}`,
+			requestBody: {
+				description: 'data',
+				content: {
+					'application/json': {
+						schema: {
+							type: 'object'
+						}
+					}
+				}
+
+			},
+			parameters: experienceHookParameters,
 			responses: {
 				'200': {
 					description: 'List of the entites'
@@ -564,6 +772,435 @@ function generateYaml(config) {
 			}
 		}
 	};
+
+	swagger.paths['/utils/export'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: `Retrieve a list of '${config.name}'`,
+			operationId: `${methodName.exportAll}`,
+			requestBody: {
+				content: {
+					'application/json': {
+						schema: {
+							properties: {
+								filter: {
+									type: 'string',
+									description: 'Filter records based on certain fields'
+								},
+								select: {
+									type: 'string',
+									description: 'Comma seperated fields to be displayed'
+								},
+								sort: {
+									type: 'string',
+									description: 'sort parameter'
+								},
+								skip: {
+									type: 'integer',
+									description: 'Number of records to skip'
+								},
+								batchSize: {
+									type: 'integer',
+									description: 'Batch size for cursor'
+								},
+							}
+						}
+					}
+				}
+			},
+			parameters: config.enableSearchIndex ? [expandOption, searchOption, totalRecord] : [expandOption, totalRecord],
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
+
+	swagger.paths['/utils/export/download/{id}'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: 'Download the file',
+			parameters: [{
+				name: 'id',
+				in: 'path',
+				required: true,
+				description: 'Id of file',
+				schema: { type: 'string' }
+			}, {
+				name: 'filename',
+				in: 'query',
+				description: 'filename of file',
+				schema: { type: 'string' }
+			}],
+			operationId: `${methodName.exportFileileDownload}`,
+			responses: {
+				'200': {
+					description: 'file download'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
+
+	swagger.paths['/utils/file/download/{id}'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: 'Download the file',
+			parameters: [
+				{
+					name: 'id',
+					in: 'path',
+					required: true,
+					description: 'Id of file',
+					schema: { type: 'string' }
+				},
+				{
+					name: 'encryptionKey',
+					in: 'query',
+					required: false,
+					description: 'Encryption Key to download decrypted file',
+					schema: { type: 'string' }
+				}
+			],
+			operationId: `${methodName.fileDownload}`,
+			responses: {
+				'200': {
+					description: 'file download'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
+
+	swagger.paths['/utils/file/upload'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: 'Uploads the file',
+			operationId: `${methodName.fileUpload}`,
+			parameters: [
+				{
+					name: 'encryptionKey',
+					in: 'query',
+					required: false,
+					description: 'Encryption Key to encrypt file',
+					schema: { type: 'string' }
+				}
+			],
+			responses: {
+				'200': {
+					description: 'meta data of file'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/fileMapper/{fileId}/count'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: `returns count of '${config.name}'`,
+			operationId: 'fileMapperCount',
+			parameters: countParameters.concat({
+				name: 'fileId',
+				in: 'path',
+				required: true,
+				description: 'fileId against which we db will be querried',
+				schema: { type: 'string' }
+			}),
+			responses: {
+				'200': {
+					description: 'Count of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/fileTransfers'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: 'Retrieve list of bulk actions\'',
+			operationId: `${methodName.exportAllDetail}`,
+			parameters: JSON.parse(JSON.stringify(getParameters)),
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/fileTransfers/{id}'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'delete': {
+			description: 'Deletes a file with file id',
+			operationId: `${methodName.exportAllDetailDelete}`,
+			parameters: [{
+				name: 'id',
+				in: 'path',
+				required: true,
+				description: 'Id of file',
+				schema: { type: 'string' }
+			}],
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/fileTransfers/count'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: 'count of bulk actions\'',
+			operationId: `${methodName.exportAllDetailCount}`,
+			parameters: JSON.parse(JSON.stringify(getParameters)),
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/fileTransfers/{fileId}/readStatus'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'put': {
+			description: 'Updates File Read Status',
+			operationId: 'exportUpdateReadStatus',
+			requestBody: {
+				description: 'Payload with read status',
+				content: {
+					'application/json': {
+						schema: {
+							properties: {
+								'isRead': {
+									'type': 'boolean',
+								}
+							}
+						}
+					}
+				}
+
+			},
+			parameters: [{
+				name: 'fileId',
+				in: 'path',
+				required: true,
+				description: 'Id of file',
+				schema: { type: 'string' }
+			}],
+			responses: {
+				'200': {
+					description: 'File read status updated'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/hook'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: 'triggers the hook with data',
+			operationId: `${methodName.hook}`,
+			requestBody: {
+				description: 'data',
+				content: {
+					'application/json': {
+						schema: {
+							type: 'object'
+						}
+					}
+				}
+
+			},
+			parameters: hookParameters,
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
+
+	swagger.paths['/utils/securedFields'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'get': {
+			description: `Retrieve a list of secured fields in '${config.name}'`,
+			operationId: `${methodName.securedFields}`,
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			}
+		}
+	};
+
+	swagger.paths['/utils/simulate'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: `validate '${config.name}'`,
+			operationId: `${methodName.simulate}`,
+			requestBody: {
+				description: `Payload to validate '${config.name}'`,
+				content: {
+					'application/json': {
+						schema: {
+							$ref: `#/components/schemas/${name}_update`
+						}
+					}
+				}
+
+			},
+			parameters: [{
+				name: 'generateId',
+				in: 'query',
+				description: 'Generate Id for the document',
+				schema: {
+					type: 'boolean',
+					default: false
+				},
+			},
+			{
+				name: 'operation',
+				in: 'query',
+				description: 'request method',
+				schema: {
+					type: 'string',
+					default: false
+				},
+			},
+			{
+				name: 'docId',
+				in: 'query',
+				description: 'request method',
+				schema: {
+					type: 'string',
+					default: false
+				},
+			},
+			{
+				name: 'select',
+				in: 'query',
+				description: 'select in case of get',
+				schema: {
+					type: 'string',
+					default: false
+				}
+			}],
+			responses: {
+				'200': {
+					description: 'List of the entites'
+				},
+				'400': {
+					description: 'Bad parameters'
+				},
+				'500': {
+					description: 'Internal server error'
+				}
+			},
+			security: [
+				{
+					"bearerAuth": []
+				}
+			]
+		}
+	};
+
 	// Was Used by WF Module
 	// swagger.paths['/utils/lock'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
@@ -604,310 +1241,6 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
-	swagger.paths['/utils/bulkShow'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: `Retrieve a list of '${config.name}'`,
-			operationId: `${methodName.bulkShow}`,
-			parameters: bulkShowParameters,
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/securedFields'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: `Retrieve a list of secured fields in '${config.name}'`,
-			operationId: `${methodName.securedFields}`,
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/hook'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: 'triggers the hook with data',
-			operationId: `${methodName.hook}`,
-			parameters: hookParameters,
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/experienceHook'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: 'triggers the hook with data',
-			operationId: `${methodName.experienceHook}`,
-			parameters: experienceHookParameters,
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/bulkDelete'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'delete': {
-			description: `Deletes a list of '${name}'`,
-			operationId: `${methodName.bulkDelete}`,
-			parameters: bulkDeleteParameters,
-			responses: {
-				'200': {
-					description: 'Empty Object'
-				},
-				'400': {
-					description: 'List document ids not deleted'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/count'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: `returns count of '${config.name}'`,
-			operationId: `${methodName.count}`,
-			parameters: countParameters,
-			responses: {
-				'200': {
-					description: 'Count of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/{id}'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: `Retrieve an existing '${config.name}'`,
-			operationId: `${methodName.show}`,
-			parameters: showParameters.concat([{
-				name: 'expand',
-				in: 'query',
-				type: 'boolean',
-				description: 'expand document based on relations',
-				default: false
-			}]),
-			responses: {
-				'200': {
-					description: `${config.name} document`
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'404': {
-					description: 'No records to list with the given parameter set.'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		},
-		'put': {
-			description: `Update an existing '${config.name}'`,
-			operationId: `${methodName.update}`,
-			parameters: [{
-				name: 'data',
-				in: 'body',
-				description: `Payload to update a '${config.name}'`,
-				schema: {
-					$ref: `#/definitions/${name}_update`
-				}
-			}, {
-				name: 'id',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: `Id of the '${config.name}' to be updated`,
-			},
-			{
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			},
-			{
-				name: 'expireAt',
-				in: 'query',
-				type: 'string',
-				description: 'ISO format date after which the document will get deleted'
-			},
-			{
-				name: 'expireAfter',
-				in: 'query',
-				type: 'string',
-				description: 'Time after which the document will get deleted.'
-			}, {
-				name: 'upsert',
-				in: 'query',
-				type: 'boolean',
-				description: 'upsert parameter'
-			}],
-			responses: {
-				'200': {
-					description: 'Update entry'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'404': {
-					description: 'No records to list with the given parameter set.'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		},
-		'delete': {
-			description: `Delete an existing '${config.name}'`,
-			operationId: `${methodName.destroy}`,
-			parameters: [{
-				name: 'id',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: `Id of the '${config.name}' to be deleted`,
-			},
-			{
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}],
-			responses: {
-				'200': {
-					description: 'Empty object'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'404': {
-					description: 'No records to list with the given parameter set.'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	if (mathDefinition) {
-		swagger.paths['/{id}/math'] = {
-			'x-swagger-router-controller': `${methodName.controller}`,
-			'put': {
-				description: `Does math operation on a '${config.name}'`,
-				operationId: `${methodName.math}`,
-				parameters: [{
-					name: 'data',
-					in: 'body',
-					description: `Payload to update a '${config.name}'`,
-					schema: {
-						$ref: `#/definitions/${name}_math`
-					}
-				}, {
-					name: 'id',
-					in: 'path',
-					type: 'string',
-					required: true,
-					description: `Id of the '${config.name}' to be updated`,
-				},
-				{
-					name: 'authorization',
-					in: 'header',
-					type: 'string',
-					description: 'The JWT token for req.validation'
-				}],
-				responses: {
-					'200': {
-						description: 'Update entry'
-					},
-					'400': {
-						description: 'Bad parameters'
-					},
-					'404': {
-						description: 'No records to list with the given parameter set.'
-					},
-					'500': {
-						description: 'Internal server error'
-					}
-				}
-			}
-		};
-	}
-
-	swagger.paths['/utils/file/upload'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: 'Uploads the file',
-			operationId: `${methodName.fileUpload}`,
-			parameters: [
-				{
-					name: 'authorization',
-					in: 'header',
-					type: 'string',
-					description: 'The JWT token for req.validation'
-				},
-				{
-					name: 'encryptionKey',
-					in: 'query',
-					type: 'string',
-					required: false,
-					description: 'Encryption Key to encrypt file',
-				}
-			],
-			responses: {
-				'200': {
-					description: 'meta data of file'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
 
 	// swagger.paths['/utils/file/{id}/view'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
@@ -940,71 +1273,6 @@ function generateYaml(config) {
 	// 	}
 	// };
 
-	swagger.paths['/utils/file/download/{id}'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Download the file',
-			parameters: [
-				{
-					name: 'id',
-					in: 'path',
-					type: 'string',
-					required: true,
-					description: 'Id of file',
-				},
-				{
-					name: 'encryptionKey',
-					in: 'query',
-					type: 'string',
-					required: false,
-					description: 'Encryption Key to download decrypted file',
-				}
-			],
-			operationId: `${methodName.fileDownload}`,
-			responses: {
-				'200': {
-					description: 'file download'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-
-	swagger.paths['/utils/export/download/{id}'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Download the file',
-			parameters: [{
-				name: 'id',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: 'Id of file',
-			}, {
-				name: 'filename',
-				in: 'query',
-				type: 'string',
-				description: 'filename of file',
-			}],
-			operationId: `${methodName.exportFileileDownload}`,
-			responses: {
-				'200': {
-					description: 'file download'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
 	// swagger.paths['/utils/fileMapper/{fileId}'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'get': {
@@ -1030,6 +1298,7 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
+
 	// swagger.paths['/utils/fileMapper/{fileId}/create'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'post': {
@@ -1067,6 +1336,7 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
+
 	// swagger.paths['/utils/fileMapper/{fileId}/mapping'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'put': {
@@ -1107,8 +1377,6 @@ function generateYaml(config) {
 	// 	}
 	// };
 
-
-
 	// Was used by WF module
 	// swagger.paths['/utils/fileMapper/enrich'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
@@ -1141,6 +1409,7 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
+
 	// swagger.paths['/utils/fileMapper/{fileId}/enrichDataForWF'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'get': {
@@ -1192,194 +1461,7 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
-	swagger.paths['/utils/fileMapper/{fileId}/count'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: `returns count of '${config.name}'`,
-			operationId: 'fileMapperCount',
-			parameters: countParameters.concat({
-				name: 'fileId',
-				in: 'path',
-				required: true,
-				type: 'string',
-				description: 'fileId against which we db will be querried'
-			}),
-			responses: {
-				'200': {
-					description: 'Count of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/export'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: `Retrieve a list of '${config.name}'`,
-			operationId: `${methodName.exportAll}`,
-			parameters: config.enableSearchIndex ? JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, searchOption, totalRecord]) : JSON.parse(JSON.stringify(exportParameters)).concat([expandOption, totalRecord]),
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/fileTransfers'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'Retrieve list of bulk actions\'',
-			operationId: `${methodName.exportAllDetail}`,
-			parameters: JSON.parse(JSON.stringify(getParameters)),
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
 
-	swagger.paths['/utils/fileTransfers/count'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'get': {
-			description: 'count of bulk actions\'',
-			operationId: `${methodName.exportAllDetailCount}`,
-			parameters: JSON.parse(JSON.stringify(getParameters)),
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/fileTransfers/{id}'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'delete': {
-			description: 'Deletes a file with file id',
-			operationId: `${methodName.exportAllDetailDelete}`,
-			parameters: [{
-				name: 'id',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: 'Id of file',
-			}, {
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}],
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/fileTransfers/{fileId}/readStatus'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'put': {
-			description: 'Updates File Read Status',
-			operationId: 'exportUpdateReadStatus',
-			parameters: [{
-				name: 'fileId',
-				in: 'path',
-				type: 'string',
-				required: true,
-				description: 'Id of file',
-			}, {
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}, {
-				name: 'data',
-				in: 'body',
-				description: 'Payload with read status',
-				schema: {
-					properties: {
-						'isRead': {
-							'type': 'boolean',
-						}
-					}
-				}
-			}],
-			responses: {
-				'200': {
-					description: 'File read status updated'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
-	swagger.paths['/utils/aggregate'] = {
-		'x-swagger-router-controller': `${methodName.controller}`,
-		'post': {
-			description: 'runs aggregate query',
-			operationId: 'v1_aggregate',
-			parameters: [{
-				name: 'authorization',
-				in: 'header',
-				type: 'string',
-				description: 'The JWT token for req.validation'
-			}, {
-				name: 'data',
-				in: 'body',
-				description: 'Payload to aggregate',
-				schema: {
-					'type': 'array',
-					'items': {
-						'type': 'object'
-					}
-				}
-			}],
-			responses: {
-				'200': {
-					description: 'List of the entites'
-				},
-				'400': {
-					description: 'Bad parameters'
-				},
-				'500': {
-					description: 'Internal server error'
-				}
-			}
-		}
-	};
 	// swagger.paths['/utils/hrefUpdate'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'put': {
@@ -1406,6 +1488,7 @@ function generateYaml(config) {
 	// 		}
 	// 	}
 	// };
+
 	// swagger.paths['/internal/health/live'] = {
 	// 	'x-swagger-router-controller': `${methodName.controller}`,
 	// 	'get': {
