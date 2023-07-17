@@ -472,7 +472,7 @@ schema.pre('save', function (next) {
 	if (envConfig.isCosmosDB()) {
 		this.collectionName = this._id;
 	} else {
-		this.collectionName = this.api.substr(1);
+		this.collectionName = this.connectors?.data?.options?.tableName || this.api.substr(1);
 	}
 	next();
 });
@@ -481,7 +481,7 @@ draftSchema.pre('save', function (next) {
 	if (envConfig.isCosmosDB()) {
 		this.collectionName = this._id;
 	} else {
-		this.collectionName = this.api.substr(1);
+		this.collectionName = this.connectors?.data?.options?.tableName || this.api.substr(1);
 	}
 	next();
 });
@@ -1143,7 +1143,7 @@ e.updateDoc = (_req, _res) => {
 					});
 					return;
 				}
-				if (oldIdElement && newIdElement && newIdElement['counter'] && oldIdElement['counter'] != newIdElement['counter']) {
+				if (oldIdElement && newIdElement && newIdElement['counter'] && oldIdElement['counter'] != newIdElement['counter'] && !_req.body?.connectors?.data?.options?.tableName) {
 					isCounterChangeRequired = true;
 				}
 			}
