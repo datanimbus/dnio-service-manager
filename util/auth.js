@@ -147,16 +147,23 @@ router.use((req, res, next) => {
 		}
 
 		if (!req.locals.app) {
-			return res.status(400).json({ message: 'App value needed for this API' });
+			res.status(400).json({ message: 'App value needed for this API' });
+			return next(new Error('App value needed for this API'));
 		}
 
 		// Check if user has permission for the path.
 		if (canAccessPath(req)) {
 			return next();
 		}
+
+		if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === req.locals.app) && !req.user.apps.includes(req.locals.app)) {
+			res.status(403).json({ "message": "You don't have permissions for this app." });
+			return next(new Error("You don't have permissions for this app."));
+		}
 	}
 
-	return res.status(403).json({ message: 'You don\'t have access for this API' });
+	res.status(403).json({ message: 'You don\'t have access for this API' });
+	return next(new Error("You don't have permissions for this app."));
 });
 
 
