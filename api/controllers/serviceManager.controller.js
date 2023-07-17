@@ -906,7 +906,7 @@ e.createDoc = (_req, _res) => {
 			.then(() => smHooks.validateAppAndGetAppData(_req))
 			.then(async (appData) => {
 				if (!('disableInsights' in _req.body)) {
-					_req.body.disableInsights = appData.disableInsights;
+					_req.body.disableInsights = appData[0].disableInsights;
 				}
 
 				if (!_req.body.connectors?.data) {
@@ -917,10 +917,10 @@ e.createDoc = (_req, _res) => {
 				}
 
 				if (!_req.body.connectors?.data?._id) {
-					_req.body.connectors.data._id = appData.connectors.data._id;
+					_req.body.connectors.data._id = appData[0].connectors.data._id;
 				}
 				if (!_req.body.connectors?.file?._id) {
-					_req.body.connectors.file._id = appData.connectors.file._id;
+					_req.body.connectors.file._id = appData[0].connectors.file._id;
 				}
 
 				return apiUniqueCheck(_req.body.api, _req.body.app);
@@ -1067,6 +1067,10 @@ e.updateDoc = (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	let ID = _req.params.id;
 	logger.info(`[${txnId}] Update service request received for ${ID}`);
+
+	if (!_req.user.isSuperAdmin && !_req.user.allPermissions.find(e => e.app === _req.params.app) && !_req.user.apps.includes(_req.params.app)) {
+		return _res.status(403).json({ "message": "You don't have permissions for this app." });
+	}
 
 	delete _req.body.collectionName;
 	delete _req.body.version;
@@ -1980,6 +1984,11 @@ e.destroyService = (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	logger.info(`[${txnId}] Deleting the service : ${id}`);
 	logger.debug(`[${txnId}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
+
+	if (!_req.user.isSuperAdmin && !_req.user.allPermissions.find(e => e.app === _req.params.app) && !_req.user.apps.includes(_req.params.app)) {
+		return _res.status(403).json({ "message": "You don't have permissions for this app." });
+	}
+
 	// return smhelper.getFlows(id, _req)
 	return Promise.resolve([]).then(_flows => {
 		logger.debug(`[${txnId}] ${JSON.stringify({ _flows })}`);
@@ -2825,6 +2834,9 @@ function findCollectionData(Id) {
 function customShow(req, res) {
 	let draft = req.query.draft;
 	let id = req.params.id;
+	if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === req.params.app) && !req.user.apps.includes(req.params.app)) {
+		return res.status(403).json({ "message": "You don't have permissions for this app." });
+	}
 	if (draft) {
 		draftCrudder.model.findOne({ _id: id })
 			.then(_d => {
@@ -2878,6 +2890,10 @@ function customIndex(req, res) {
 	const app = req.params.app;
 	const draft = req.query.draft;
 	let filter = req.query.filter;
+
+	if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === app) && !req.user.apps.includes(app)) {
+		return res.status(403).json({ "message": "You don't have permissions for this app." });
+	}
 	if (filter) {
 		try {
 			filter = JSON.parse(filter);
