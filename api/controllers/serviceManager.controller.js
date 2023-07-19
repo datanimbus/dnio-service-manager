@@ -1160,10 +1160,10 @@ e.updateDoc = (_req, _res) => {
 					}
 
 					if (!_req.body.connectors?.data?._id) {
-						_req.body.connectors.data._id = appData.connectors.data._id;
+						_req.body.connectors.data._id = appData[0].connectors.data._id;
 					}
 					if (!_req.body.connectors?.file?._id) {
-						_req.body.connectors.file._id = appData.connectors.file._id;
+						_req.body.connectors.file._id = appData[0].connectors.file._id;
 					}
 
 					if (oldData.name != _req.body.name) {
