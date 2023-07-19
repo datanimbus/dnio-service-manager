@@ -1,4 +1,14 @@
 node_modules
+.vscode
+.idea
+.eslintrc.yml
+.gitignore
+.dockerignore
+.huskyrc
+Dockerfile
+sm.yaml
+VERSION
+README.md
 scripts
 ds-base
 LAST_PULL
@@ -7,3 +17,4 @@ LATEST_SM
 CURRENT_SM
 build
 test
+.git
