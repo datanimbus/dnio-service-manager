@@ -96,8 +96,12 @@ router.use((req, res, next) => {
 		
 		if (params && params['{app}'] && !params['{app}'].match(/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]+$/)) {
 			return next(new Error('APP_NAME_ERROR :: App name must consist of alphanumeric characters or \'-\' , and must start and end with an alphanumeric character.'));
-		} 
+		}
 
+		if (req.locals.app && params && req.locals.app !== params['{app}']) {
+			return next(new Error("Appname in url and body do not match."));
+		}
+		
 		if (!req.locals.app && params && params['{app}']) req.locals.app = params['{app}'];
 	}
 
