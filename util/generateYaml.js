@@ -151,7 +151,13 @@ function getCreateDefinition(defArr) {
 			attribute['type'] = 'string';
 		}
 		if (attribute['type'] === 'Object') {
-			definition['properties'][el] = getCreateDefinition(attribute.definition);
+			if (attribute.properties.schemaFree) {
+				definition['properties'][el] = {
+					type: 'object'
+				}
+			} else {
+				definition['properties'][el] = getCreateDefinition(attribute.definition);
+			}
 		}
 		else if (attribute['type'] === 'User') {
 			definition['properties'][el] = getCreateDefinition(attribute.definition);
@@ -214,7 +220,7 @@ function getMathKeyList(defArr, key) {
 	defArr.forEach(attribute => {
 		let _k = attribute.key;
 		let newKey = key == '' ? _k : key + '.' + _k;
-		if (attribute['type'] === 'Object') {
+		if (attribute['type'] === 'Object' && !attribute.properties.schemaFree) {
 			list = list.concat(getMathKeyList(attribute['definition'], newKey));
 		} else if (attribute['type'] === 'Number') {
 			list.push(newKey);
