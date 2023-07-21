@@ -32,7 +32,7 @@
         "json-to-pretty-yaml": "^1.2.2",
         "jsonwebtoken": "^9.0.0",
         "lodash": "^4.17.20",
-        "log4js": "^6.5.2",
+        "log4js": "^6.9.1",
         "mongodb": "^4.9.0",
         "mongoose": "^6.5.2",
         "node-cron": "^3.0.0",

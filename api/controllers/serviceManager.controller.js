@@ -905,6 +905,13 @@ e.createDoc = (_req, _res) => {
 			.then(port => _req.body.port = port)
 			.then(() => smHooks.validateAppAndGetAppData(_req))
 			.then(async (appData) => {
+				if (!appData[0]) {
+					_res.status(404).json({
+						'message': `App data not found for ${_req.body.app}.`
+					});
+					throw new Error(`App data not found for ${_req.body.app}.`);
+				}
+
 				if (!('disableInsights' in _req.body)) {
 					_req.body.disableInsights = appData[0].disableInsights;
 				}
@@ -1160,10 +1167,10 @@ e.updateDoc = (_req, _res) => {
 					}
 
 					if (!_req.body.connectors?.data?._id) {
-						_req.body.connectors.data._id = appData.connectors.data._id;
+						_req.body.connectors.data._id = appData[0].connectors.data._id;
 					}
 					if (!_req.body.connectors?.file?._id) {
-						_req.body.connectors.file._id = appData.connectors.file._id;
+						_req.body.connectors.file._id = appData[0].connectors.file._id;
 					}
 
 					if (oldData.name != _req.body.name) {
