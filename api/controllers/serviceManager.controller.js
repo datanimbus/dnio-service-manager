@@ -1340,6 +1340,7 @@ function rollBackDeploy(id, req) {
 e.deployAPIHandler = (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	let ID = _req.params.id;
+	let app = _req.params.app;
 	logger.info(`[${txnId}] Service deploy request received for service ${ID}`);
 
 	let user = _req.get('User');
@@ -1356,11 +1357,11 @@ e.deployAPIHandler = (_req, _res) => {
 	let isWorkflowChanged = false;
 	let isStateModelChanged = false;
 
-	return crudder.model.findOne({ _id: ID, '_metadata.deleted': false })
+	return crudder.model.findOne({ _id: ID, app: app, '_metadata.deleted': false })
 		.then(_d => {
 			if (!_d) {
-				logger.debug(`[${txnId}] No data found in DB for service ${ID}`);
-				_res.status(404).json({ message: 'Not found' });
+				logger.debug(`[${txnId}] No data found in DB for service ${ID} in app ${app}`);
+				_res.status(404).json({ message: 'Service not found' });
 			} else {
 				logger.debug(`[${txnId}] Old data found in DB for service ${ID}`);
 				logger.trace(`[${txnId}] Old data from DB :: ${JSON.stringify(_d)}`);
@@ -1734,11 +1735,11 @@ e.startAPIHandler = (_req, _res) => {
 
 
 async function startService(req, res, id, list) {
+	let txnId = req.get('TxnId');
 	try {
-		let txnId = req.get('TxnId');
 		let socket = req.app.get('socket');
 
-		let doc = await crudder.model.findOne({ _id: id, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } });
+		let doc = await crudder.model.findOne({ _id: id, app: req.params.app, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } });
 
 		if (doc && !doc?.schemaFree && doc?.definition?.length == 1) {
 			throw new Error('Data service definition not found.');
@@ -1800,88 +1801,100 @@ async function startService(req, res, id, list) {
 			throw new Error('No service found with given id');
 		}
 	} catch (err) {
-		logger.error(`[${txnId}] Data service start error ${id} :: ${e.message}`)
-		if (!res.headersSent) res.status(500).json({ message: e.message });
+		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`)
+		if (!res.headersSent) res.status(500).json({ message: err.message });
 	}
 }
 
-e.stopAPIHandler = (_req, _res) => {
+e.stopAPIHandler = async (_req, _res) => {
 	let txnId = _req.get('TxnId');
 	let id = _req.params.id;
 	let socket = _req.app.get('socket');
 	let instances = null;
-	checkIncomingRelation(id)
-		.then(() => {
-			_res.status(202).json({
-				message: `Deployment termination request accepted for service ${id}.`
-			});
-		}, (data) => {
-			let serviceMsg = '';
-			if (data.relatedEntities.length == 1) {
-				serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-			} else if (data.relatedEntities.length == 2) {
-				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
-			} else {
-				serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
-			}
 
-			_res.status(400).json({
-				message: 'Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.'
-			});
-			throw new Error('Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.');
-		})
-		.then(() => {
-			if (process.env.SM_ENV == 'K8s') {
-				logger.info(`[${txnId}][${id}] Scaling down k8s deployment to 0.`);
-				return crudder.model.findOne({
+	try {
+		let doc = await crudder.model.findOne({ _id: id, app: _req.params.app, '_metadata.deleted': false, 'type': { '$nin': ['internal'] } });
+
+		if (!doc) {
+			throw new Error('No service found with given id');
+		} else {
+			checkIncomingRelation(id)
+			.then(() => {
+				_res.status(202).json({
+					message: `Deployment termination request accepted for service ${id}.`
+				});
+			}, (data) => {
+				let serviceMsg = '';
+				if (data.relatedEntities.length == 1) {
+					serviceMsg = 'Data Service: ' + data.relatedEntities[0];
+				} else if (data.relatedEntities.length == 2) {
+					serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
+				} else {
+					serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
+				}
+	
+				_res.status(400).json({
+					message: 'Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.'
+				});
+				throw new Error('Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.');
+			})
+			.then(() => {
+				if (process.env.SM_ENV == 'K8s') {
+					logger.info(`[${txnId}][${id}] Scaling down k8s deployment to 0.`);
+					return crudder.model.findOne({
+						_id: id,
+						'type': { '$nin': ['internal'] }
+					})
+						.then(_d => {
+							if (!_d) throw new Error('No service found with given id');
+							const ns = envConfig.dataStackNS + '-' + _d.app.toLowerCase().replace(/ /g, '');
+							return kubeutil.deployment.scaleDeployment(ns, _d.api.split('/')[1].toLowerCase(), 0);
+						})
+						.then(_d => {
+							instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
+							logger.info('Instances at time of undeploying ' + instances);
+							if (instances) {
+								return crudder.model.findOne({
+									_id: id
+								});
+							}
+						})
+						.then(_d => {
+							if (_d && instances) {
+								_d.instances = instances;
+								return _d.save(_req);
+							}
+						})
+						.catch(err => {
+							logger.error(err);
+						});
+				} else logger.info(`[${txnId}][${id}] Can't stop service. Not running on kubernetes.`);
+			})
+			.then(() => {
+				return deployUtil.updateDocument(crudder.model, {
+					_id: id
+				}, {
+					status: 'Undeployed'
+				}, _req);
+			})
+			.then((doc) => {
+				dataStackutils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
+				deployUtil.sendToSocket(socket, 'serviceStatus', {
 					_id: id,
-					'type': { '$nin': ['internal'] }
-				})
-					.then(_d => {
-						if (!_d) throw new Error('No service found with given id');
-						const ns = envConfig.dataStackNS + '-' + _d.app.toLowerCase().replace(/ /g, '');
-						return kubeutil.deployment.scaleDeployment(ns, _d.api.split('/')[1].toLowerCase(), 0);
-					})
-					.then(_d => {
-						instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
-						logger.info('Instances at time of undeploying ' + instances);
-						if (instances) {
-							return crudder.model.findOne({
-								_id: id
-							});
-						}
-					})
-					.then(_d => {
-						if (_d && instances) {
-							_d.instances = instances;
-							return _d.save(_req);
-						}
-					})
-					.catch(err => {
-						logger.error(err);
-					});
-			} else logger.info(`[${txnId}][${id}] Can't stop service. Not running on kubernetes.`);
-		})
-		.then(() => {
-			return deployUtil.updateDocument(crudder.model, {
-				_id: id
-			}, {
-				status: 'Undeployed'
-			}, _req);
-		})
-		.then((doc) => {
-			dataStackutils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
-			deployUtil.sendToSocket(socket, 'serviceStatus', {
-				_id: id,
-				app: doc.app,
-				message: 'Undeployed'
+					app: doc.app,
+					message: 'Undeployed'
+				});
+			})
+			.catch(err => {
+				logger.error(err);
+				if (!_res.headersSent)
+					_res.status(500).send(err.message);
 			});
-		})
-		.catch(err => {
-			logger.error(err);
-			if (!_res.headersSent)
-				_res.status(500).send(err.message);
-		});
+		}
+	} catch (err) {
+		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`)
+		if (!_res.headersSent) _res.status(500).json({ message: err.message });
+	}
 };
 
 function destroyDeployment(id, count, _req) {
