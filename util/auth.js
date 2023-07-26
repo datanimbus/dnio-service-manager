@@ -99,7 +99,7 @@ router.use((req, res, next) => {
 		}
 
 		if (req.locals.app && params && req.locals.app !== params['{app}']) {
-			return next(new Error("Appname in url and body do not match."));
+			return next(new Error("Appname in url and body/filter do not match."));
 		}
 		
 		if (!req.locals.app && params && params['{app}']) req.locals.app = params['{app}'];

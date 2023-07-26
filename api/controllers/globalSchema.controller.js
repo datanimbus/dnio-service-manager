@@ -253,11 +253,37 @@ e.updateDoc = (_req, _res) => {
 	crudder.update(_req, _res);
 };
 
+e.customShow = async (req, res) => {
+	let _id = req.params.id;
+	let app = req.params.app;
+
+	let data = await crudder.model.findOne({ _id, app }).lean();
+	if (data) {
+		return res.status(200).json(data);
+	} else {
+		return res.status(404).json({ message: 'Library not found'});
+	}
+}
+
+
+e.customDelete = async (req, res) => {
+	let _id =  req.params.id;
+	let app = req.params.app;
+
+	let data = await crudder.model.deleteOne({ _id, app });
+
+	if (data.deletedCount > 0) {
+		return res.status(200).json({ message: "Deleted" });
+	} else {
+		return res.status(404).json({ message: 'Library not found'});
+	}
+}
+
 module.exports = {
 	create: e.createDoc,
 	index: crudder.index,
-	show: crudder.show,
-	destroy: crudder.destroy,
+	show: e.customShow,
+	destroy: e.customDelete,
 	update: e.updateDoc,
 	count: crudder.count
 };
