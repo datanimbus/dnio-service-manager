@@ -598,9 +598,9 @@ function getNextPort() {
 		});
 }
 
-function checkIncomingRelation(serviceId) {
+function checkIncomingRelation(serviceId, app) {
 	return new Promise((resolve, reject) => {
-		crudder.model.findOne({ _id: serviceId, '_metadata.deleted': false })
+		crudder.model.findOne({ _id: serviceId, app: app, '_metadata.deleted': false })
 			.then((_doc) => {
 				if (_doc) {
 					_doc = _doc.toObject();
@@ -1075,10 +1075,6 @@ e.updateDoc = (_req, _res) => {
 	let ID = _req.params.id;
 	logger.info(`[${txnId}] Update service request received for ${ID}`);
 
-	if (!_req.user.isSuperAdmin && !_req.user.allPermissions.find(e => e.app === _req.params.app) && !_req.user.apps.includes(_req.params.app)) {
-		return _res.status(403).json({ "message": "You don't have permissions for this app." });
-	}
-
 	delete _req.body.collectionName;
 	delete _req.body.version;
 	_req.body._id = ID;
@@ -1102,7 +1098,7 @@ e.updateDoc = (_req, _res) => {
 		.then(expandedDef => {
 			if (expandedDef) _req.body.definition = expandedDef;
 		})
-		.then(() => crudder.model.findOne({ _id: ID, '_metadata.deleted': false }))
+		.then(() => crudder.model.findOne({ _id: ID, app: _req.params.app, '_metadata.deleted': false }))
 		.then(_d => {
 			logger.trace(`[${txnId}] Document from DB for ${ID} :: ${JSON.stringify(_d)}`);
 
@@ -1818,78 +1814,78 @@ e.stopAPIHandler = async (_req, _res) => {
 		if (!doc) {
 			throw new Error('No service found with given id');
 		} else {
-			checkIncomingRelation(id)
-			.then(() => {
-				_res.status(202).json({
-					message: `Deployment termination request accepted for service ${id}.`
-				});
-			}, (data) => {
-				let serviceMsg = '';
-				if (data.relatedEntities.length == 1) {
-					serviceMsg = 'Data Service: ' + data.relatedEntities[0];
-				} else if (data.relatedEntities.length == 2) {
-					serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
-				} else {
-					serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
-				}
-	
-				_res.status(400).json({
-					message: 'Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.'
-				});
-				throw new Error('Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.');
-			})
-			.then(() => {
-				if (process.env.SM_ENV == 'K8s') {
-					logger.info(`[${txnId}][${id}] Scaling down k8s deployment to 0.`);
-					return crudder.model.findOne({
+			checkIncomingRelation(id, _req.params.app)
+				.then(() => {
+					_res.status(202).json({
+						message: `Deployment termination request accepted for service ${id}.`
+					});
+				}, (data) => {
+					let serviceMsg = '';
+					if (data.relatedEntities.length == 1) {
+						serviceMsg = 'Data Service: ' + data.relatedEntities[0];
+					} else if (data.relatedEntities.length == 2) {
+						serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ' & ' + data.relatedEntities[1];
+					} else {
+						serviceMsg = 'Data Services: ' + data.relatedEntities[0] + ',' + data.relatedEntities[1] + ' & ' + 'more';
+					}
+
+					_res.status(400).json({
+						message: 'Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.'
+					});
+					throw new Error('Data Service ' + data.name + ' cannot be stopped as it is being used by the following ' + serviceMsg + '. Try again after stopping/delinking from the related Data Services.');
+				})
+				.then(() => {
+					if (process.env.SM_ENV == 'K8s') {
+						logger.info(`[${txnId}][${id}] Scaling down k8s deployment to 0.`);
+						return crudder.model.findOne({
+							_id: id,
+							'type': { '$nin': ['internal'] }
+						})
+							.then(_d => {
+								if (!_d) throw new Error('No service found with given id');
+								const ns = envConfig.dataStackNS + '-' + _d.app.toLowerCase().replace(/ /g, '');
+								return kubeutil.deployment.scaleDeployment(ns, _d.api.split('/')[1].toLowerCase(), 0);
+							})
+							.then(_d => {
+								instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
+								logger.info('Instances at time of undeploying ' + instances);
+								if (instances) {
+									return crudder.model.findOne({
+										_id: id
+									});
+								}
+							})
+							.then(_d => {
+								if (_d && instances) {
+									_d.instances = instances;
+									return _d.save(_req);
+								}
+							})
+							.catch(err => {
+								logger.error(err);
+							});
+					} else logger.info(`[${txnId}][${id}] Can't stop service. Not running on kubernetes.`);
+				})
+				.then(() => {
+					return deployUtil.updateDocument(crudder.model, {
+						_id: id
+					}, {
+						status: 'Undeployed'
+					}, _req);
+				})
+				.then((doc) => {
+					dataStackutils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
+					deployUtil.sendToSocket(socket, 'serviceStatus', {
 						_id: id,
-						'type': { '$nin': ['internal'] }
-					})
-						.then(_d => {
-							if (!_d) throw new Error('No service found with given id');
-							const ns = envConfig.dataStackNS + '-' + _d.app.toLowerCase().replace(/ /g, '');
-							return kubeutil.deployment.scaleDeployment(ns, _d.api.split('/')[1].toLowerCase(), 0);
-						})
-						.then(_d => {
-							instances = _d && _d.status && _d.status.replicas ? _d.status.replicas : null;
-							logger.info('Instances at time of undeploying ' + instances);
-							if (instances) {
-								return crudder.model.findOne({
-									_id: id
-								});
-							}
-						})
-						.then(_d => {
-							if (_d && instances) {
-								_d.instances = instances;
-								return _d.save(_req);
-							}
-						})
-						.catch(err => {
-							logger.error(err);
-						});
-				} else logger.info(`[${txnId}][${id}] Can't stop service. Not running on kubernetes.`);
-			})
-			.then(() => {
-				return deployUtil.updateDocument(crudder.model, {
-					_id: id
-				}, {
-					status: 'Undeployed'
-				}, _req);
-			})
-			.then((doc) => {
-				dataStackutils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
-				deployUtil.sendToSocket(socket, 'serviceStatus', {
-					_id: id,
-					app: doc.app,
-					message: 'Undeployed'
+						app: doc.app,
+						message: 'Undeployed'
+					});
+				})
+				.catch(err => {
+					logger.error(err);
+					if (!_res.headersSent)
+						_res.status(500).send(err.message);
 				});
-			})
-			.catch(err => {
-				logger.error(err);
-				if (!_res.headersSent)
-					_res.status(500).send(err.message);
-			});
 		}
 	} catch (err) {
 		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`)
@@ -1999,15 +1995,12 @@ function dropCollections(collectionName, app, txnId, appName) {
 
 e.destroyService = (_req, _res) => {
 	let id = _req.params.id;
+	let app = _req.params.app;
 	let socket = _req.app.get('socket');
 	let originalDoc = {};
 	let txnId = _req.get('TxnId');
 	logger.info(`[${txnId}] Deleting the service : ${id}`);
 	logger.debug(`[${txnId}] Socket status : ${socket ? 'Active' : 'Inactive'}`);
-
-	if (!_req.user.isSuperAdmin && !_req.user.allPermissions.find(e => e.app === _req.params.app) && !_req.user.apps.includes(_req.params.app)) {
-		return _res.status(403).json({ "message": "You don't have permissions for this app." });
-	}
 
 	// return smhelper.getFlows(id, _req)
 	return Promise.resolve([]).then(_flows => {
@@ -2017,17 +2010,17 @@ e.destroyService = (_req, _res) => {
 			logger.info(`[${txnId}] Data service in use by flows`);
 			throw new Error('Data service in use by flows');
 		} else {
-			return checkIncomingRelation(id);
+			return checkIncomingRelation(id, app);
 		}
 	})
 		.then((doc) => {
 			logger.debug(`[${txnId}] Delete data service ${id} has 0 incoming relationships`);
-			logger.debug(`[${txnId}] Delete data service :: ID :: ${doc._id}`);
-			logger.debug(`[${txnId}] Delete data service :: Type :: ${doc.type}`);
-			logger.debug(`[${txnId}] Delete data service :: Status :: ${doc.status}`);
-			logger.debug(`[${txnId}] Delete data service :: App :: ${doc.app}`);
-			logger.debug(`[${txnId}] Delete data service :: Version :: ${doc.version}`);
-			logger.debug(`[${txnId}] Delete data service :: Perm. del. data :: ${doc.permanentDeleteData}`);
+			logger.debug(`[${txnId}] Delete data service :: ID :: ${doc?._id}`);
+			logger.debug(`[${txnId}] Delete data service :: Type :: ${doc?.type}`);
+			logger.debug(`[${txnId}] Delete data service :: Status :: ${doc?.status}`);
+			logger.debug(`[${txnId}] Delete data service :: App :: ${doc?.app}`);
+			logger.debug(`[${txnId}] Delete data service :: Version :: ${doc?.version}`);
+			logger.debug(`[${txnId}] Delete data service :: Perm. del. data :: ${doc?.permanentDeleteData}`);
 			if (doc && doc.type != 'internal') {
 				originalDoc = JSON.parse(JSON.stringify(doc));
 				crudder.model.findOneAndUpdate({ _id: originalDoc._id }, { status: 'Pending' })
@@ -2110,7 +2103,7 @@ e.destroyService = (_req, _res) => {
 			smHooks.deleteAudit(originalDoc.app + '.' + originalDoc.collectionName, _req);
 		})
 		.catch(err => {
-			logger.error(`[${txnId}] Delete data service : err.message`);
+			logger.error(`[${txnId}] Delete data service : ${err.message}`);
 			if (!_res.headersSent) _res.status(500).send(err.message);
 			if (err.message !== '____CUSTOM_ENTITY_STOP_MSG_____') {
 				deployUtil.updateDocument(crudder.model, { _id: id }, { status: 'Undeployed' }, _req)
@@ -2123,7 +2116,8 @@ e.documentCount = (_req, _res) => {
 	let id = _req.params.id;
 	const ids = _req.query.serviceIds ? _req.query.serviceIds.split(',') : [];
 	const filter = {
-		'_metadata.deleted': false
+		'_metadata.deleted': false,
+		app: _req.params.app
 	};
 	if (id && id !== 'all') {
 		filter._id = id;
@@ -2851,23 +2845,46 @@ function findCollectionData(Id) {
 		});
 }
 
-function customShow(req, res) {
+async function customShow(req, res) {
 	let draft = req.query.draft;
 	let id = req.params.id;
-	if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === req.params.app) && !req.user.apps.includes(req.params.app)) {
-		return res.status(403).json({ "message": "You don't have permissions for this app." });
-	}
-	if (draft) {
-		draftCrudder.model.findOne({ _id: id })
-			.then(_d => {
-				if (_d) draftCrudder.show(req, res);
-				else crudder.show(req, res);
-			})
-			.catch(err => {
+	let app = req.params.app;
+
+	try {
+		let filter = req.query.filter;
+
+		if (filter) {
+			try {
+				filter = JSON.parse(filter);
+			} catch (err) {
 				logger.error(err);
-			});
-	} else {
-		crudder.show(req, res);
+				filter = null;
+			}
+		}
+		if (!filter) {
+			filter = {};
+		}
+		filter.app = app;
+		filter._id = id;
+
+		let data;
+		if (draft) {
+			let draftData = await draftCrudder.model.findOne(filter);
+			if (draftData) {
+				data = await draftCrudder.model.findOne(filter, req.query.select).lean();
+			} else {
+				data = await crudder.model.findOne(filter, req.query.select).lean();
+			}
+		} else {
+			data = await crudder.model.findOne(filter, req.query.select).lean();
+		}
+		if (data) {
+			return res.status(200).json(data);
+		} else {
+			return res.status(404).json({ message: 'Service not found'});
+		}
+	} catch (err) {
+		logger.error(err);
 	}
 }
 
@@ -2911,9 +2928,6 @@ function customIndex(req, res) {
 	const draft = req.query.draft;
 	let filter = req.query.filter;
 
-	if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === app) && !req.user.apps.includes(app)) {
-		return res.status(403).json({ "message": "You don't have permissions for this app." });
-	}
 	if (filter) {
 		try {
 			filter = JSON.parse(filter);
