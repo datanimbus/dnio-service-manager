@@ -19,7 +19,7 @@ pipeline {
         stage('SCM Base Image') {
             steps {
                 dir('ds-base') {
-                  git branch: "$BRANCH_NAME", url: 'https://github.com/appveen/ds-base.git'
+                  git branch: "$BRANCH_NAME", url: 'https://github.com/datanimbus/dnio-base.git'
                 }
             }
         }
