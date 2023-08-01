@@ -233,12 +233,6 @@ function generateYaml(config) {
                 in: 'query',
                 description: 'Time after which the document will get deleted.',
                 schema: { type: 'string' }
-            },
-            {
-                name: 'upsert',
-                in: 'query',
-                description: 'upsert parameter',
-                schema: { type: 'boolean' }
             }],
             responses: {
                 '200': {
