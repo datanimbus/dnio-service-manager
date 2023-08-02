@@ -163,7 +163,7 @@ module.exports = {
 		'API_LOGS_METHODS',
 		'ML_FILE_PARSER'
 	],
-	baseImage: `${dockerReg}data.stack.base:${process.env.IMAGE_TAG}`,
+	baseImage: `${dockerReg}datanimbus.io.base:${process.env.IMAGE_TAG}`,
 	isAcceptableK8sStatusCodes: statusCode => {
 		if (statusCode < 400) return true;
 		if (statusCode == 409) return true; // 409 means the k8s resource already exists.
