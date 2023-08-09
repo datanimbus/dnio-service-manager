@@ -17,7 +17,7 @@
     "author": "Jugnu Agrawal <jugnu@appveen.com>",
     "license": "ISC",
     "dependencies": {
-        "@appveen/data.stack-utils": "^1.0.22",
+        "@appveen/data.stack-utils": "https://github.com/appveen/data.stack-utils",
         "@appveen/ds-auth-cache": "^1.0.8",
         "@appveen/json-utils": "^1.1.0",
         "@appveen/swagger-mongoose-crud": "^2.0.1",
