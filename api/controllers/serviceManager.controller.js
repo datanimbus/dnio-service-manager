@@ -2946,17 +2946,10 @@ async function customIndex(req, res) {
 	}
 	filter.app = app;
 	req.query.filter = JSON.stringify(filter);
-	let data;
 	if (draft)
-		data = await draftCrudder.model.find(filter).select(req.query.select).lean();
+		draftCrudder.index(req, res);
 	else
-		data = await crudder.model.find(filter).select(req.query.select).lean();
-
-	if (data && data[0]) {
-		return res.status(200).json(data);
-	} else {
-		return res.status(404).json({ "message": "No service found." })
-	}
+		crudder.index(req, res);
 }
 
 function draftDelete(req, res) {
