@@ -73,6 +73,12 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 
 		// logger.trace(`[${txnId}] Environment variables to send to DM ${schema._id} :: ${JSON.stringify(deploymentEnvVars)}`);
 
+		let envFrom = [];
+		envFrom.push({
+			type: 'secret',
+			name: _.toLower(schema.app)
+		});
+
 		let namespace = (config.dataStackNS + '-' + schema.app).toLowerCase();
 		// let port = schema.port;
 		let port = 80;
@@ -121,7 +127,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 		logger.trace(`[${txnId}] [${schema._id}] Service creation response: ${JSON.stringify(k8sServiceResponse)}`);
 		if (!config.isAcceptableK8sStatusCodes(k8sServiceResponse.statusCode)) throw new Error(`Service creation failed for service ${schema._id}/${schema.name}`);
 
-		let k8sDeploymentResponse = await kubeutil.deployment.createDeployment(namespace, name, config.baseImage, port, deploymentEnvVars, options, version, volumeMounts);
+		let k8sDeploymentResponse = await kubeutil.deployment.createDeployment(namespace, name, config.baseImage, port, deploymentEnvVars, options, version, volumeMounts, envFrom);
 		logger.trace(`[${txnId}] [${schema._id}] Deployment creation response: ${JSON.stringify(k8sDeploymentResponse)}`);
 		if (!config.isAcceptableK8sStatusCodes(k8sDeploymentResponse.statusCode)) throw new Error(`Deployment creation failed for service ${schema._id}/${schema.name}`);
 
