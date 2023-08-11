@@ -2738,10 +2738,15 @@ function scaleDeploymentsToOriginal(req, socket, ids, srvcId) {
 	return Promise.all(promises);
 }
 
-e.purgeLogsService = function (req, res) {
+e.purgeLogsService = async function (req, res) {
 	let id = req.params.id;
 	let type = req.params.type;
 	let app = req.params.app;
+
+	let doc = await crudder.model.findOne({ _id: id, app: app}).lean();
+	if (!doc) {
+		return res.status(404).json({ message: "Data Service not found."});
+	}
 	deleteLogs(id, app, type)
 		.then(() => {
 			res.status(200).json({});
