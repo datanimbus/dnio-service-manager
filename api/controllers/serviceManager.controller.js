@@ -2871,17 +2871,18 @@ async function customShow(req, res) {
 		}
 		filter.app = app;
 		filter._id = id;
-
+		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
+		
 		let data;
 		if (draft) {
 			let draftData = await draftCrudder.model.findOne(filter);
 			if (draftData) {
-				data = await draftCrudder.model.findOne(filter, req.query.select).lean();
+				data = await draftCrudder.model.findOne(filter, select).lean();
 			} else {
-				data = await crudder.model.findOne(filter, req.query.select).lean();
+				data = await crudder.model.findOne(filter, select).lean();
 			}
 		} else {
-			data = await crudder.model.findOne(filter, req.query.select).lean();
+			data = await crudder.model.findOne(filter, select).lean();
 		}
 		if (data) {
 			return res.status(200).json(data);
