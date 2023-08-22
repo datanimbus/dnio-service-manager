@@ -2236,7 +2236,8 @@ function makePurgeApiCall(url) {
 		url: url,
 		method: 'DELETE',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
+			'Authorization': 'JWT ' + global.SM_TOKEN
 		},
 		json: true
 	};
