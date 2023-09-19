@@ -1,6 +1,6 @@
 {
     "name": "ds-service-manager",
-    "version": "2.7.5",
+    "version": "2.7.6",
     "description": "",
     "main": "app.js",
     "scripts": {
