@@ -90,7 +90,7 @@ var definition = {
 	},
 	'versionValidity': {
 		'type': {
-			'validityValue': Schema.Types.Mixed,
+			'validityValue': 'Number',
 			'validityType': {
 				'type': 'String',
 				'enum': ['count', 'time']
