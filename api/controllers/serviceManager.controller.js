@@ -1370,10 +1370,10 @@ e.deployAPIHandler = (_req, _res) => {
 				}
 				if (_d.status === 'Draft') {
 					let svcObject = _d.toObject();
-					if (envConfig.verifyDeploymentUser && !isSuperAdmin && svcObject && svcObject._metadata && svcObject._metadata.lastUpdatedBy == user) {
-						logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${svcObject.status}`);
-						return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
-					}
+					// if (envConfig.verifyDeploymentUser && !isSuperAdmin && svcObject && svcObject._metadata && svcObject._metadata.lastUpdatedBy == user) {
+					// 	logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${svcObject.status}`);
+					// 	return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
+					// }
 					if (!svcObject.schemaFree && (!svcObject.definition || svcObject.definition.length == 1)) {
 						logger.error(`[${txnId}] Definition not found for service ${ID}`);
 						throw new Error('Data service definition not found.');
@@ -1429,10 +1429,10 @@ e.deployAPIHandler = (_req, _res) => {
 					return draftCrudder.model.findOne({ _id: ID, '_metadata.deleted': false })
 						.then(data => {
 							let newData = JSON.parse(JSON.stringify(data.toObject()));
-							if (envConfig.verifyDeploymentUser && !isSuperAdmin && newData && newData._metadata && newData._metadata.lastUpdatedBy == user) {
-								logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${newData.status}`);
-								return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
-							}
+							// if (envConfig.verifyDeploymentUser && !isSuperAdmin && newData && newData._metadata && newData._metadata.lastUpdatedBy == user) {
+							// 	logger.error(`[${txnId}] User cannot deploy own changes for service ${ID} status ${newData.status}`);
+							// 	return _res.status(403).json({ message: 'You can\'t deploy your own changes.' });
+							// }
 
 							if (newData.webHooks.length || newData.workflowHooks) {
 								logger.trace(`[${txnId}] Webhooks updated for service ${ID}`);
