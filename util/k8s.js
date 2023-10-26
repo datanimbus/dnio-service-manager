@@ -17,11 +17,12 @@ e.deploymentDelete = (_txnId, _schema) => {
 		ns,
 		_schema.api.split('/')[1].toLowerCase())
 		.then(_ => {
-			logger.debug(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: statusCode :: ${_.statusCode}`);
+			let statusCode = _.statusCode || _.response?.status;
+			logger.debug(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: statusCode :: ${statusCode}`);
 			logger.trace(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: response :: ${JSON.stringify(_)}`);
-			if (_.statusCode != 200 && _.statusCode != 202 && _.statusCode != 404) {
-				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + _.statusCode;
-				logger.error(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: errorMsg`);
+			if (statusCode != 200 && statusCode != 202 && statusCode != 404) {
+				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + statusCode;
+				logger.error(`[${_txnId}] Kubernetes delete deployment :: ${_schema._id} :: ${errorMsg}`);
 				return new Error(errorMsg);
 			} return _;
 		})
@@ -60,11 +61,12 @@ e.serviceDelete = (_txnId, _schema) => {
 		ns,
 		_schema.api.split('/')[1].toLowerCase())
 		.then(_ => {
-			logger.debug(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: statusCode :: ${_.statusCode}`);
+			let statusCode = _.statusCode || _.response.status;
+			logger.debug(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: statusCode :: ${statusCode}`);
 			logger.trace(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: response :: ${JSON.stringify(_)}`);
-			if (_.statusCode != 200 && _.statusCode != 202 && _.statusCode != 404) {
-				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + _.statusCode;
-				logger.error(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: errorMsg`);
+			if (statusCode != 200 && statusCode != 202 && statusCode != 404) {
+				let errorMsg = _ && _.body && _.body.message ? _.body.message : 'K8s API returned ' + statusCode;
+				logger.error(`[${_txnId}] Kubernetes delete service :: ${_schema._id} :: ${errorMsg}`);
 				return Error(errorMsg);
 			} return _;
 		})
