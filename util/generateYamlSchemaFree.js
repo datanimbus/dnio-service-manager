@@ -421,25 +421,22 @@ function generateYaml(config) {
         'delete': {
             description: `Deletes a list of '${name}'`,
             operationId: `${methodName.bulkDelete}`,
-            // TODO - requestBody can't be used inside DELETE operation
-            // requestBody: {
-            // 	description: 'Payload to reset a User',
-            // 	content: {
-            // 		'application/json': {
-            // 			schema: {
-            // 				type: 'object',
-            // 				properties: {
-            // 					ids: {
-            // 						type: 'array',
-            // 						items: {
-            // 							type: 'string'
-            // 						}
-            // 					}
-            // 				}
-            // 			}
-            // 		}
-            // 	}
-            // },
+            parameters: [{
+				name: 'ids',
+				in: 'query',
+				description: 'List of document IDs to be deleted',
+				schema: {
+					type: 'object',
+					properties: {
+						ids: {
+							type: 'array',
+							items: {
+								type: 'string'
+							}
+						}
+					}
+				}
+			}],
             responses: {
                 '200': {
                     description: 'Empty Object'
