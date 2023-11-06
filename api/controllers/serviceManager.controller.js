@@ -2,7 +2,7 @@
 
 const net = require('net');
 const mongoose = require('mongoose');
-const request = require('request');
+const request = require('../../util/got-request-wrapper');
 const _ = require('lodash');
 const yamljs = require('json-to-pretty-yaml');
 

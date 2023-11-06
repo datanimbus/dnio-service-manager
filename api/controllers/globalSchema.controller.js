@@ -14,7 +14,7 @@ const schema = MakeSchema(definition, {
 	usePushEach: true
 });
 const envConfig = require('../../config/config');
-const request = require('request');
+const request = require('../../util/got-request-wrapper');
 const smHooks = require('../helpers/serviceManagerHooks.js');
 const logger = global.logger;
 var e = {};
@@ -263,7 +263,7 @@ e.customShow = async (req, res) => {
 	} else {
 		return res.status(404).json({ message: 'Library not found'});
 	}
-}
+};
 
 
 e.customDelete = async (req, res) => {
@@ -273,11 +273,11 @@ e.customDelete = async (req, res) => {
 	let data = await crudder.model.deleteOne({ _id, app });
 
 	if (data.deletedCount > 0) {
-		return res.status(200).json({ message: "Deleted" });
+		return res.status(200).json({ message: 'Deleted' });
 	} else {
 		return res.status(404).json({ message: 'Library not found'});
 	}
-}
+};
 
 module.exports = {
 	create: e.createDoc,

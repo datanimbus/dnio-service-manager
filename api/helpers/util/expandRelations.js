@@ -1,6 +1,6 @@
 
 let logger = global.logger;
-const request = require('request');
+const { request } = require('../../../util/got-request-wrapper');
 const envConfig = require('../../../config/config');
 let e = {};
 
@@ -9,9 +9,9 @@ function informDSHrefChange(srvcObj, body, _req) {
 	let pathSplit = path.split('/');
 	let app = pathSplit[1], api = pathSplit[2];
 	let baseurl = 'http://';
-	if(envConfig.isK8sEnv()){
+	if (envConfig.isK8sEnv()) {
 		baseurl += `${api.toLowerCase()}.${envConfig.dataStackNS}-${app.toLowerCase()}`;
-	}else{
+	} else {
 		baseurl += `localhost:${srvcObj.port}`;
 	}
 	let url = `${baseurl}/${app}/${api}/utils/hrefUpdate`;

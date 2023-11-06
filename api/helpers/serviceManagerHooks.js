@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const _ = require('lodash');
-const request = require('request');
+const request = require('../../util/got-request-wrapper');
 const logger = global.logger;
 const envConfig = require('../../config/config.js');
 var e = {};

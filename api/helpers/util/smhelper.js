@@ -4,7 +4,7 @@ global.Promise = bluebird;
 var log4js = require('log4js');
 var logger = log4js.getLogger();
 let envConfig = require('../../../config/config');
-const request = require('request');
+const { request } = require('../../../util/got-request-wrapper');
 logger.level = 'info';
 
 function schemaValidate(schema) {

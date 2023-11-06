@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const request = require('request');
+const { request } = require('../../util/got-request-wrapper');
 const _ = require('lodash');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 

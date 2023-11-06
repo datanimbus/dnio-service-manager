@@ -1,7 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const request = require('request');
+const request = require('../../util/got-request-wrapper');
 
 const deployUtil = require('../deploy/deploymentUtil');
 const k8s = require('../../util/k8s.js');
