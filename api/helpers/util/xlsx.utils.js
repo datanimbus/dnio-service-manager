@@ -1,6 +1,7 @@
 const path = require('path');
 const { Worker } = require('worker_threads');
 const mongoose = require('mongoose');
+const _ = require('lodash');
 
 async function readFileForDataService(req, fileTransferId) {
 	const importModel = mongoose.model('service-imports');
