@@ -32,7 +32,7 @@ function handleError(err, callback) {
 }
 
 function request(options, callback) {
-	const gotOptions = getGOTOptions(getGOTOptions);
+	const gotOptions = getGOTOptions(options);
 	got(gotOptions).then((res) => {
 		if (res) {
 			callback(null, res, res.body);
@@ -45,7 +45,7 @@ function request(options, callback) {
 }
 
 function get(options, callback) {
-	const gotOptions = getGOTOptions(getGOTOptions);
+	const gotOptions = getGOTOptions(options);
 	gotOptions.method = 'GET';
 	got(gotOptions).then((res) => {
 		if (res) {
@@ -59,7 +59,7 @@ function get(options, callback) {
 }
 
 function put(options, callback) {
-	const gotOptions = getGOTOptions(getGOTOptions);
+	const gotOptions = getGOTOptions(options);
 	gotOptions.method = 'PUT';
 	got(gotOptions).then((res) => {
 		if (res) {
@@ -73,7 +73,7 @@ function put(options, callback) {
 }
 
 function post(options, callback) {
-	const gotOptions = getGOTOptions(getGOTOptions);
+	const gotOptions = getGOTOptions(options);
 	gotOptions.method = 'POST';
 	got(gotOptions).then((res) => {
 		if (res) {
@@ -87,7 +87,7 @@ function post(options, callback) {
 }
 
 function remove(options, callback) {
-	const gotOptions = getGOTOptions(getGOTOptions);
+	const gotOptions = getGOTOptions(options);
 	gotOptions.method = 'DELETE';
 	got(gotOptions).then((res) => {
 		if (res) {
