@@ -427,7 +427,7 @@ schema.pre('save', function (next, req) {
 
 	// One extra character for / in api
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
-	var nameregx = /^[a-zA-Z]+[a-zA-Z0-9_ -]*$/;
+	// var nameregx = /^[a-zA-Z]+[a-zA-Z0-9_ -]*$/;
 
 	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
@@ -450,7 +450,7 @@ draftSchema.pre('save', function (next, req) {
 
 	// One extra character for / in api
 	var apiregx = /^\/[a-zA-Z]+[a-zA-Z0-9]*$/;
-	var nameregx = /^[a-zA-Z]+[a-zA-Z0-9_ -]*$/;
+	// var nameregx = /^[a-zA-Z]+[a-zA-Z0-9_ -]*$/;
 
 	if (this.api.length > 41) {
 		return next(new Error('API endpoint length cannot be greater than 40'));
@@ -649,57 +649,57 @@ function checkIncomingRelation(serviceId, app) {
 	});
 }
 
-function checkOutGoingRelation(serviceId) {
-	return new Promise((resolve, reject) => {
-		crudder.model.findOne({
-			_id: serviceId,
-			'_metadata.deleted': false
-		})
-			.then((_doc) => {
-				if (_doc) {
-					_doc = _doc.toObject();
-					if (_doc.relatedSchemas.outgoing && !_.isEmpty(_doc.relatedSchemas.outgoing)) {
-						let extService = _doc.relatedSchemas.outgoing.map(obj => obj.service);
-						extService = _.uniq(extService);
-						let rejectFlag = false;
-						let relatedEntities = [];
-						crudder.model.find({
-							_id: {
-								$in: extService
-							}
-						}, 'status name')
-							.then(_docStatus => {
-								_docStatus.forEach(docObj => {
-									if (docObj.status == 'Undeployed') {
-										rejectFlag = true;
-										relatedEntities.push(docObj.name);
-										// return;
-									}
-								});
-								var c = extService.length;
-								if (c == 1 && extService[0] == serviceId) {
-									resolve(_doc);
-								} else {
-									if (rejectFlag) {
-										reject({
-											relatedEntities: relatedEntities,
-											name: _doc.name
-										});
-									} else {
-										resolve(_doc);
-									}
-								}
-							});
-					} else {
-						resolve(_doc);
-					}
-				} else {
-					resolve();
-				}
-			})
-			.catch((err) => reject(err));
-	});
-}
+// function checkOutGoingRelation(serviceId) {
+// 	return new Promise((resolve, reject) => {
+// 		crudder.model.findOne({
+// 			_id: serviceId,
+// 			'_metadata.deleted': false
+// 		})
+// 			.then((_doc) => {
+// 				if (_doc) {
+// 					_doc = _doc.toObject();
+// 					if (_doc.relatedSchemas.outgoing && !_.isEmpty(_doc.relatedSchemas.outgoing)) {
+// 						let extService = _doc.relatedSchemas.outgoing.map(obj => obj.service);
+// 						extService = _.uniq(extService);
+// 						let rejectFlag = false;
+// 						let relatedEntities = [];
+// 						crudder.model.find({
+// 							_id: {
+// 								$in: extService
+// 							}
+// 						}, 'status name')
+// 							.then(_docStatus => {
+// 								_docStatus.forEach(docObj => {
+// 									if (docObj.status == 'Undeployed') {
+// 										rejectFlag = true;
+// 										relatedEntities.push(docObj.name);
+// 										// return;
+// 									}
+// 								});
+// 								var c = extService.length;
+// 								if (c == 1 && extService[0] == serviceId) {
+// 									resolve(_doc);
+// 								} else {
+// 									if (rejectFlag) {
+// 										reject({
+// 											relatedEntities: relatedEntities,
+// 											name: _doc.name
+// 										});
+// 									} else {
+// 										resolve(_doc);
+// 									}
+// 								}
+// 							});
+// 					} else {
+// 						resolve(_doc);
+// 					}
+// 				} else {
+// 					resolve();
+// 				}
+// 			})
+// 			.catch((err) => reject(err));
+// 	});
+// }
 
 //remove incoming relation of the entity 
 function removeIncomingRelation(serviceId, req) {
@@ -1231,9 +1231,16 @@ e.updateDoc = (_req, _res) => {
 					_res.status(200).json(srvcObj);
 				})
 				.catch(err => {
-					logger.error(`[${txnId}] :: Error in validateAppAndGetAppData :: update doc :: `, err);
-					if (!_res.headersSent) _res.status(400).json({ message: err.message });
+					let message = 'Error in update doc';
 					logger.error(err);
+					logger.error(`[${txnId}] :: Error in validateAppAndGetAppData :: update doc :: `, err);
+					if (err && err.message) {
+						message = err.message;
+					}
+					if (!_res.headersSent) {
+						_res.status(400).json({ message });
+					}
+
 				});
 		})
 		.catch(err => {
@@ -1339,9 +1346,9 @@ e.deployAPIHandler = (_req, _res) => {
 	let app = _req.params.app;
 	logger.info(`[${txnId}] Service deploy request received for service ${ID}`);
 
-	let user = _req.get('User');
 	let socket = _req.app.get('socket');
-	let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')) : false;
+	// let user = _req.get('User');
+	// let isSuperAdmin = _req.get('isSuperAdmin') ? JSON.parse(_req.get('isSuperAdmin')) : false;
 	let isReDeploymentRequired = false;
 	let preHookUpdated = false;
 	let isWebHookUpdateRequired = false;
@@ -1797,7 +1804,7 @@ async function startService(req, res, id, list) {
 			throw new Error('No service found with given id');
 		}
 	} catch (err) {
-		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`)
+		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`);
 		if (!res.headersSent) res.status(500).json({ message: err.message });
 	}
 }
@@ -1888,7 +1895,7 @@ e.stopAPIHandler = async (_req, _res) => {
 				});
 		}
 	} catch (err) {
-		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`)
+		logger.error(`[${txnId}] Data service start error ${id} :: ${err.message}`);
 		if (!_res.headersSent) _res.status(500).json({ message: err.message });
 	}
 };
@@ -2744,9 +2751,9 @@ e.purgeLogsService = async function (req, res) {
 	let type = req.params.type;
 	let app = req.params.app;
 
-	let doc = await crudder.model.findOne({ _id: id, app: app}).lean();
+	let doc = await crudder.model.findOne({ _id: id, app: app }).lean();
 	if (!doc) {
-		return res.status(404).json({ message: "Data Service not found."});
+		return res.status(404).json({ message: 'Data Service not found.' });
 	}
 	deleteLogs(id, app, type)
 		.then(() => {
@@ -2873,7 +2880,7 @@ async function customShow(req, res) {
 		filter.app = app;
 		filter._id = id;
 		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
-		
+
 		let data;
 		if (draft) {
 			let draftData = await draftCrudder.model.findOne(filter);
@@ -2888,7 +2895,7 @@ async function customShow(req, res) {
 		if (data) {
 			return res.status(200).json(data);
 		} else {
-			return res.status(404).json({ message: 'Service not found'});
+			return res.status(404).json({ message: 'Service not found' });
 		}
 	} catch (err) {
 		logger.error(err);
@@ -3020,7 +3027,7 @@ function validateUserDeletion(req, res) {
 					if (flag) {
 						return res.status(500).json({ message: 'Document is in use' });
 					}
-					res.status(200).json({})
+					res.status(200).json({});
 				});
 		});
 }
@@ -3479,7 +3486,7 @@ async function getYamls(req, res) {
 
 async function getEnvVars(req, res) {
 	try {
-		let envVars = {}
+		let envVars = {};
 		envConfig.envkeysForDataService.forEach(key => {
 			envVars[key] = process.env[key];
 		});

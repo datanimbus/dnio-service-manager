@@ -1,8 +1,6 @@
 'use strict';
-const envConfig = require('../../config/config');
-const logger = global.logger;
 
-const authorDBName = envConfig.mongoOptions.dbName;
+const logger = global.logger;
 
 var e = {};
 

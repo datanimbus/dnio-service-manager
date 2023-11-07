@@ -154,7 +154,7 @@ function getCreateDefinition(defArr) {
 			if (attribute.properties.schemaFree) {
 				definition['properties'][el] = {
 					type: 'object'
-				}
+				};
 			} else {
 				definition['properties'][el] = getCreateDefinition(attribute.definition);
 			}
@@ -266,7 +266,7 @@ function getMethodNames(config) {
 	obj.securedFields = `v1_${name}SecuredFields`;
 	obj.bulkDelete = `v1_${name}BulkDelete`;
 	obj.bulkUpdate = `v1_${name}BulkUpdate`;
-    obj.bulkUpsert = `v1_${name}BulkUpsert`;
+	obj.bulkUpsert = `v1_${name}BulkUpsert`;
 	obj.fileUpload = `v1_${name}FileUpload`;
 	obj.fileView = `v1_${name}FileView`;
 	obj.fileDownload = `v1_${name}FileDownload`;
@@ -305,7 +305,7 @@ function generateYaml(config) {
 		paths: {},
 		components: {}
 	};
-	let schemas = {}
+	let schemas = {};
 	let securitySchemes = {};
 	var name = _.camelCase(config.name);
 	schemas[`${name}_create`] = createDefinition;
@@ -345,9 +345,9 @@ function generateYaml(config) {
 		'type': 'http',
 		'scheme': 'bearer',
 		'bearerFormat': 'JWT'
-	}
+	};
 
-	swagger.components.securitySchemes = securitySchemes
+	swagger.components.securitySchemes = securitySchemes;
 	swagger.components.schemas = schemas;
 
 	let expandOption = {
@@ -393,7 +393,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		},
@@ -436,7 +436,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -472,7 +472,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		},
@@ -530,7 +530,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		},
@@ -560,7 +560,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -606,7 +606,7 @@ function generateYaml(config) {
 				},
 				security: [
 					{
-						"bearerAuth": []
+						'bearerAuth': []
 					}
 				]
 			}
@@ -645,7 +645,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -685,7 +685,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -710,131 +710,129 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
 	};
 
-    swagger.paths['/utils/bulkUpdate'] = {
-        'x-swagger-router-controller': `${methodName.controller}`,
-        'put': {
-            description: `Bulk update an existing list of '${name}' documents.`,
-            operationId: `${methodName.bulkUpdate}`,
-            parameters: [
-                {
-                    name: 'ids',
-                    in: 'query',
-                    description: 'Array of document IDs to be updated.',
-                    schema: { 
-                        type: 'object', 
-                        properties: 
-                        { 
-                            ids: 
-                            { 
-                                type: 'array', 
-                                items: { type: 'string' } 
-                            } 
-                        } 
-                    }
-                }
-            ],
-            requestBody: {
-                description: `Payload to update '${name}' documents.`,
-                content: {
-                    'application/json': {
-                        schema: {
-                            type: 'object'
-                        }
-                    }
-                }
-            },
-            responses: {
-                '200': {
-                    description: 'Success. Returns a list of updated entities.'
-                },
-                '400': {
-                    description: 'Bad request. The request parameters are invalid or incomplete.'
-                },
-                '403': {
-                    description: 'Forbidden. You do not have permission to update records.'
-                },
-                '500': {
-                    description: 'Internal server error. An unexpected error occurred during processing.'
-                }
-            },
-            security: [
-                {
-                    "bearerAuth": []
-                }
-            ]
-        }
-    };
-    
-    swagger.paths['/utils/bulkUpsert'] = {
-        'x-swagger-router-controller': `${methodName.controller}`,
-        'post': {
-            description: `Bulk upsert a list of '${name}' documents.`,
-            operationId: `${methodName.bulkUpsert}`,
-            parameters: [
-                {
-                    name: 'update',
-                    in: 'query',
-                    description: 'Flag indicating whether to update existing documents (true or false).',
-                    schema: { type: 'boolean' }
-                },
-                {
-                    name: 'insert',
-                    in: 'query',
-                    description: 'Flag indicating whether to insert new documents (true or false).',
-                    schema: { type: 'boolean' }
-                }
-            ],
-            requestBody: {
-                description: `Payload to update/insert '${name}' documents.`,
-                content: {
-                    'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                keys: {
-                                    type: 'array',
-                                    items: { type: 'string' },
-                                    description: 'Array of document keys to identify the documents to update/insert.'
-                                },
-                                docs: {
-                                    type: 'array',
-                                    items: { type: 'object' },
-                                    description: 'Array of documents to be updated/inserted.'
-                                }
-                            },
-                            required: ['keys', 'docs']
-                        }
-                    }
-                }
-            },
-            responses: {
-                '200': {
-                    description: 'Success. Returns a list of updated or inserted entities.'
-                },
-                '400': {
-                    description: 'Bad request. The request parameters are invalid or incomplete.'
-                },
-                '403': {
-                    description: 'Forbidden. The user does not have permission for this operation.'
-                },
-                '500': {
-                    description: 'Internal server error. An unexpected error occurred during processing.'
-                }
-            },
-            security: [
-                {
-                    "bearerAuth": []
-                }
-            ]
-        }
-    };
-    
+	swagger.paths['/utils/bulkUpdate'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'put': {
+			description: `Bulk update an existing list of '${name}' documents.`,
+			operationId: `${methodName.bulkUpdate}`,
+			parameters: [
+				{
+					name: 'ids',
+					in: 'query',
+					description: 'Array of document IDs to be updated.',
+					schema: {
+						type: 'object',
+						properties: {
+							ids: {
+								type: 'array',
+								items: { type: 'string' }
+							}
+						}
+					}
+				}
+			],
+			requestBody: {
+				description: `Payload to update '${name}' documents.`,
+				content: {
+					'application/json': {
+						schema: {
+							type: 'object'
+						}
+					}
+				}
+			},
+			responses: {
+				'200': {
+					description: 'Success. Returns a list of updated entities.'
+				},
+				'400': {
+					description: 'Bad request. The request parameters are invalid or incomplete.'
+				},
+				'403': {
+					description: 'Forbidden. You do not have permission to update records.'
+				},
+				'500': {
+					description: 'Internal server error. An unexpected error occurred during processing.'
+				}
+			},
+			security: [
+				{
+					'bearerAuth': []
+				}
+			]
+		}
+	};
+
+	swagger.paths['/utils/bulkUpsert'] = {
+		'x-swagger-router-controller': `${methodName.controller}`,
+		'post': {
+			description: `Bulk upsert a list of '${name}' documents.`,
+			operationId: `${methodName.bulkUpsert}`,
+			parameters: [
+				{
+					name: 'update',
+					in: 'query',
+					description: 'Flag indicating whether to update existing documents (true or false).',
+					schema: { type: 'boolean' }
+				},
+				{
+					name: 'insert',
+					in: 'query',
+					description: 'Flag indicating whether to insert new documents (true or false).',
+					schema: { type: 'boolean' }
+				}
+			],
+			requestBody: {
+				description: `Payload to update/insert '${name}' documents.`,
+				content: {
+					'application/json': {
+						schema: {
+							type: 'object',
+							properties: {
+								keys: {
+									type: 'array',
+									items: { type: 'string' },
+									description: 'Array of document keys to identify the documents to update/insert.'
+								},
+								docs: {
+									type: 'array',
+									items: { type: 'object' },
+									description: 'Array of documents to be updated/inserted.'
+								}
+							},
+							required: ['keys', 'docs']
+						}
+					}
+				}
+			},
+			responses: {
+				'200': {
+					description: 'Success. Returns a list of updated or inserted entities.'
+				},
+				'400': {
+					description: 'Bad request. The request parameters are invalid or incomplete.'
+				},
+				'403': {
+					description: 'Forbidden. The user does not have permission for this operation.'
+				},
+				'500': {
+					description: 'Internal server error. An unexpected error occurred during processing.'
+				}
+			},
+			security: [
+				{
+					'bearerAuth': []
+				}
+			]
+		}
+	};
+
 	swagger.paths['/utils/count'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
 		'get': {
@@ -854,7 +852,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1034,7 +1032,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1065,7 +1063,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1090,7 +1088,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1121,7 +1119,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1146,7 +1144,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1192,7 +1190,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}
@@ -1313,7 +1311,7 @@ function generateYaml(config) {
 			},
 			security: [
 				{
-					"bearerAuth": []
+					'bearerAuth': []
 				}
 			]
 		}

@@ -1,7 +1,7 @@
 const path = require('path');
 const { Worker } = require('worker_threads');
 const mongoose = require('mongoose');
-const _ = require('lodash');
+// const _ = require('lodash');
 
 async function readFileForDataService(req, fileTransferId) {
 	const importModel = mongoose.model('service-imports');
@@ -37,31 +37,31 @@ async function readFileForDataService(req, fileTransferId) {
 }
 
 
-function convertToDefinition(json, parentKey) {
-	const definitions = [];
-	if (json) {
-		Object.keys(json).forEach(key => {
-			let temp = {};
-			const tempKey = _.camelCase(key);
-			temp.key = tempKey;
-			temp.properties = {
-				name: _.startCase(key),
-				dataPath: parentKey ? parentKey + '.' + tempKey : tempKey
-			};
-			if (json[key]) {
-				temp.type = _.capitalize(typeof json[key]);
-			} else {
-				temp.type = 'String';
-			}
-			if (json[key] && typeof json[key] == 'object') {
-				temp.type = _.capitalize(typeof json[key]);
-				temp.definition = convertToDefinition(json[key], tempKey);
-			}
-			definitions.push(temp);
-		});
-	}
-	return definitions;
-}
+// function convertToDefinition(json, parentKey) {
+// 	const definitions = [];
+// 	if (json) {
+// 		Object.keys(json).forEach(key => {
+// 			let temp = {};
+// 			const tempKey = _.camelCase(key);
+// 			temp.key = tempKey;
+// 			temp.properties = {
+// 				name: _.startCase(key),
+// 				dataPath: parentKey ? parentKey + '.' + tempKey : tempKey
+// 			};
+// 			if (json[key]) {
+// 				temp.type = _.capitalize(typeof json[key]);
+// 			} else {
+// 				temp.type = 'String';
+// 			}
+// 			if (json[key] && typeof json[key] == 'object') {
+// 				temp.type = _.capitalize(typeof json[key]);
+// 				temp.definition = convertToDefinition(json[key], tempKey);
+// 			}
+// 			definitions.push(temp);
+// 		});
+// 	}
+// 	return definitions;
+// }
 
 
 module.exports.readFileForDataService = readFileForDataService;

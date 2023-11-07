@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 let envConfig = require('../../config/config');
 var definition = {
 	'_id': {
