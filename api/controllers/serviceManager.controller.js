@@ -225,7 +225,7 @@ schema.pre('save', function (next, req) {
 	logger.debug(`[${txnId}] Service Pre :: Adding metadata details`);
 
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = envConfig.RELEASE;
 	}
 	let user = req.headers ? req.headers.user : 'AUTO';
 	self._metadata.lastUpdatedBy = user;
@@ -814,7 +814,7 @@ e.verifyHook = (_req, _res) => {
 			_res.status(400).end();
 		}
 	});
-	let timeout = (process.env.HOOK_CONNECTION_TIMEOUT && parseInt(process.env.HOOK_CONNECTION_TIMEOUT)) || 30;
+	let timeout = (envConfig.HOOK_CONNECTION_TIMEOUT && parseInt(envConfig.HOOK_CONNECTION_TIMEOUT)) || 30;
 	setTimeout(function () {
 		client.destroy();
 	}, timeout * 1000);

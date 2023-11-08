@@ -54,8 +54,8 @@ function redeploy(services, successIds, i) {
 
 async function init() {
 	let successIds = [];
-	if (process.env.RELEASE && envConfig.isK8sEnv()) {
-		return mongoose.model('services').find({ '_metadata.version.release': { '$ne': process.env.RELEASE } })
+	if (envConfig.RELEASE && envConfig.isK8sEnv()) {
+		return mongoose.model('services').find({ '_metadata.version.release': { '$ne': envConfig.RELEASE } })
 			.then(_services => {
 				logger.info('Rebuilding code for ' + _services.map(_d => _d._id));
 				var arrays = [],

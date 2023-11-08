@@ -1,7 +1,7 @@
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 const logger = global.logger;
 const envConfig = require('../config/config');
-let release = process.env.RELEASE;
+let release = envConfig.RELEASE;
 let dockerReg = process.env.DOCKER_REGISTRY_SERVER ? process.env.DOCKER_REGISTRY_SERVER : '';
 if (dockerReg.length > 0 && !dockerReg.endsWith('/')) dockerReg += '/';
 logger.info('Docker registry configured:: ' + dockerReg);

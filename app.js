@@ -15,11 +15,12 @@ const socket = require('socket.io');
 const { MongoClient } = require('mongodb');
 const upload = require('express-fileupload');
 const JWT = require('jsonwebtoken');
-let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
+let timeOut;
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
 global.Promise = bluebird;
 global.logger = logger;
 const envConfig = require('./config/config.js');
+const { fetchEnvironmentVariablesFromDB } = require('./config/config');
 let mongoAppcenterUrl = envConfig.mongoAppcenterUrl;
 
 const token = JWT.sign({ name: 'SM_TOKEN', _id: 'admin', isSuperAdmin: true }, envConfig.RBAC_JWT_KEY);
@@ -94,6 +95,10 @@ let authorDBName = envConfig.mongoOptions.dbName;
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
 		require('./util/init/fixDataService')();
+
+		// After MongoDB is connected, fetch environment variables
+		const envVariables = await fetchEnvironmentVariablesFromDB();
+		timeOut = envVariables.API_REQUEST_TIMEOUT || 120;
 	} catch (err) {
 		logger.error(err);
 	}
