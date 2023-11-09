@@ -1,10 +1,10 @@
 
 let startActiveEntity = require('./startActiveEntity');
 // let request = require('request');
-// let envConfig = require('../../config/config');
+let envConfig = require('../../config/config');
 const mongoose = require('mongoose');
 let logger = global.logger;
-let release = process.env.RELEASE;
+let release = envConfig.RELEASE;
 
 // function checkDependency() {
 // 	var options = {
@@ -74,7 +74,7 @@ function fixServiceinNewRelease(successIds) {
 			return Promise.all(promises)
 				.then(() => {
 					logger.info('Total number of services updated ' + count);
-					return mongoose.model('services').updateMany({ _id: { '$in': successIds } }, { '_metadata.version.release': process.env.RELEASE });
+					return mongoose.model('services').updateMany({ _id: { '$in': successIds } }, { '_metadata.version.release': envConfig.RELEASE });
 				});
 		});
 }

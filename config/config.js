@@ -3,6 +3,7 @@ const dataStackutils = require('@appveen/data.stack-utils');
 let debugDB = false;
 if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
 
+let envVariables = {};
 let logger = global.logger;
 
 const dataStackNS = process.env.DATA_STACK_NAMESPACE;
@@ -74,6 +75,17 @@ function isCosmosDB() {
 let allowedExtArr = ['ppt', 'xls', 'csv', 'doc', 'jpg', 'png', 'apng', 'gif', 'webp', 'flif', 'cr2', 'orf', 'arw', 'dng', 'nef', 'rw2', 'raf', 'tif', 'bmp', 'jxr', 'psd', 'zip', 'tar', 'rar', 'gz', 'bz2', '7z', 'dmg', 'mp4', 'mid', 'mkv', 'webm', 'mov', 'avi', 'mpg', 'mp2', 'mp3', 'm4a', 'oga', 'ogg', 'ogv', 'opus', 'flac', 'wav', 'spx', 'amr', 'pdf', 'epub', 'exe', 'swf', 'rtf', 'wasm', 'woff', 'woff2', 'eot', 'ttf', 'otf', 'ico', 'flv', 'ps', 'xz', 'sqlite', 'nes', 'crx', 'xpi', 'cab', 'deb', 'ar', 'rpm', 'Z', 'lz', 'msi', 'mxf', 'mts', 'blend', 'bpg', 'docx', 'pptx', 'xlsx', '3gp', '3g2', 'jp2', 'jpm', 'jpx', 'mj2', 'aif', 'qcp', 'odt', 'ods', 'odp', 'xml', 'mobi', 'heic', 'cur', 'ktx', 'ape', 'wv', 'wmv', 'wma', 'dcm', 'ics', 'glb', 'pcap', 'dsf', 'lnk', 'alias', 'voc', 'ac3', 'm4v', 'm4p', 'm4b', 'f4v', 'f4p', 'f4b', 'f4a', 'mie', 'asf', 'ogm', 'ogx', 'mpc'];
 let allowedExt = process.env.ALLOWED_FILE_TYPES ? process.env.ALLOWED_FILE_TYPES.split(',') : allowedExtArr;
 
+async function fetchEnvironmentVariablesFromDB() {
+    try {
+        envVariables = await dataStackutils.database.fetchEnvVariables();
+		return envVariables;
+    } catch (error) {
+        logger.error(error);
+        logger.error('Fetching environment variables failed. Crashing the component.');
+        process.exit(1);
+    }
+}
+
 module.exports = {
 	baseUrlSM: get('sm') + '/sm',
 	baseUrlNE: get('ne') + '/ne',
@@ -92,8 +104,8 @@ module.exports = {
 	isCosmosDB: isCosmosDB,
 	logQueueName: 'systemService',
 	dataStackNS: dataStackNS,
-	defaultTimezone: process.env.TZ_DEFAULT || 'Zulu',
-	fsMount: process.env.DS_FS_MOUNT_PATH || '/tmp/ds',
+	defaultTimezone: envVariables.TZ_DEFAULT || 'Zulu',
+	fsMount: envVariables.DS_FS_MOUNT_PATH || '/tmp/ds',
 	streamingConfig: {
 		url: process.env.STREAMING_HOST || 'nats://127.0.0.1:4222',
 		user: process.env.STREAMING_USER || '',
@@ -121,11 +133,11 @@ module.exports = {
 		// retryMiliSeconds: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true
 	},
-	enableSearchIndex: (process.env.DS_FUZZY_SEARCH && process.env.DS_FUZZY_SEARCH.toLowerCase() === 'true') || false,
+	enableSearchIndex: (envVariables.DS_FUZZY_SEARCH && envVariables.DS_FUZZY_SEARCH.toLowerCase() === 'true') || false,
 	allowedExt,
-	maxHeapSize: process.env.NODE_MAX_HEAP_SIZE || '4096',
+	maxHeapSize: envVariables.NODE_MAX_HEAP_SIZE || '4096',
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60,
-	RBAC_JWT_KEY: process.env.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
+	RBAC_JWT_KEY: envVariables.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
 	envkeysForDataService: [
 		'FQDN',
 		'GOOGLE_API_KEY',
@@ -166,5 +178,8 @@ module.exports = {
 		if (statusCode < 400) return true;
 		if (statusCode == 409) return true; // 409 means the k8s resource already exists.
 		return false;
-	}
+	},
+	fetchEnvironmentVariablesFromDB: fetchEnvironmentVariablesFromDB,
+	HOOK_CONNECTION_TIMEOUT: envVariables.HOOK_CONNECTION_TIMEOUT,
+	RELEASE: envVariables.RELEASE
 };

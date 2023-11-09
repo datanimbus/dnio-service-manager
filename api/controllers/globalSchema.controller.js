@@ -114,10 +114,10 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = envConfig.RELEASE;
 	}
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = envConfig.RELEASE;
 	}
 	next();
 });
