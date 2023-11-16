@@ -10,8 +10,10 @@ RUN set -ex; apk add --no-cache --virtual .fetch-deps curl tar git ;
 COPY package.json /app
 
 RUN npm install -g npm
-RUN npm install --production --no-audit
-# RUN npm audit fix --production
+# RUN npm install --production --no-audit
+RUN npm i --production
+RUN npm audit fix --production
+
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
 
 COPY api /app/api
