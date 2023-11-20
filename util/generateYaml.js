@@ -659,17 +659,9 @@ function generateYaml(config) {
 			parameters: [{
 				name: 'ids',
 				in: 'query',
-				description: 'List of document IDs to be deleted',
+				description: 'Comma-separated list of document IDs to be deleted',
 				schema: {
-					type: 'object',
-					properties: {
-						ids: {
-							type: 'array',
-							items: {
-								type: 'string'
-							}
-						}
-					}
+					type: 'string',  
 				}
 			}],
 			responses: {
