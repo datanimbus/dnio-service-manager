@@ -41,17 +41,6 @@ pipeline {
                 sh "./scripts/push_ecr.sh"
             }
         }
-        stage('Save to S3') {
-            when {
-                expression {
-                    params.pushToS3  == true || params.dockerHub  == true
-                }
-            }
-            steps {
-                sh "chmod 777 ./scripts/push_s3.sh"
-                sh "./scripts/push_s3.sh"
-            }
-        }
         stage('Deploy') {
             when {
                 expression {
@@ -72,6 +61,17 @@ pipeline {
             steps {
                 sh "chmod 777 ./scripts/push_hub.sh"
                 sh "./scripts/push_hub.sh"
+            }
+        }
+        stage('Save to S3') {
+            when {
+                expression {
+                    params.pushToS3  == true || params.dockerHub  == true
+                }
+            }
+            steps {
+                sh "chmod 777 ./scripts/push_s3.sh"
+                sh "./scripts/push_s3.sh"
             }
         }
         stage('Clean Up') {
