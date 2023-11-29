@@ -1,4 +1,8 @@
 node_modules
+build
+test
+scripts
+ds-base
 .vscode
 .idea
 .eslintrc.yml
@@ -9,12 +13,8 @@ Dockerfile
 sm.yaml
 VERSION
 README.md
-scripts
-ds-base
 LAST_PULL
 LAST_PULL_SM
 LATEST_SM
 CURRENT_SM
-build
-test
 .git
