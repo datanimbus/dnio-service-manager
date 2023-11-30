@@ -81,7 +81,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 
 		let namespace = (config.dataStackNS + '-' + schema.app).toLowerCase();
 		// let port = schema.port;
-		let port = 80;
+		let port = 8000;
 		let name = (schema.api).substring(1).toLowerCase();
 		let version = schema.version;
 		let volumeMounts = {
@@ -97,7 +97,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 				httpGet: {
 					path: '/api/internal/health/live',
 					// port: schema.port,
-					port: 80,
+					port: 8000,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
@@ -107,7 +107,7 @@ e.deployService = async (schema, socket, req, _isDeleteAndCreate) => {
 				httpGet: {
 					path: '/api/internal/health/ready',
 					// port: schema.port,
-					port: 80,
+					port: 8000,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
