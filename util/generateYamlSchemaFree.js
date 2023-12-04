@@ -766,10 +766,18 @@ function generateYaml(config) {
 
 	swagger.paths['/utils/file/upload'] = {
 		'x-swagger-router-controller': `${methodName.controller}`,
+		consumes: ['multipart/form-data'],
 		'post': {
 			description: 'Uploads the file',
 			operationId: `${methodName.fileUpload}`,
 			parameters: [
+				{
+					name: 'file',
+					in: 'formData',
+					required: true,
+					type: 'file',  
+					description: 'The file to upload',
+				},
 				{
 					name: 'encryptionKey',
 					in: 'query',

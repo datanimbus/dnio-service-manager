@@ -1002,7 +1002,15 @@ function generateYaml(config) {
 		'post': {
 			description: 'Uploads the file',
 			operationId: `${methodName.fileUpload}`,
+			consumes: ['multipart/form-data'],
 			parameters: [
+				{
+					name: 'file',
+					in: 'formData',
+					required: true,
+					type: 'file',  
+					description: 'The file to upload',
+				},
 				{
 					name: 'encryptionKey',
 					in: 'query',
