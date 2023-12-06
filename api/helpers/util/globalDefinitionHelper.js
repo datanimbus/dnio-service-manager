@@ -70,15 +70,20 @@ function substituteGlobalDefinition(schema, globalSchema) {
 					sysDef.key = attribute.key;
 					let properties = attribute['properties'];
 					let newDef = JSON.parse(JSON.stringify(sysDef));
-					if (attribute['properties']['unique']) {
-						newDef.definition.forEach(element => {
-							if(element.key == 'checksum') element.properties.unique = true;
-						});
-					}
+					newDef.definition.forEach(element => {
+						if (!element.properties) {
+							element.properties = {};
+						}
+						if (attribute['properties']['unique'] && element.key == 'checksum') {
+							element.properties.unique = true;
+						}
+						element.properties.dataPath = properties.dataPath + '.' + element.key;
+						element.properties.dataPathSegs = [].concat(properties.dataPathSegs, element.key);
+					});
 					attribute = newDef;
 					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
-			} 
+			}
 			// else if (attribute['type'] == 'Date' && attribute['properties']['_typeChanged'] == 'Date') {
 			// 	let sysDef = getSystemGlobalDefinition('Date', systemGlobalSchema);
 			// 	if (sysDef) {
@@ -109,7 +114,7 @@ function substituteSystemGlobalDefinition(schema) {
 					if (properties) attribute['properties'] = JSON.parse(JSON.stringify(properties));
 				}
 			}
-			if (attribute['definition'] && !(attribute['properties'] && attribute['properties']['dateType'])) 
+			if (attribute['definition'] && !(attribute['properties'] && attribute['properties']['dateType']))
 				attribute['definition'] = substituteSystemGlobalDefinition(attribute['definition'], systemGlobalSchema);
 		}
 		return attribute;
