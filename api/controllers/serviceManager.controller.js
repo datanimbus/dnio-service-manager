@@ -3358,7 +3358,7 @@ async function getYamls(req, res) {
 
 		const namespace = (envConfig.dataStackNS + '-' + doc.app).toLowerCase();
 		// const port = doc.port;
-		const port = 80;
+		const port = 8000;
 		const name = (doc.api).substring(1).toLowerCase();
 		const envVars = [
 			{ name: 'DATA_STACK_NAMESPACE', value: process.env.DATA_STACK_NAMESPACE },
@@ -3378,7 +3378,7 @@ async function getYamls(req, res) {
 				httpGet: {
 					path: '/api/internal/health/live',
 					// port: doc.port,
-					port: 80,
+					port: port,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
@@ -3388,7 +3388,7 @@ async function getYamls(req, res) {
 				httpGet: {
 					path: '/api/internal/health/ready',
 					// port: doc.port,
-					port: 80,
+					port: port,
 					scheme: 'HTTP'
 				},
 				initialDelaySeconds: 5,
