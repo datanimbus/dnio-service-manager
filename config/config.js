@@ -76,14 +76,14 @@ let allowedExtArr = ['ppt', 'xls', 'csv', 'doc', 'jpg', 'png', 'apng', 'gif', 'w
 let allowedExt = process.env.ALLOWED_FILE_TYPES ? process.env.ALLOWED_FILE_TYPES.split(',') : allowedExtArr;
 
 async function fetchEnvironmentVariablesFromDB() {
-    try {
-        envVariables = await dataStackutils.database.fetchEnvVariables();
+	try {
+		envVariables = await dataStackutils.database.fetchEnvVariables();
 		return envVariables;
-    } catch (error) {
-        logger.error(error);
-        logger.error('Fetching environment variables failed. Crashing the component.');
-        process.exit(1);
-    }
+	} catch (error) {
+		logger.error(error);
+		logger.error('Fetching environment variables failed. Crashing the component.');
+		process.exit(1);
+	}
 }
 
 module.exports = {
@@ -171,7 +171,8 @@ module.exports = {
 		'TZ_DEFAULT',
 		'MAX_JSON_SIZE',
 		'API_LOGS_METHODS',
-		'ML_FILE_PARSER'
+		'ML_FILE_PARSER',
+		'ODP_RULES'
 	],
 	baseImage: `${dockerReg}datanimbus.io.base:${process.env.IMAGE_TAG}`,
 	isAcceptableK8sStatusCodes: statusCode => {
