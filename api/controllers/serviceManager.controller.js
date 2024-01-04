@@ -1,6 +1,8 @@
 'use strict';
 
 const net = require('net');
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
 const request = require('../../util/got-request-wrapper');
 const _ = require('lodash');
@@ -3487,6 +3489,9 @@ async function getEnvVars(req, res) {
 		envVars['NODE_OPTIONS'] = `--max-old-space-size=${envConfig.maxHeapSize}`;
 		envVars['NODE_ENV'] = 'production';
 
+		if (envVars['DNIO_DATABASE_TYPE'] != 'mongodb') {
+			envVars['DNIO_DATABASE_CERT'] = fs.readFileSync(path.join(process.cwd(), envVars['DNIO_DATABASE_CERT_NAME']), 'utf-8');
+		}
 		res.status(200).json(envVars);
 
 	} catch (err) {

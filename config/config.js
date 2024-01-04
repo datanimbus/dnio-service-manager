@@ -139,6 +139,8 @@ module.exports = {
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60,
 	RBAC_JWT_KEY: envVariables.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
 	envkeysForDataService: [
+		'DNIO_DATABASE_TYPE',	//mongodb | cosmosdb | documentdb
+		'DNIO_DATABASE_CERT_NAME',
 		'FQDN',
 		'GOOGLE_API_KEY',
 		'HOOK_CONNECTION_TIMEOUT',
