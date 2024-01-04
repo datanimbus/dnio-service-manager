@@ -155,7 +155,7 @@ router.use((req, res, next) => {
 			return next(new Error('App value needed for this API'));
 		}
 
-		if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === req.locals.app) && !req.user.apps.includes(req.locals.app)) {
+		if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === req.locals.app) && !req.user?.apps?.includes(req.locals.app)) {
 			res.status(403).json({ 'message': 'You don\'t have permissions for this app.' });
 			return next(new Error('You don\'t have permissions for this app.'));
 		}
