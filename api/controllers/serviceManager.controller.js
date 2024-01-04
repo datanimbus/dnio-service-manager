@@ -2592,12 +2592,6 @@ function updateDeployment(req, res, ds) {
 		.then(_d => {
 			logger.info('Service deleted');
 			logger.trace(_d);
-			// srvcDoc.definition = JSON.parse(srvcDoc.definition);
-			return k8s.serviceStart(srvcDoc);
-		})
-		.then(_d => {
-			logger.info('Service started');
-			logger.trace(_d);
 			return deployUtil.deployService(srvcDoc, socket, req, false);
 		})
 		.catch(err => {
