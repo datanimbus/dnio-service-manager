@@ -31,6 +31,11 @@ function mongoUrl() {
 	return mongoUrl;
 }
 
+function dbUrl() {
+	let dbUrl = process.env.DB_AUTHOR_URL || process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
+	return dbUrl;
+}
+
 function isK8sEnv() {
 	return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT;
 }
@@ -90,6 +95,8 @@ module.exports = {
 	baseUrlSM: get('sm') + '/sm',
 	baseUrlNE: get('ne') + '/ne',
 	mongoUrl: mongoUrl(),
+	dbAuthorType: process.env.DB_AUTHOR_TYPE,
+	dbAuthorUrl: dbUrl(),
 	baseUrlUSR: get('user') + '/rbac',
 	baseUrlMON: get('mon') + '/mon',
 	baseUrlWF: get('wf') + '/workflow',
@@ -99,6 +106,8 @@ module.exports = {
 	baseUrlGW: get('gw') + '/gw',
 	debugDB: debugDB,
 	mongoAppcenterUrl: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017',
+	dbAppcenterType: process.env.DB_APPCENTER_TYPE,
+	dbAppcenterUrl: process.env.DB_APPCENTER_URL || process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017',
 	validationApi: get('user') + '/rbac/validate',
 	isK8sEnv: isK8sEnv,
 	isCosmosDB: isCosmosDB,
@@ -115,6 +124,17 @@ module.exports = {
 		maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
 		connectTimeout: 2000,
 		stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
+	},
+	dbAuthorOptions: {
+		dbName: process.env.DB_AUTHOR_DBNAME || process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
+		useNewUrlParser: true
+	},
+	dbLogsOptions: {
+		dbName: process.env.DB_LOGS_DBNAME || process.env.MONGO_LOGS_DBNAME || 'datastackLogs',
+		useNewUrlParser: true
+	},
+	dbAppcenterOptions: {
+		useNewUrlParser: true
 	},
 	mongoOptions: {
 		// reconnectTries: process.env.MONGO_RECONN_TRIES,
@@ -139,7 +159,14 @@ module.exports = {
 	healthTimeout: process.env.K8S_DS_HEALTH_API_TIMEOUT ? parseInt(process.env.K8S_DS_HEALTH_API_TIMEOUT) : 60,
 	RBAC_JWT_KEY: envVariables.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
 	envkeysForDataService: [
-		'DNIO_DATABASE_TYPE',	//mongodb | cosmosdb | documentdb
+		'DB_AUTHOR_TYPE',	//mongodb | cosmosdb | documentdb
+		'DB_APPCENTER_TYPE',	//mongodb | cosmosdb | documentdb
+		'DB_LOGS_TYPE',	//mongodb | cosmosdb | documentdb
+		'DB_AUTHOR_URL',
+		'DB_APPCENTER_URL',
+		'DB_LOGS_URL',
+		'DB_AUTHOR_DBNAME',
+		'DB_LOGS_DBNAME',
 		'DNIO_DATABASE_CERT_NAME',
 		'FQDN',
 		'GOOGLE_API_KEY',

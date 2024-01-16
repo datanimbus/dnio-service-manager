@@ -1,7 +1,7 @@
 'use strict';
 
-const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 
 const definition = {
 	_id: {
@@ -83,6 +83,7 @@ const notificationOptions = {
 
 notificationSchema.index({ app: 1, user: 1, status: 1 });
 notificationSchema.pre('save', cuti.counter.getIdGenerator('IMPORT', 'services.fileTransfers', null, null, 1000));
+
 const notificationCrudder = new SMCrud(notificationSchema, 'service-transfers', notificationOptions);
 
 

@@ -54,13 +54,13 @@ function schemaValidateDefault(schema, app) {
 					var nameID = attribute['properties']['relatedTo'];
 					var obj1 = {};
 					obj1['_id'] = nameID;
-					return global.mongoDB.db.collection('services').findOne(obj1)
+					return global.authorDBConnection.db.collection('services').findOne(obj1)
 						.then(data => {
 							var colname = data.collectionName;
 							var obj = {};
 							obj['_id'] = defValue;
 							let dbName = envConfig.isK8sEnv() ? `${envConfig.dataStackNS}-${data.app}` : data.app;
-							return global.mongoConnection.db(dbName).collection(colname).findOne(obj)
+							return global.appcenterDBConnection.db(dbName).collection(colname).findOne(obj)
 								.then(_d => {
 									if (!_d) {
 										throw new Error('Default value is invalid for ' + attribute.key);
@@ -153,7 +153,7 @@ function checkData(uri) {
 	let lastSegSplit = lastSeg.split('?');
 	let collection = `${lastSegSplit[0]}`;
 	let filter = lastSegSplit[1].replace('filter=', '').replace('"{{id}}"', '{"$exists": true}');
-	return global.mongoConnection.db(db).collection(collection).findOne(JSON.parse(filter));
+	return global.appcenterDBConnection.db(db).collection(collection).findOne(JSON.parse(filter));
 }
 
 function canUpdateAPI(relations) {

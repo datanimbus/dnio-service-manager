@@ -6,8 +6,9 @@ const logger = global.logger;
 async function updateExistingServicesWithDefaultConnectors() {
 	try {
 		logger.info('=== Updating existing services with default connectors ===');
-		let servicesAndConnector = await global.mongoConnection
-			.db('datastackConfig')
+		// let servicesAndConnector = await global.mongoConnection
+		// .db('datastackConfig')
+		let servicesAndConnector = await global.authorDBConnection
 			.collection('services')
 			.aggregate([
 				{
@@ -62,8 +63,9 @@ async function updateExistingServicesWithDefaultConnectors() {
 				}
 			});
 			await Object.keys(updateQueryDataAndCondition).forEach(async function (key) {
-				let updateResult = await global.mongoConnection
-					.db('datastackConfig')
+				// let updateResult = await global.mongoConnection
+				// 	.db('datastackConfig')
+				let updateResult = await global.authorDBConnection
 					.collection('services')
 					.updateMany(updateQueryDataAndCondition[key].query, updateQueryDataAndCondition[key].data);
 				logger.debug(updateResult);
