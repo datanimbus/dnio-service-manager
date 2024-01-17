@@ -111,31 +111,6 @@ schema.index({ api: 1, app: 1 }, { unique: true });
 
 schema.index({ name: 1, app: 1 }, { unique: true });
 
-schema.pre('save', async function (next) {
-	try {
-		let doc = this;
-		if (doc.status == 'Active') {
-			const temp = {};
-			if (doc.app && doc.port && doc.api) {
-				let URL = 'http://localhost:' + doc.port;
-				if (envConfig.isK8sEnv()) {
-					URL = 'http://' + doc.api.split('/')[1] + '.' + envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
-				}
-				logger.trace(`Routing map :: ${doc.app}${doc.api} : ${URL}`);
-			}
-			temp[`${doc.app}${doc.api}`] = URL;
-			let status = await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
-			logger.debug('Setting Route Cache', status, doc.status);
-		} else {
-			let status = await authCache.client.del(`DSROUTE:${doc._id}`);
-			logger.debug('Removing Route Cache', status, doc.status);
-		}
-	} catch (err) {
-		logger.error('Route Cache Error', err);
-	}
-	next();
-});
-
 schema.post('save', function (error, doc, next) {
 	if ((error.errors && error.errors.api) || error.name === 'ValidationError' && error.message.indexOf('__CUSTOM_API_DUPLICATE_ERROR__') > -1) {
 		next(new Error('API endpoint is already in use'));
@@ -1455,6 +1430,7 @@ e.deployAPIHandler = (_req, _res) => {
 						})
 						.then(() => deployUtil.deployService(svcObject, socket, _req, false))
 						.then(() => {
+							addRouteInCache(svcObject);
 							logger.info(`[${txnId}] Deployment process started for service ${ID} status ${svcObject.status}`);
 							dataStackutils.eventsUtil.publishEvent('EVENT_DS_DEPLOYMENT_QUEUED', 'dataService', _req, _d);
 							_res.status(202).json({ message: 'Deployment process started' });
@@ -1722,6 +1698,7 @@ e.deployAPIHandler = (_req, _res) => {
 												return deployUtil.deployService(data, socket, _req, oldData ? isReDeploymentRequired : false);
 											})
 											.then(_d => {
+												addRouteInCache(data);
 												logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: Response from deployService :: ${JSON.stringify(_d)}`);
 											});
 									}
@@ -1731,6 +1708,7 @@ e.deployAPIHandler = (_req, _res) => {
 									eventsList.forEach(event => dataStackutils.eventsUtil.publishEvent(event, 'dataService', _req, newData));
 								})
 								.catch(err => {
+									removeRouteFromCache(data);
 									logger.debug('Inside catch');
 									if (!_res.headersSent)
 										_res.status(400).json({ message: err.message });
@@ -1739,6 +1717,7 @@ e.deployAPIHandler = (_req, _res) => {
 								});
 						})
 						.catch(err => {
+							removeRouteFromCache(_d);
 							logger.debug('Inside catch');
 							if (!_res.headersSent)
 								_res.status(400).json({
@@ -1825,7 +1804,10 @@ async function startService(req, res, id, list) {
 					});
 			}
 			return deployUtil.deployService(doc, socket, req, false)
-				.then(() => dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc));
+				.then(() => {
+					addRouteInCache(doc);
+					return dataStackutils.eventsUtil.publishEvent('EVENT_DS_START', 'dataService', req, doc);
+				});
 
 		} else {
 			throw new Error('No service found with given id');
@@ -1908,6 +1890,7 @@ e.stopAPIHandler = async (_req, _res) => {
 					}, _req);
 				})
 				.then((doc) => {
+					removeRouteFromCache(doc);
 					dataStackutils.eventsUtil.publishEvent('EVENT_DS_STOP', 'dataService', _req, doc);
 					deployUtil.sendToSocket(socket, 'serviceStatus', {
 						_id: id,
@@ -3572,6 +3555,25 @@ async function importFromXLSX(req, res) {
 		}
 	}
 
+}
+
+async function addRouteInCache(doc) {
+	const temp = {};
+	if (doc.app && doc.port && doc.api) {
+		let URL = 'http://localhost:' + doc.port;
+		if (envConfig.isK8sEnv()) {
+			URL = 'http://' + doc.api.split('/')[1] + '.' + envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+		}
+		logger.trace(`Routing map :: ${doc.app}${doc.api} : ${URL}`);
+	}
+	temp[`${doc.app}${doc.api}`] = URL;
+	let status = await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
+	logger.debug('Setting Route Cache', status, doc.status);
+}
+
+async function removeRouteFromCache(doc) {
+	let status = await authCache.client.del(`DSROUTE:${doc._id}`);
+	logger.debug('Removing Route Cache', status, doc.status);
 }
 
 module.exports = {
