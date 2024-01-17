@@ -124,10 +124,10 @@ schema.post('save', async function (doc) {
 			}
 			temp[`${doc.app}${doc.api}`] = URL;
 			let status = await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
-			logger.debug('Setting Route Cache', status);
+			logger.debug('Setting Route Cache', status, doc.status);
 		} else {
 			let status = await authCache.client.del(`DSROUTE:${doc._id}`);
-			logger.debug('Removing Route Cache', status);
+			logger.debug('Removing Route Cache', status, doc.status);
 		}
 	} catch (err) {
 		logger.error('Route Cache Error', err);
