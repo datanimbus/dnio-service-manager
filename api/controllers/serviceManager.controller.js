@@ -36,7 +36,7 @@ const logger = global.logger;
 var client = queueMgmt.client;
 const destroyDeploymentRetry = 5;
 const draftDefinition = JSON.parse(JSON.stringify(definition));
-
+const authCache = new AuthCache();
 
 const schema = MakeSchema(definition, {
 	usePushEach: true
@@ -112,7 +112,6 @@ schema.index({ api: 1, app: 1 }, { unique: true });
 schema.index({ name: 1, app: 1 }, { unique: true });
 
 schema.post('save', async function (doc) {
-	let authCache = new AuthCache();
 	if (doc.status == 'Active') {
 		const temp = {};
 		if (doc.app && doc.port && doc.api) {
