@@ -3565,15 +3565,15 @@ async function addRouteInCache(doc) {
 			URL = 'http://' + doc.api.split('/')[1] + '.' + envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
 		}
 		logger.trace(`Routing map :: ${doc.app}${doc.api} : ${URL}`);
+		temp[`${doc.app}${doc.api}`] = URL;
 	}
-	temp[`${doc.app}${doc.api}`] = URL;
 	let status = await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
-	logger.debug('Setting Route Cache', status, doc.status);
+	logger.debug('Setting Route Cache', status, JSON.stringify(temp));
 }
 
 async function removeRouteFromCache(doc) {
 	let status = await authCache.client.del(`DSROUTE:${doc._id}`);
-	logger.debug('Removing Route Cache', status, doc.status);
+	logger.debug('Removing Route Cache', status);
 }
 
 module.exports = {
