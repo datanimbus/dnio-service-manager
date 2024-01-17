@@ -112,19 +112,25 @@ schema.index({ api: 1, app: 1 }, { unique: true });
 schema.index({ name: 1, app: 1 }, { unique: true });
 
 schema.post('save', async function (doc) {
-	if (doc.status == 'Active') {
-		const temp = {};
-		if (doc.app && doc.port && doc.api) {
-			let URL = 'http://localhost:' + doc.port;
-			if (envConfig.isK8sEnv()) {
-				URL = 'http://' + doc.api.split('/')[1] + '.' + envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+	try {
+		if (doc.status == 'Active') {
+			const temp = {};
+			if (doc.app && doc.port && doc.api) {
+				let URL = 'http://localhost:' + doc.port;
+				if (envConfig.isK8sEnv()) {
+					URL = 'http://' + doc.api.split('/')[1] + '.' + envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+				}
+				logger.trace(`Routing map :: ${doc.app}${doc.api} : ${URL}`);
 			}
-			logger.trace(`Routing map :: ${doc.app}${doc.api} : ${URL}`);
+			temp[`${doc.app}${doc.api}`] = URL;
+			let status = await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
+			logger.debug('Setting Route Cache', status);
+		} else {
+			let status = await authCache.client.del(`DSROUTE:${doc._id}`);
+			logger.debug('Removing Route Cache', status);
 		}
-		temp[`${doc.app}${doc.api}`] = URL;
-		await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
-	} else {
-		await authCache.client.del(`DSROUTE:${doc._id}`);
+	} catch (err) {
+		logger.error('Route Cache Error', err);
 	}
 });
 
