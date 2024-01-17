@@ -577,7 +577,11 @@ function generateYaml(config) {
 					content: {
 						'application/json': {
 							schema: {
-								$ref: `#/components/schemas/${name}_math`
+								type: 'array',
+								items: {
+									type: 'object',
+									properties: mathDefinition.properties
+								}
 							}
 						}
 					}
