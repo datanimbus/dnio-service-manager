@@ -111,8 +111,9 @@ schema.index({ api: 1, app: 1 }, { unique: true });
 
 schema.index({ name: 1, app: 1 }, { unique: true });
 
-schema.post('save', async function (doc) {
+schema.pre('save', async function (next) {
 	try {
+		let doc = this;
 		if (doc.status == 'Active') {
 			const temp = {};
 			if (doc.app && doc.port && doc.api) {
@@ -132,6 +133,7 @@ schema.post('save', async function (doc) {
 	} catch (err) {
 		logger.error('Route Cache Error', err);
 	}
+	next();
 });
 
 schema.post('save', function (error, doc, next) {
