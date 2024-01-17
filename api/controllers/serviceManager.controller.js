@@ -10,6 +10,7 @@ const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const cuti = require('@appveen/utils');
 const dataStackutils = require('@appveen/data.stack-utils'); //Common utils for Project
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
+const { AuthCache } = require('@appveen/ds-auth-cache');
 
 const k8s = require('../../util/k8s.js');
 let rolesUtil = require('../helpers/roles');
@@ -108,6 +109,23 @@ schema.index({ api: 1, app: 1 }, { unique: true });
 
 schema.index({ name: 1, app: 1 }, { unique: true });
 
+schema.post('save', async function (doc) {
+	let authCache = new AuthCache();
+	if (doc.status == 'Active') {
+		const temp = {};
+		if (doc.app && doc.port && doc.api) {
+			let URL = 'http://localhost:' + doc.port;
+			if (envConfig.isK8sEnv()) {
+				URL = 'http://' + doc.api.split('/')[1] + '.' + envConfig.dataStackNS + '-' + doc.app.toLowerCase().replace(/ /g, '');
+			}
+			logger.trace(`Routing map :: ${doc.app}${doc.api} : ${URL}`);
+		}
+		temp[`${doc.app}${doc.api}`] = URL;
+		await authCache.client.setAsync(`DSROUTE:${doc._id}`, JSON.stringify(temp));
+	} else {
+		await authCache.client.del(`DSROUTE:${doc._id}`);
+	}
+});
 
 schema.post('save', function (error, doc, next) {
 	if ((error.errors && error.errors.api) || error.name === 'ValidationError' && error.message.indexOf('__CUSTOM_API_DUPLICATE_ERROR__') > -1) {
@@ -1036,7 +1054,7 @@ function allowVersionChange(_o, _n) {
 
 
 function deepEqual(a, b) {
-	if ((typeof a == "object" && a != null) && (typeof b == "object" && b != null)) {
+	if ((typeof a == 'object' && a != null) && (typeof b == 'object' && b != null)) {
 		let count = [0, 0];
 		for (let key in a) count[0]++;
 		for (let key in b) count[1]++;
