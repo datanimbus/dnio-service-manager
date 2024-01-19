@@ -1,24 +1,24 @@
 'use strict';
 
+const log4js = require('log4js');
 const express = require('express');
 const bluebird = require('bluebird');
 const mongoose = require('mongoose');
 const socket = require('socket.io');
-const { MongoClient } = require('mongodb');
 const upload = require('express-fileupload');
 const JWT = require('jsonwebtoken');
 
 const cuti = require('@appveen/utils');
 
 let version = require('./package.json').version;
-const envConfig = require('./config/config.js');
-const { fetchEnvironmentVariablesFromDB } = require('./config/config');
 
-const log4js = cuti.logger.getLogger;
 const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT ? `[${process.env.DATA_STACK_NAMESPACE}] [${process.env.HOSTNAME}] [SM ${version}]` : `[SM ${version}]`;
 const logger = log4js.getLogger(loggerName);
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
 global.logger = logger;
+
+const envConfig = require('./config/config.js');
+const { fetchEnvironmentVariablesFromDB } = require('./config/config');
 
 let timeOut;
 global.Promise = bluebird;
@@ -172,10 +172,6 @@ function initialize() {
 			logger.info('Connection accepted from : ' + socket.id);
 		});
 	}
-
-
-
-
 
 
 	var logMiddleware = cuti.logMiddleware.getLogMiddleware(logger);
