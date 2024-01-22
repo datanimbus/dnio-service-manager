@@ -160,14 +160,16 @@ module.exports = {
 	RBAC_JWT_KEY: envVariables.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
 	envkeysForDataService: [
 		'DB_AUTHOR_TYPE',	//mongodb | cosmosdb | documentdb
-		'DB_APPCENTER_TYPE',	//mongodb | cosmosdb | documentdb
-		'DB_LOGS_TYPE',	//mongodb | cosmosdb | documentdb
 		'DB_AUTHOR_URL',
-		'DB_APPCENTER_URL',
-		'DB_LOGS_URL',
 		'DB_AUTHOR_DBNAME',
+		'DB_AUTHOR_CERT_NAME',
+		'DB_APPCENTER_TYPE',	//mongodb | cosmosdb | documentdb
+		'DB_APPCENTER_URL',
+		'DB_APPCENTER_CERT_NAME',
+		'DB_LOGS_TYPE',	//mongodb | cosmosdb | documentdb
+		'DB_LOGS_URL',
 		'DB_LOGS_DBNAME',
-		'DNIO_DATABASE_CERT_NAME',
+		'DB_LOGS_CERT_NAME',
 		'FQDN',
 		'GOOGLE_API_KEY',
 		'HOOK_CONNECTION_TIMEOUT',
