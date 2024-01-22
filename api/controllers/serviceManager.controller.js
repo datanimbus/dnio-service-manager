@@ -3504,13 +3504,13 @@ async function getEnvVars(req, res) {
 		envVars['NODE_OPTIONS'] = `--max-old-space-size=${envConfig.maxHeapSize}`;
 		envVars['NODE_ENV'] = 'production';
 
-		if (envVars['DB_AUTHOR_TYPE'] && envVars['DB_AUTHOR_TYPE'] != 'mongodb') {
+		if (envVars['DB_AUTHOR_TYPE'] && envVars['DB_AUTHOR_TYPE'] != 'mongodb' && envVars['DB_AUTHOR_CERT_NAME']) {
 			envVars['DB_AUTHOR_CERT'] = fs.readFileSync(path.join(process.cwd(), envVars['DB_AUTHOR_CERT_NAME']), 'utf-8');
 		}
-		if (envVars['DB_APPCENTER_TYPE'] && envVars['DB_APPCENTER_TYPE'] != 'mongodb') {
+		if (envVars['DB_APPCENTER_TYPE'] && envVars['DB_APPCENTER_TYPE'] != 'mongodb' && envVars['DB_APPCENTER_CERT_NAME']) {
 			envVars['DB_APPCENTER_CERT'] = fs.readFileSync(path.join(process.cwd(), envVars['DB_APPCENTER_CERT_NAME']), 'utf-8');
 		}
-		if (envVars['DB_LOGS_TYPE'] && envVars['DB_LOGS_TYPE'] != 'mongodb') {
+		if (envVars['DB_LOGS_TYPE'] && envVars['DB_LOGS_TYPE'] != 'mongodb' && envVars['DB_LOGS_CERT_NAME']) {
 			envVars['DB_LOGS_CERT'] = fs.readFileSync(path.join(process.cwd(), envVars['DB_LOGS_CERT_NAME']), 'utf-8');
 		}
 		res.status(200).json(envVars);
