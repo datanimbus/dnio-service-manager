@@ -498,9 +498,11 @@ schema.pre('save', async function (next, req) {
 			let status;
 			if (this.oldModel.states) {
 				let states = Object.keys(this.oldModel.states).filter((state) => { if (this.oldModel.states[state].length == 0) return state; });
-				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: { '$nin': states } }, { $set: obj });
+				// status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: { '$nin': states } }, { $set: obj });
+				status = await global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({ [this.stateModel.attribute]: { '$nin': states } }, { $set: obj });
 			} else {
-				status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
+				// status = await global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
+				status = await global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(this.collectionName).updateMany({}, { $set: obj });
 			}
 
 			logger.debug(`[${txnId}] Initial States updated :: ${JSON.stringify(status.result)}`);
@@ -517,7 +519,8 @@ schema.pre('save', async function (next, req) {
 	try {
 		if (!this.isNew && this.workflowConfig && this.workflowConfig.enabled && this.isWorkflowChanged) {
 			logger.info(`[${txnId}] Updating existing work items to first step for service :: ${this._id}`);
-			let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
+			// let collection = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
+			let collection = global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${this.app}`).collection(`${this.collectionName}.workflow`);
 			let workItems = await collection.find({ status: 'Pending', app: this.app, serviceId: this._id });
 			workItems.forEach(item => {
 				let obj = {};
@@ -1658,7 +1661,8 @@ e.deployAPIHandler = (_req, _res) => {
 									if (isCounterChangeRequired) {
 										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Counter change required? ${isCounterChangeRequired ? 'YES' : 'NO'}`);
 										logger.debug(`[${txnId}] Deploy API handler :: ${ID} :: DB :: ${`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`}`);
-										return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`).collection('counters')
+										// return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`).collection('counters')
+										return global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`).collection('counters')
 											.update({ _id: oldData.collectionName }, { next: parseInt(newIdElement['counter'], 10) - 1 });
 									}
 								})
@@ -1681,7 +1685,8 @@ e.deployAPIHandler = (_req, _res) => {
 										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Redeploying under app ${_d.app}`);
 										logger.trace(`[${txnId}] Deploy API handler :: ${JSON.stringify(_d)}`);
 										var data = JSON.parse(JSON.stringify(_d));
-										let mongoDBVishnu = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
+										// let mongoDBVishnu = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
+										let mongoDBVishnu = global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${srvcObj.app}`);
 										logger.info(`[${txnId}] Deploy API handler :: ${ID} :: Reindexing the collection :: ${data.collectionName}`);
 										let promise = Promise.resolve();
 										if (removeSoftDeletedRecords) {
@@ -1932,7 +1937,8 @@ function destroyDeployment(id, count, _req) {
 
 async function renameCollections(oldColl, newColl, app) {
 	try {
-		const mongoDBAppcenter = global.mongoConnection.db(app);
+		// const mongoDBAppcenter = global.mongoConnection.db(app);
+		const mongoDBAppcenter = global.dbAppcenterConnection.useDb(app);
 		if (mongoDBAppcenter) {
 			await mongoDBAppcenter.collection(oldColl).rename(newColl);
 			logger.info('Collection name changed from ' + oldColl + ' to ' + newColl);
@@ -1968,7 +1974,8 @@ async function renameCollections(oldColl, newColl, app) {
 
 function dropCollections(collectionName, app, txnId, appName) {
 	logger.debug(`[${txnId}] DropCollection :: DB clean up : ${app}`);
-	let appCenterDB = global.mongoConnection.db(app);
+	// let appCenterDB = global.mongoConnection.db(app);
+	let appCenterDB = global.dbAppcenterConnection.useDb(app);
 	logger.error(`[${txnId}] DropCollection :: AppCenter DB Connection ${appCenterDB ? 'Active' : 'Inactive'}`);
 	if (appCenterDB) {
 		logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${collectionName}`);
@@ -1990,7 +1997,8 @@ function dropCollections(collectionName, app, txnId, appName) {
 			else logger.info(`[${txnId}] DropCollection :: Counter ${collectionName} deleted successfully`);
 		});
 
-		let logsDB = global.mongoConnection.db(envConfig.mongoLogsOptions.dbName);
+		// let logsDB = global.mongoConnection.db(envConfig.mongoLogsOptions.dbName);
+		let logsDB = global.dbAppcenterConnection.useDb(envConfig.dbLogsOptions.dbName);
 		logger.error(`[${txnId}] DropCollection :: Logs DB Connection ${logsDB ? 'Active' : 'Inactive'}`);
 		if (logsDB) {
 			logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${appName}.${collectionName}.audit`);
@@ -2144,7 +2152,8 @@ e.documentCount = (_req, _res) => {
 			if (_doc) {
 				if (Array.isArray(_doc)) {
 					return Promise.all(_doc.map(e => {
-						return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${e.app}`).collection(e.collectionName).count()
+						// return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${e.app}`).collection(e.collectionName).count()
+						return global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${e.app}`).collection(e.collectionName).count()
 							.then(_count => {
 								return {
 									_id: e._id,
@@ -2153,7 +2162,8 @@ e.documentCount = (_req, _res) => {
 							});
 					}));
 				} else {
-					return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${_doc.app}`).collection(_doc.collectionName).count();
+					// return global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${_doc.app}`).collection(_doc.collectionName).count();
+					return global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${_doc.app}`).collection(_doc.collectionName).count();
 				}
 			} else {
 				_res.status(404).json({
@@ -2395,7 +2405,8 @@ function getIdCounter(serviceId, app) {
 		.then(_doc => {
 			if (_doc) {
 				var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + app;
-				return global.mongoConnection.db(dbName).collection('counters').findOne({ _id: _doc.collectionName }, { next: 1 });
+				return global.dbAppcenterConnection.useDb(dbName).collection('counters').findOne({ _id: _doc.collectionName }, { next: 1 });
+				// return global.mongoConnection.db(dbName).collection('counters').findOne({ _id: _doc.collectionName }, { next: 1 });
 			}
 		})
 		.then(_d => {
@@ -2828,7 +2839,8 @@ e.lockDocumentCount = (req, res) => {
 				app = _sd.app;
 				let dbName = envConfig.isK8sEnv() ? `${envConfig.dataStackNS}-${app}` : `${envConfig.dataStackNS}-${app}`;
 
-				return global.mongoConnection.db(dbName).collection(collectionName).find({ '_metadata.workflow': { $exists: true } }).count()
+				// return global.mongoConnection.db(dbName).collection(collectionName).find({ '_metadata.workflow': { $exists: true } }).count()
+				return global.dbAppcenterConnection.useDb(dbName).collection(collectionName).find({ '_metadata.workflow': { $exists: true } }).count()
 					.then(count => {
 						res.status(200).json({ count: count });
 					})
@@ -2989,7 +3001,8 @@ function validateUserDeletion(req, res) {
 	crudder.model.find({ 'relatedSchemas.internal.users.0': { $exists: true }, app: app })
 		.then(_d => {
 			promise = _d.map(data => {
-				let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
+				// let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
+				let db = global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
 				if (!data.relatedSchemas) {
 					data.relatedSchemas = {};
 				}
@@ -3036,7 +3049,8 @@ function userDeletion(req, res) {
 	crudder.model.find({ 'relatedSchemas.internal.users.0': { $exists: true }, app: app })
 		.then(_d => {
 			promise = _d.map(data => {
-				let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
+				// let db = global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
+				let db = global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${data.app}`);
 				let filter = data.relatedSchemas.internal.users.map(doc => doc.filter.replace('{{id}}', id));
 				let path = data.relatedSchemas.internal.users.map(doc => doc.path);
 				filter = filter.map(doc => JSON.parse(doc));
@@ -3262,7 +3276,8 @@ function checkUniqueField(app, collectionName, field) {
 	];
 	aggregateQuery[0]['$match'][field] = { '$ne': null };
 	return new Promise((resolve, reject) => {
-		global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${app}`)
+		// global.mongoConnection.db(`${process.env.DATA_STACK_NAMESPACE}-${app}`)
+		global.dbAppcenterConnection.useDb(`${process.env.DATA_STACK_NAMESPACE}-${app}`)
 			.collection(collectionName).aggregate(aggregateQuery).toArray()
 			.then(result => {
 				let res = {};

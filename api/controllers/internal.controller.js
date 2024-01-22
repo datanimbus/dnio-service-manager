@@ -14,7 +14,8 @@ var e = {};
 
 function dropCollections(collectionName, app, txnId) {
 	logger.debug(`[${txnId}] DropCollection :: DB clean up : ${app}`);
-	let appCenterDB = global.mongoConnection.db(app);
+	// let appCenterDB = global.mongoConnection.db(app);
+	let appCenterDB = global.dbAppcenterConnection.useDb(app);
 	logger.error(`[${txnId}] DropCollection :: AppCenter DB Connection ${appCenterDB ? 'Active' : 'Inactive'}`);
 	if (appCenterDB) {
 		logger.debug(`[${txnId}] DropCollection :: DB clean up drop collection : ${collectionName}`);
